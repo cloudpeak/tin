@@ -24,7 +24,6 @@
 ```c++
  #include "tin/all.h"
 
-// case 0
 void HandleClient(tin::net::TcpConn conn) {
   // Set TCP Read Write buffer.
   conn->SetReadBuffer(64 * 1024);
@@ -79,7 +78,7 @@ int TinMain(int argc, char** argv) {
   while (true) {
     tin::net::TcpConn conn = listener->Accept();
     if (tin::GetErrorCode() == 0) {
-          tin::Spawn(&HandleClient, conn);
+      tin::Spawn(&HandleClient, conn);
     } else {
       LOG(INFO) << "Accept failed due to " << tin::GetErrorStr();
     }
