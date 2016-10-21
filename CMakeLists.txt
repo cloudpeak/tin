@@ -306,7 +306,10 @@ set(DEP_LIBS tin base quark zcontext pthread)
 else()
 set(DEP_LIBS tin base quark zcontext pthread rt)
 endif()
-if(TIN_NO_EXAMPLES EQUAL 0)
+
+if(NOT DEFINED TIN_BUILD_EXAMPLES)	set(TIN_BUILD_EXAMPLES 1)
+endif()
+if(${TIN_BUILD_EXAMPLES})
 add_subdirectory(examples)
 endif()
 
