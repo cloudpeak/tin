@@ -1,5 +1,5 @@
 # Notes
-  + in alpha phase, may buggy..
+  + in alpha phase, may be kinda buggy..
   + most of the code is copied or adapted from golang, chromium, libuv,  boost, etc.
 
 # Platforms
@@ -22,7 +22,7 @@
 
 ## Example(echo server)
 ```c++
- #include "tin/all.h"
+#include "tin/all.h"
 
 void HandleClient(tin::net::TcpConn conn) {
   // Set TCP Read Write buffer.
