@@ -1,6 +1,3 @@
-# Notes
-  + in alpha stage.
-  + most of the code is copied or adapted from golang, chromium, libuv,  boost, etc.
 
 # Platforms
   +  Windows XP or later
