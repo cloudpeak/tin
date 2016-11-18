@@ -1,5 +1,5 @@
 # Notes
-  + in alpha phase, may be kinda buggy..
+  + in alpha stage.
   + most of the code is copied or adapted from golang, chromium, libuv,  boost, etc.
 
 # Platforms
