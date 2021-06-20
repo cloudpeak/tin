@@ -6,16 +6,19 @@
 
 # How to build
   + git clone --recursive https://github.com/cloudpeak/tin.git
+  + cd tin
   + mkdir build
   + cd build
+  + Visual Studio 2019 Win64
+    + cmake -G "Visual Studio 16 2019" -A x64  ../ -DCMAKE_BUILD_TYPE=RELEASE
   + Visual Studio 2015 Win64
-    + cmake -G "Visual Studio 14 2015 Win64" ../tin -DCMAKE_BUILD_TYPE=RELEASE
+    + cmake -G "Visual Studio 14 2015 Win64" ../ -DCMAKE_BUILD_TYPE=RELEASE
   + Visual Studio 2015 Win32
-    + cmake -G "Visual Studio 14 2015" ../tin -DCMAKE_BUILD_TYPE=RELEASE
+    + cmake -G "Visual Studio 14 2015" ../ -DCMAKE_BUILD_TYPE=RELEASE
   + Visual Studio 2008 Win32
-    + cmake -G "Visual Studio 9 2008" ../tin -DCMAKE_BUILD_TYPE=RELEASE
+    + cmake -G "Visual Studio 9 2008" ../ -DCMAKE_BUILD_TYPE=RELEASE
   + GCC or Clang
-    + cmake ../tin -DCMAKE_BUILD_TYPE=RELEASE && make
+    + cmake ../ -DCMAKE_BUILD_TYPE=RELEASE && make
 
 ## Example(echo server)
 ```c++
