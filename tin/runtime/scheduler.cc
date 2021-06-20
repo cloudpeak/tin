@@ -4,6 +4,7 @@
 
 #include "base/logging.h"
 #include "base/memory/aligned_memory.h"
+#include "base/sys_info.h"
 #include "base/threading/platform_thread.h"
 
 #include "context/zcontext.h"
@@ -484,7 +485,7 @@ void Scheduler::OnSwitch(G* curg) {
 }
 
 int Scheduler::Init() {
-  ResizeProc(8);
+  ResizeProc(base::SysInfo::NumberOfProcessors());
   return 0;
 }
 
