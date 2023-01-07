@@ -9,14 +9,21 @@
   + cd tin
   + mkdir build
   + cd build
-  + Visual Studio 2019 Win64
-    + cmake -G "Visual Studio 16 2019" -A x64  ../ -DCMAKE_BUILD_TYPE=RELEASE
-  + Visual Studio 2015 Win64
-    + cmake -G "Visual Studio 14 2015 Win64" ../ -DCMAKE_BUILD_TYPE=RELEASE
-  + Visual Studio 2015 Win32
-    + cmake -G "Visual Studio 14 2015" ../ -DCMAKE_BUILD_TYPE=RELEASE
-  + Visual Studio 2008 Win32
-    + cmake -G "Visual Studio 9 2008" ../ -DCMAKE_BUILD_TYPE=RELEASE
+  + Visual studio
+    + Visual Studio 2022 Win64
+      + cmake -G "Visual Studio 17 2022" -A x64  ../ -DCMAKE_BUILD_TYPE=RELEASE
+    + Visual Studio 2019 Win64
+      + cmake -G "Visual Studio 16 2019" -A x64  ../ -DCMAKE_BUILD_TYPE=RELEASE
+
+    + Visual Studio 2015 Win64
+      + cmake -G "Visual Studio 14 2015 Win64" ../ -DCMAKE_BUILD_TYPE=RELEASE
+
+    + Visual Studio 2015 Win32
+      + cmake -G "Visual Studio 14 2015" ../ -DCMAKE_BUILD_TYPE=RELEASE
+
+    + Visual Studio 2008 Win32
+      + cmake -G "Visual Studio 9 2008" ../ -DCMAKE_BUILD_TYPE=RELEASE
+
   + GCC or Clang
     + cmake ../ -DCMAKE_BUILD_TYPE=RELEASE && make
 
