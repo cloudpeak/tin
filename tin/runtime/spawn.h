@@ -4,17 +4,23 @@
 
 #pragma once
 #include <cstdlib>
-#include "base/bind.h"
-#include "base/callback.h"
-#include "base/basictypes.h"
+#include <absl/functional/bind_front.h>
 
 namespace tin {
-void RuntimeSpawn(base::Closure* closure);
+void RuntimeSpawn(std::function<void()>* closure);
 
-inline void DoSpawn(base::Closure closure) {
+inline void  DoSpawn(std::function<void()> closure) {
   RuntimeSpawn(&closure);
 }
 
+template <typename Functor, typename... Args>
+void Spawn(Functor functor, Args&&... args) {
+  auto boundFunction = absl::bind_front(functor, std::forward<Args>(args)...);
+  std::function<void()> closure = [boundFunction]() mutable { boundFunction(); };
+  DoSpawn(closure);
+}
+
+/*
 template <typename Functor>
 void Spawn(Functor functor) {
   DoSpawn(base::Bind(functor));
@@ -61,5 +67,6 @@ void Spawn(Functor functor, const P1& p1, const P2& p2, const P3& p3,
            const P4& p4, const P5& p5, const P6& p6, const P7& p7) {
   DoSpawn(base::Bind(functor, p1, p2, p3, p4, p5, p6, p7));
 }
+*/
 
 }  // namespace tin

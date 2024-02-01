@@ -3,10 +3,6 @@
 // found in the LICENSE file.
 
 #include <cstdlib>
-#include "base/basictypes.h"
-#include "base/logging.h"
-#include "base/sys_info.h"
-#include "base/threading/platform_thread.h"
 
 #include "tin/runtime/env.h"
 #include "tin/runtime/greenlet.h"
@@ -19,7 +15,7 @@ namespace tin {
 namespace runtime {
 
 bool CanSpin(int i) {
-  int32 max_proc = rtm_conf->MaxProcs();
+  int32_t max_proc = rtm_conf->MaxProcs();
   if (i >= spin::kActiveSpin ||
       rtm_env->NumberOfProcessors() <= 1 ||
       max_proc <=

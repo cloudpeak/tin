@@ -39,7 +39,7 @@ void NetPollPreDeinit() {
 #define EPOLLRDHUP 0x2000
 #endif
 
-int32 NetPollOpen(uintptr_t fd, PollDescriptor* pd) {
+int32_t NetPollOpen(uintptr_t fd, PollDescriptor* pd) {
   struct epoll_event ev;
   ev.events = EPOLLIN | EPOLLOUT | EPOLLRDHUP | EPOLLET;
   ev.data.ptr = pd;
@@ -48,7 +48,7 @@ int32 NetPollOpen(uintptr_t fd, PollDescriptor* pd) {
   return 0;
 }
 
-int32 NetPollClose(uintptr_t fd) {
+int32_t NetPollClose(uintptr_t fd) {
   struct epoll_event ev;
   if (epoll_ctl(epfd, EPOLL_CTL_DEL,  static_cast<int>(fd), &ev) == -1)
     return errno;

@@ -9,6 +9,8 @@
 
 #include "tin/tin.h"
 
+#include <absl/strings/str_format.h>
+#include <iostream>
 namespace tin {
 
 namespace {
@@ -17,6 +19,9 @@ base::AtExitManager* atexit = NULL;
 }
 
 void Initialize() {
+  std::string name = "John"; int age = 25;
+
+  std::string formatted_string = absl::StrFormat("My name is %s and I am %d years old.", name, age); std::cout << formatted_string << std::endl;
   atexit = new base::AtExitManager;
   conf = new tin::Config;
   *conf = DefaultConfig();

@@ -7,6 +7,8 @@
 
 #include "build/build_config.h"
 
+#include <absl/functional/bind_front.h>
+
 #include "base/sys_info.h"
 #include "tin/runtime/util.h"
 #include "tin/runtime/timer/timer_queue.h"
@@ -24,7 +26,7 @@ namespace runtime {
 Env::Env()
   : argc_(0)
   , argv_(NULL)
-  , main_signal_(false, false) {
+  , main_signal_(false) {
 }
 
 void Env::PreInit() {
@@ -41,7 +43,8 @@ int Env::Initialize(EntryFn fn, int argc, char** argv, tin::Config* new_conf) {
   timer_q = new TimerQueue;
   glet_tls = new base::ThreadLocalPointer<Greenlet>;
   ThreadPoll::GetInstance()->Start();
-  M::New(base::Bind(&SysInit), NULL);
+  M::New(absl::bind_front(&SysInit), NULL);
+
   return 0;
 }
 
@@ -51,7 +54,7 @@ void Env::Deinitialize() {
 }
 
 int Env::WaitMainExit() {
-  main_signal_.Wait();
+  main_signal_.WaitForNotification();
   return 0;
 }
 
@@ -59,7 +62,7 @@ void Env::SysInit() {
   GetM()->SetM0Flag();
   sched->Init();
   SpawnSimple(&MainGlet, NULL, "main");
-  M::New(base::Bind(&SysMon), NULL);
+  M::New(absl::bind_front(&SysMon), NULL);
 }
 
 void* Env::MainGlet(intptr_t) {
@@ -75,7 +78,7 @@ void Env::OnMainExit() {
   exit_flag_ = true;
   ThreadPoll::GetInstance()->JoinAll();
   timer_q->Join();
-  rtm_env->main_signal_.Signal();
+  rtm_env->main_signal_.Notify();
 }
 
 void Env::SignalInit() {

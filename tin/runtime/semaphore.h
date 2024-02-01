@@ -4,7 +4,6 @@
 
 #pragma once
 #include <stdlib.h>
-#include "base/basictypes.h"
 #include "tin/runtime/util.h"
 
 
@@ -13,14 +12,14 @@ namespace runtime {
 
 struct Sudog {
   G* gp;
-  uint32* selectdone;
+  uint32_t * selectdone;
   Sudog* next;
   Sudog* prev;
   void* elem;  // data element
-  int32 nrelease;
+  int32_t nrelease;
   Sudog* waitlink;
-  uint32* address;
-  uint32  wakedup;
+  uint32_t* address;
+  uint32_t  wakedup;
 
   Sudog() {
     wakedup = 0;
@@ -47,7 +46,7 @@ class SyncSema {
   }
 
   void Acquire();
-  void Release(uint32 n);
+  void Release(uint32_t n);
 
  private:
   RawMutex lock_;

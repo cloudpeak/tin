@@ -50,7 +50,7 @@ int INetNToP4(const unsigned char* src, char* dst, size_t size) {
 
 static int INetNToP6(const unsigned char* src, char* dst, size_t size) {
   /*
-   * Note that int32 and int16 need only be "at least" large enough
+   * Note that int32_t and int16 need only be "at least" large enough
    * to contain a value of the specified size.  On some systems, like
    * Crays, there is no such thing as an integer variable with 16 bits.
    * Keep this in mind if you think this function should have been coded

@@ -8,6 +8,7 @@
 
 #include "base/basictypes.h"
 #include "base/logging.h"
+#include <absl/strings/string_view.h>
 #include "base/strings/string_piece.h"
 #include "base/strings/string_split.h"
 #include "base/strings/stringprintf.h"
@@ -116,11 +117,11 @@ bool IsReservedIPv6(const std::vector<uint8>& ip_address) {
   return true;
 }
 
-bool ParseIPLiteralToBytes(const base::StringPiece& ip_literal,
+bool ParseIPLiteralToBytes(const absl::string_view& ip_literal,
                            std::vector<uint8>* bytes) {
   // |ip_literal| could be either an IPv4 or an IPv6 literal. If it contains
   // a colon however, it must be an IPv6 address.
-  bool ipv4 = ip_literal.find(':') == base::StringPiece::npos;
+  bool ipv4 = ip_literal.find(':') == absl::string_view::npos;
   bytes->resize(ipv4 ? 4 : 16);  // 128 bits.
   return tin::net::INetPToN(ipv4, ip_literal.data(), vector_as_array(bytes));
 }
@@ -207,7 +208,7 @@ bool IPAddress::IsIPv4MappedIPv6() const {
   return IsIPv6() && IPAddressStartsWith(*this, kIPv4MappedPrefix);
 }
 
-bool IPAddress::AssignFromIPLiteral(const base::StringPiece& ip_literal) {
+bool IPAddress::AssignFromIPLiteral(const absl::string_view& ip_literal) {
   std::vector<uint8> number;
 
   if (!ParseIPLiteralToBytes(ip_literal, &number))
@@ -333,13 +334,13 @@ bool IPAddressMatchesPrefix(const IPAddress& ip_address,
                               prefix_length_in_bits);
 }
 
-bool ParseURLHostnameToAddress(const base::StringPiece& hostname,
+bool ParseURLHostnameToAddress(const absl::string_view& hostname,
                                IPAddress* ip_address) {
   if (hostname.size() >= 2 && hostname.front() == '[' &&
       hostname.back() == ']') {
     // Strip the square brackets that surround IPv6 literals.
-    base::StringPiece ip_literal =
-      base::StringPiece(hostname).substr(1, hostname.size() - 2);
+    absl::string_view ip_literal =
+            absl::string_view(hostname).substr(1, hostname.size() - 2);
     return ip_address->AssignFromIPLiteral(ip_literal) && ip_address->IsIPv6();
   }
 

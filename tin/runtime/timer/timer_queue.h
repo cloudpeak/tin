@@ -5,8 +5,6 @@
 #pragma once
 #include <vector>
 
-#include "base/synchronization/waitable_event.h"
-
 #include "tin/time/time.h"
 #include "tin/sync/wait_group.h"
 #include "tin/runtime/util.h"
@@ -15,11 +13,11 @@
 namespace tin {
 namespace runtime {
 
-void InternalNanoSleep(int64 ns);
+void InternalNanoSleep(int64_t ns);
 
 typedef void (*TimerCallback)(void* arg, uintptr_t seq);
 
-int64 NanoFromNow(int64 deadline);
+int64_t NanoFromNow(int64_t deadline);
 
 struct Timer {
   Timer() {
@@ -31,8 +29,8 @@ struct Timer {
   }
 
   int i;
-  int64 when;
-  int64 period;
+  int64_t when;
+  int64_t period;
   uintptr_t seq;
   TimerCallback f;
   void* arg;
@@ -42,6 +40,9 @@ class TimerQueue {
  public:
   TimerQueue();
   ~TimerQueue();
+
+  TimerQueue(const TimerQueue&) = delete;
+  TimerQueue& operator=(const TimerQueue&) = delete;
 
   void AddTimerLocked(Timer* t);
   void AddTimer(Timer* t);
@@ -69,7 +70,9 @@ class TimerQueue {
   std::vector<Timer*> timers_;
   bool exit_flag_;
   tin::WaitGroup wait_group_;
-  DISALLOW_COPY_AND_ASSIGN(TimerQueue);
+
+
+
 };
 
 

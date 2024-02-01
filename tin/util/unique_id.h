@@ -3,10 +3,10 @@
 // found in the LICENSE file.
 
 #pragma once
-#include "base/basictypes.h"
+#include <cstdint>
 
 namespace tin {
 
-uint64 GetUniqueId();
+uint64_t GetUniqueId();
 
 }  // namespace tin.

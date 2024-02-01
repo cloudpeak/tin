@@ -4,7 +4,7 @@
 
 #pragma once
 #include <stdlib.h>
-#include "base/basictypes.h"
+#include <stdint.h>
 
 namespace tin {
 
@@ -17,8 +17,8 @@ class Mutex {
   void Unlock();
 
  private:
-  int32 state_;
-  uint32 sema_;
+  int32_t state_;
+  uint32_t sema_;
   DISALLOW_COPY_AND_ASSIGN(Mutex);
 };
 

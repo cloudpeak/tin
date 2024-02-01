@@ -3,8 +3,7 @@
 // found in the LICENSE file.
 
 #include "base/bind.h"
-#include "base/time/time.h"
-
+#include "absl/functional/bind_front.h"
 #include "tin/runtime/util.h"
 #include "tin/runtime/runtime.h"
 #include "tin/runtime/scheduler.h"
@@ -21,7 +20,7 @@ void WakeupSleeperFn(void* arg, uintptr_t seq) {
   Ready(gp);
 }
 
-void InternalNanoSleep(int64 ns) {
+void InternalNanoSleep(int64_t ns) {
   G* gp = GetG();
   Timer* t = gp->GetTimer();
   t->when = MonoNow() + ns;
@@ -33,10 +32,10 @@ void InternalNanoSleep(int64 ns) {
   Park(TimerQueue::UnlockQueue, timer_q, 0);
 }
 
-int64 NanoFromNow(int64 deadline) {
-  int64 now = MonoNow();
-  int64 when = now + deadline;
-  // if infinite or int64 overflow
+int64_t NanoFromNow(int64_t deadline) {
+  int64_t now = MonoNow();
+  int64_t when = now + deadline;
+  // if infinite or int64_t overflow
   if (deadline == -1 || (now > kint64max - deadline)) {
     when = kint64max;
   }
@@ -79,7 +78,8 @@ void TimerQueue::AddTimerLocked(Timer* t) {
     }
     if (!created_) {
       created_ = true;
-      SpawnSimple(base::Bind(&TimerQueue::Proc, base::Unretained(this)),
+
+      SpawnSimple(absl::bind_front(&TimerQueue::Proc, this),
                   "timer_queue");
       wait_group_.Add(1);
     }
@@ -116,7 +116,7 @@ bool TimerQueue::UnlockQueue(void* arg1, void* arg2) {
 }
 
 void TimerQueue::SiftUp(int i) {
-  int64 when = timers_[i]->when;
+  int64_t when = timers_[i]->when;
   Timer* tmp = timers_[i];
   while (i > 0) {
     int p = (i - 1) / 4;  // parent.
@@ -133,7 +133,7 @@ void TimerQueue::SiftUp(int i) {
 
 void TimerQueue::SiftDown(int i) {
   int n = Length();
-  int64 when = timers_[i]->when;
+  int64_t when = timers_[i]->when;
   Timer* tmp = timers_[i];
   while (true) {
     int c = i * 4 + 1;  // left child
@@ -141,13 +141,13 @@ void TimerQueue::SiftDown(int i) {
     if (c >= n) {
       break;
     }
-    int64 w = timers_[c]->when;
+    int64_t w = timers_[c]->when;
     if (c + 1 < n && timers_[c + 1]->when < w) {
       w = timers_[c + 1]->when;
       c++;
     }
     if (c3 < n) {
-      int64 w3 = timers_[c3]->when;
+      int64_t w3 = timers_[c3]->when;
       if (c3 + 1 < n && timers_[c3 + 1]->when < w3) {
         w3 = timers_[c3 + 1]->when;
         c3++;
@@ -173,8 +173,8 @@ void TimerQueue::Proc() {
   while (true) {
     mutex_.Lock();
     sleeping_ = false;
-    int64 now = MonoNow();
-    int64 delta = -1;
+    int64_t now = MonoNow();
+    int64_t delta = -1;
     bool oneshot;
     (void)oneshot;
     while (!exit_flag_) {

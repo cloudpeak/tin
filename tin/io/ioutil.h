@@ -22,7 +22,7 @@ file_t OpenFile(const path_t& name,
 
 bool CloseFile(file_t file);
 
-bool TruncateFile(file_t file, int64 length);
+bool TruncateFile(file_t file, int64_t length);
 
 int ReadFile(file_t file, char* data, int size);
 

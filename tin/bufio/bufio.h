@@ -5,8 +5,7 @@
 #pragma once
 
 #include <cstdlib>
-
-#include "base/basictypes.h"
+#include <cstdint>
 #include "base/strings/string_piece.h"
 #include "tin/io/io.h"
 
@@ -35,12 +34,12 @@ class Reader : public tin::io::Reader {
   virtual int Read(void* buf, int nbytes);
 
   // return error code.
-  int ReadSlice(uint8 delim, base::StringPiece* line);
+  int ReadSlice(uint8_t delim, base::StringPiece* line);
 
   // return error code.
   int ReadLine(base::StringPiece* line, bool* is_prefix);
 
-  int ReadByte(uint8* c);
+  int ReadByte(uint8_t* c);
   int UnreadByte();
   int Peek(int n, base::StringPiece* piece);
 
@@ -53,8 +52,8 @@ class Reader : public tin::io::Reader {
     return ((write_idx_ == storage_size_) && (read_idx_ != write_idx_));
   }
 
-  typedef uint8* iterator;
-  typedef const uint8* const_iterator;
+  typedef uint8_t* iterator;
+  typedef const uint8_t* const_iterator;
 
   iterator begin() { return storage_ + read_idx_; }
   const_iterator begin() const { return storage_ + read_idx_; }
@@ -67,7 +66,7 @@ class Reader : public tin::io::Reader {
   void Fill();
 
  private:
-  uint8* storage_;
+  uint8_t* storage_;
   int storage_size_;
   int read_idx_;
   int write_idx_;

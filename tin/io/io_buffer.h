@@ -6,14 +6,12 @@
 #define PKG_IO_IO_BUFFER_H_
 
 #include <string>
-#include "base/basictypes.h"
-#include "base/move.h"
+
 
 namespace tin {
 
 class IOBuffer {
  public:
-  MOVE_ONLY_TYPE_FOR_CPP_03(IOBuffer, RValue)
 
  public:
   IOBuffer();
@@ -74,29 +72,29 @@ class IOBuffer {
   int storage_size_;
 
  public:
-  IOBuffer(RValue rvalue) {  // NOLINT
-    storage_ = rvalue.object->storage_;
-    write_idx_ = rvalue.object->write_idx_;
-    read_idx_ = rvalue.object->read_idx_;
-    storage_size_ = rvalue.object->storage_size_;
+  IOBuffer(IOBuffer&& rvalue) {  // NOLINT
+    storage_ = rvalue.storage_;
+    write_idx_ = rvalue.write_idx_;
+    read_idx_ = rvalue.read_idx_;
+    storage_size_ = rvalue.storage_size_;
 
-    rvalue.object->storage_ = NULL;
-    rvalue.object->write_idx_ = 0;
-    rvalue.object->read_idx_ = 0;
-    rvalue.object->storage_size_ = 0;
+    rvalue.storage_ = NULL;
+    rvalue.write_idx_ = 0;
+    rvalue.read_idx_ = 0;
+    rvalue.storage_size_ = 0;
   }
 
-  void operator=(RValue rvalue) {
+  void operator=(IOBuffer&& rvalue) {
     delete storage_;
-    storage_ = rvalue.object->storage_;
-    write_idx_ = rvalue.object->write_idx_;
-    read_idx_ = rvalue.object->read_idx_;
-    storage_size_ = rvalue.object->storage_size_;
+    storage_ = rvalue.storage_;
+    write_idx_ = rvalue.write_idx_;
+    read_idx_ = rvalue.read_idx_;
+    storage_size_ = rvalue.storage_size_;
 
-    rvalue.object->storage_ = NULL;
-    rvalue.object->write_idx_ = 0;
-    rvalue.object->read_idx_ = 0;
-    rvalue.object->storage_size_ = 0;
+    rvalue.storage_ = NULL;
+    rvalue.write_idx_ = 0;
+    rvalue.read_idx_ = 0;
+    rvalue.storage_size_ = 0;
   }
 };
 

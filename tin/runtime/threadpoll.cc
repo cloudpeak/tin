@@ -2,8 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "base/bind.h"
-#include "base/callback.h"
+#include <absl/functional/bind_front.h>
+
 #include "tin/error/error.h"
 #include "tin/runtime/m.h"
 #include "tin/runtime/util.h"
@@ -51,12 +51,13 @@ void SubmitGetAddrInfoGletWork(GletWork* work) {
 // ThreadPoll implementation.
 ThreadPoll::ThreadPoll()
   : num_threads_(64)
-  , dry_(true, false) {
+  , dry_(false) {
 }
 
 void ThreadPoll::Start() {
   for (int i = 0; i < num_threads_; ++i) {
-    M* m = M::New(base::Bind(&ThreadPoll::Run, base::Unretained(this)), NULL);
+//    M* m = M::New(base::Bind(&ThreadPoll::Run, base::Unretained(this)), NULL);
+    M* m = M::New(absl::bind_front(&ThreadPoll::Run, this), NULL);
     threads_.push_back(m);
   }
 }
@@ -75,11 +76,11 @@ void ThreadPoll::JoinAll() {
 }
 
 void ThreadPoll::AddWork(Work* work) {
-  base::AutoLock locked(lock_);
+  absl::MutexLock guard(&lock_);
   tasks_.push_back(work);
   // If we were empty, signal that we have work now.
-  if (!dry_.IsSignaled())
-    dry_.Signal();
+  if (!dry_.HasBeenNotified())
+    dry_.Notify();
 }
 
 // consider replace with conditional variable.
@@ -87,10 +88,10 @@ void ThreadPoll::Run() {
   Work* work = NULL;
 
   while (true) {
-    dry_.Wait();
+    dry_.WaitForNotification();
     {
-      base::AutoLock locked(lock_);
-      if (!dry_.IsSignaled())
+      absl::MutexLock guard(&lock_);
+      if (!dry_.HasBeenNotified())
         continue;
 
       DCHECK(!tasks_.empty());
@@ -99,7 +100,7 @@ void ThreadPoll::Run() {
 
       // Signal to any other threads that we're currently out of work.
       if (tasks_.empty())
-        dry_.Reset();
+        dry_.Notify(); // TODO
     }
 
     // A NULL delegate pointer signals us to quit.

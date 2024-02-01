@@ -5,7 +5,6 @@
 #pragma once
 
 #include "build/build_config.h"
-#include "base/compiler_specific.h"
 #include "tin/runtime/util.h"
 
 namespace tin {

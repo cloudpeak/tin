@@ -4,7 +4,8 @@
 
 #pragma once
 #include "tin/time/time.h"
-#include "base/strings/string_piece.h"
+//#include "base/strings/string_piece.h"
+#include "absl/strings/string_view.h"
 
 namespace tin {
 namespace io {
@@ -30,7 +31,7 @@ int ReadFull(Reader* reader, void* buf, int nbytes);
 
 int Write(Writer* writer, const void* buf, int nbytes);
 
-int WriteString(Writer* writer, const base::StringPiece& str);
+int WriteString(Writer* writer, const absl::string_view& str);
 
 }  // namespace io
 }  // namespace tin

@@ -6,9 +6,6 @@
 
 #include <cstdlib>
 
-#include "base/basictypes.h"
-#include "base/threading/thread_local.h"
-
 #include "tin/runtime/env.h"
 
 namespace tin {

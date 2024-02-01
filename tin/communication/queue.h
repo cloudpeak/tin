@@ -6,7 +6,7 @@
 #include <iostream>
 #include <deque>
 #include "base/memory/ref_counted.h"
-#include "base/synchronization/cancellation_flag.h"
+// #include "base/synchronization/cancellation_flag.h"
 #include "tin/sync/atomic.h"
 #include "tin/runtime/raw_mutex.h"
 #include "tin/runtime/semaphore.h"
@@ -15,14 +15,14 @@
 
 namespace tin {
 
-const uint32 kDefaultQueueCapacity = 64;
-const uint32 kMaxQueueCapacity = kuint32max;
+const uint32_t kDefaultQueueCapacity = 64;
+const uint32_t kMaxQueueCapacity = kuint32max;
 
 template<class T>
 class QueueImpl
   : public base::RefCountedThreadSafe<QueueImpl<T> > {
  public:
-  explicit QueueImpl(uint32 capacity = kDefaultQueueCapacity)
+  explicit QueueImpl(uint32_t capacity = kDefaultQueueCapacity)
     : capacity_(capacity)
     , full_waiters_(0)
     , empty_waiters_(0)
@@ -143,7 +143,7 @@ class QueueImpl
   Cond full_cond_;   // producer waiting due to queue is full.
   Cond empty_cond_;  // consumer waiting due to queue is empty.
   std::deque<T> queue_;
-  uint32 capacity_;
+  uint32_t capacity_;
   int full_waiters_;
   int empty_waiters_;
   bool closed_;
@@ -160,7 +160,7 @@ class Queue
 };
 
 template <typename T>
-Queue<T> MakeQueue(uint32 max_size =
+Queue<T> MakeQueue(uint32_t max_size =
                      kDefaultQueueCapacity) {
   return Queue<T>(new QueueImpl<T>(max_size));
 }

@@ -3,8 +3,9 @@
 // found in the LICENSE file.
 
 #include <algorithm>
+#include <absl/log/check.h>
+#include <absl/log/log.h>
 
-#include "base/logging.h"
 #include "tin/error/error.h"
 #include "tin/runtime/runtime.h"
 #include "tin/bufio/bufio.h"
@@ -18,7 +19,7 @@ namespace tin {
 namespace bufio {
 
 Reader::Reader(tin::io::Reader* rd, size_t size)
-  : storage_(new uint8[size])
+  : storage_(new uint8_t[size])
   , storage_size_(static_cast<int>(size))
   , read_idx_(0)
   , write_idx_(0)
@@ -32,7 +33,7 @@ Reader::~Reader() {
 }
 
 int Reader::Read(void* buf, int buf_size) {
-  uint8* p = static_cast<uint8*>(buf);
+  uint8_t* p = static_cast<uint8_t*>(buf);
   int n = buf_size;
   if (n == 0) {
     tin::SetErrorCode(ReadErr());
@@ -119,7 +120,7 @@ int Reader::ReadErr() {
   return err;
 }
 
-int Reader::ReadSlice(uint8 delim, base::StringPiece* line) {
+int Reader::ReadSlice(uint8_t delim, base::StringPiece* line) {
   int err = 0;
   while (true) {
     const_iterator it =  std::find(begin(), end(), delim);
@@ -237,12 +238,12 @@ int Reader::UnreadByte() {
     // b.r == 0 && b.w == 0
     write_idx_ = 1;
   }
-  *begin() = static_cast<uint8>(last_byte_);
+  *begin() = static_cast<uint8_t>(last_byte_);
   last_byte_ = -1;
   return 0;
 }
 
-int Reader::ReadByte(uint8* c) {
+int Reader::ReadByte(uint8_t* c) {
   while (empty()) {
     if (err_ != 0) {
       *c = 0;

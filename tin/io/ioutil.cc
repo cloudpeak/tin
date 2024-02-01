@@ -110,7 +110,7 @@ class TruncateFileWork : public GletWork {
   int64& length_;
 };
 
-bool TruncateFile(file_t file, int64 length) {
+bool TruncateFile(file_t file, int64_t length) {
   scoped_ptr<TruncateFileWork> work(new TruncateFileWork(file, length));
   SubmitGletWork(work.get());
   return work->Succeed();
@@ -129,7 +129,7 @@ class ReadFileWork : public GletWork {
   virtual ~ReadFileWork() { }
 
   virtual void Run() {
-    int64 offset =
+    int64_t offset =
       base::SeekPlatformFile(file_, base::PLATFORM_FILE_FROM_CURRENT, 0);
     if (offset >= 0)
       bytes_read_ = base::ReadPlatformFile(file_, offset, data_, size_);
@@ -166,7 +166,7 @@ class WriteFileWork : public GletWork {
   virtual ~WriteFileWork() { }
 
   virtual void Run() {
-    int64 offset =
+    int64_t offset =
       base::SeekPlatformFile(file_, base::PLATFORM_FILE_FROM_CURRENT, 0);
     if (offset >= 0)
       bytes_written_ = base::WritePlatformFile(file_, offset, data_, size_);

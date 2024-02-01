@@ -29,7 +29,7 @@ class AtomicFlag {
   }
 
  private:
-  uint32 flag_;
+  uint32_t flag_;
   DISALLOW_COPY_AND_ASSIGN(AtomicFlag);
 };
 

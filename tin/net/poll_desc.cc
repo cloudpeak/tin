@@ -2,8 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "base/logging.h"
-#include "base/synchronization/once.h"
+#include <absl/log/log.h>
+#include <absl/base/call_once.h>
 #include "tin/error/error.h"
 #include "tin/net/net.h"
 #include "tin/runtime/runtime.h"
@@ -29,10 +29,11 @@ int ConvertErr(int res) {
 }
 }  // namespace
 
-base::OnceType server_init = ONCE_INIT;
+
+absl::once_flag server_init;
 
 int PollDesc::Init(uintptr_t sysfd) {
-  base::CallOnce(&server_init, tin::runtime::pollops::ServerInit);
+  absl::call_once(server_init, tin::runtime::pollops::ServerInit);
   int error_no = 0;
   runtime::PollDescriptor* ctx = runtime::pollops::Open(sysfd, &error_no);
   if (error_no == 0) {

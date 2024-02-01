@@ -13,13 +13,13 @@ namespace tin {
 # define CLOCK_MONOTONIC_COARSE 6
 #endif
 
-int64 Now() {
-  int64 t = base::Time::Now().ToTimeT();
+int64_t Now() {
+  int64_t t = base::Time::Now().ToTimeT();
   // to nano seconds.
   return t * 1000000000LL;
 }
 #if !defined(OS_MACOSX)
-int64 MonoNow() {
+int64_t MonoNow() {
   static clock_t fast_clock_id = -1;
   struct timespec t;
   // ignore data race currently, it's harmless.
@@ -38,15 +38,15 @@ int64 MonoNow() {
   return t.tv_sec * 1000000000LL + t.tv_nsec;
 }
 #else
-int64 MonoNow() {
-  int64 t = base::TimeTicks::Now().ToInternalValue() * 1000;
+int64_t MonoNow() {
+  int64_t t = base::TimeTicks::Now().ToInternalValue() * 1000;
   // to nano seconds.
   return t;
 }
 #endif
 
-int32 NowSeconds() {
-  int64 millisecond = Now() / 1000000000LL;
+int32_t NowSeconds() {
+  int64_t millisecond = Now() / 1000000000LL;
   return static_cast<uint32>(millisecond);
 }
 

@@ -3,6 +3,8 @@
 // found in the LICENSE file.
 
 #pragma once
+#include <cstddef>
+
 #include "tin/runtime/util.h"
 #include "tin/runtime/guintptr.h"
 #include "tin/runtime/unlock.h"
@@ -22,11 +24,11 @@ class Scheduler {
 
   void GlobalRunqPut(G* gp);
   void GlobalRunqPutHead(G* gp);
-  void GlobalRunqBatch(G* ghead, G* gtail, int32 n);
-  G*   GlobalRunqGet(P* p, int32 maximium);
+  void GlobalRunqBatch(G* ghead, G* gtail, int32_t n);
+  G*   GlobalRunqGet(P* p, int32_t maximium);
   void InjectGList(G* glist);
 
-  int32 GlobalRunqSize() {
+  int32_t GlobalRunqSize() {
     return runq_size_;
   }
 
@@ -50,12 +52,12 @@ class Scheduler {
   bool ExitSyscallFast();
   bool ExitSyscallPIdle();
   void ResetSpinning();
-  uint32 NrIdleP() {return nr_idlep_; }
-  uint32 NrSpinning() {
+  uint32_t NrIdleP() {return nr_idlep_; }
+  uint32_t NrSpinning() {
     return nr_spinning_;
   }
 
-  uint32 LastPollTime();
+  uint32_t LastPollTime();
   uint32* MutableLastPollTime() {
     return &last_poll_;
   }
@@ -70,19 +72,19 @@ class Scheduler {
   RawMutex lock_;
   GUintptr runq_head_;
   GUintptr runq_tail_;
-  int32 runq_size_;
+  int32_t runq_size_;
 
   P* idlep_;
-  uint32 nr_idlep_;
-  uint32 nr_spinning_;
+  uint32_t nr_idlep_;
+  uint32_t nr_spinning_;
 
   M* idlem_;      // idle m's waiting for work
-  int32 nr_idlem_;         // number of idle m's waiting for work
-  int32 nr_idlem_locked_;   // number of locked m's waiting for work
-  int32 mcount_;        // number of m's that have been created
-  int32 max_mcount_;      // maximum number of m's allowed (or die)
+  int32_t nr_idlem_;         // number of idle m's waiting for work
+  int32_t nr_idlem_locked_;   // number of locked m's waiting for work
+  int32_t mcount_;        // number of m's that have been created
+  int32_t max_mcount_;      // maximum number of m's allowed (or die)
 
-  uint32 last_poll_;
+  uint32_t last_poll_;
 
   P** allp_;
 

@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "base/logging.h"
+#include "absl/log/log.h"
 #include "tin/net/address_family.h"
 #include "tin/net/ip_address.h"
 #include "tin/net/sys_addrinfo.h"
@@ -29,7 +29,7 @@ int ConvertAddressFamily(AddressFamily address_family) {
   case ADDRESS_FAMILY_IPV6:
     return AF_INET6;
   }
-  NOTREACHED();
+  ABSL_ASSERT(false);
   return AF_UNSPEC;
 }
 

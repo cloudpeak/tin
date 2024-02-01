@@ -24,8 +24,8 @@ class FdMutex {
 
  private:
   quark::atomic_uint64_t state_;
-  uint32 rsema_;
-  uint32 wsema_;
+  uint32_t rsema_;
+  uint32_t wsema_;
 };
 
 }  // namespace net

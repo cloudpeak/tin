@@ -4,8 +4,8 @@
 
 #pragma once
 
-#include "base/basictypes.h"
-#include "base/strings/string_piece.h"
+
+#include <absl/strings/string_view.h>
 #include "tin/net/ip_address.h"
 #include "tin/net/tcp_conn.h"
 #include "tin/net/listener.h"
@@ -13,16 +13,16 @@
 namespace tin {
 namespace net {
 
-TcpConn DialTcp(const IPAddress& address, uint16 port);
+TcpConn DialTcp(const IPAddress& address, uint16_t port);
 
-TcpConn DialTcp(const base::StringPiece& addr, uint16 port);
+TcpConn DialTcp(const absl::string_view& addr, uint16_t port);
 
-TcpConn DialTcpTimeout(const IPAddress& address, uint16 port, int64 deadline);
+TcpConn DialTcpTimeout(const IPAddress& address, uint16_t port, int64_t deadline);
 
-TcpConn DialTcpTimeout(const base::StringPiece& addr, uint16 port,
-                       int64 deadline);
+TcpConn DialTcpTimeout(const absl::string_view& addr, uint16_t port,
+                       int64_t deadline);
 
-TCPListener ListenTcp(const base::StringPiece& addr, uint16 port,
+TCPListener ListenTcp(const absl::string_view& addr, uint16_t port,
                       int backlog = 511);
 
 }  // namespace net

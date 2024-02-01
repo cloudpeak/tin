@@ -8,20 +8,20 @@
 #include <deque>
 
 #include "base/memory/ref_counted.h"
-#include "base/synchronization/cancellation_flag.h"
+// #include "base/synchronization/cancellation_flag.h"
 #include "tin/sync/atomic.h"
 #include "tin/runtime/raw_mutex.h"
 #include "tin/runtime/semaphore.h"
 
 
 namespace tin {
-const uint32 kDefaultChanSize = 64;
+const uint32_t kDefaultChanSize = 64;
 
 template<class T>
 class Channel
   : public base::RefCountedThreadSafe<Channel<T> > {
  public:
-  explicit Channel(uint32 max_size = kDefaultChanSize)
+  explicit Channel(uint32_t max_size = kDefaultChanSize)
     : max_size_(max_size)
     , free_space_sem_(max_size)
     , used_space_sem_(0)
@@ -109,12 +109,12 @@ class Channel
   DISALLOW_COPY_AND_ASSIGN(Channel<T>);
 
  private:
-  uint32 free_space_sem_;
-  uint32 used_space_sem_;
+  uint32_t free_space_sem_;
+  uint32_t used_space_sem_;
   runtime::RawMutex lock_;
   std::deque<T> queue_;
-  uint32 max_size_;
-  uint32 closed_;
+  uint32_t max_size_;
+  uint32_t closed_;
 };
 
 
@@ -128,7 +128,7 @@ class Chan
 };
 
 template <typename T>
-Chan<T> MakeChan(uint32 max_size = kDefaultChanSize) {
+Chan<T> MakeChan(uint32_t max_size = kDefaultChanSize) {
   return Chan<T>(new Channel<T>(max_size));
 }
 

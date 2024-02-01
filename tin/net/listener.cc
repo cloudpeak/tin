@@ -23,7 +23,7 @@ TCPListenerImpl::~TCPListenerImpl() {
   delete netfd_;
 }
 
-void TCPListenerImpl::SetDeadline(int64 t) {
+void TCPListenerImpl::SetDeadline(int64_t t) {
   int err = netfd_->SetDeadline(t);
   SetErrorCode(TinTranslateSysError(err));
 }

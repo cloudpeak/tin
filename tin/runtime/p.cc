@@ -2,8 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "base/logging.h"
-#include "base/threading/platform_thread.h"
+#include <absl/log/check.h>
+#include <absl/log/log.h>
 
 #include "tin/sync/atomic.h"
 #include "tin/runtime/runtime.h"
@@ -44,8 +44,8 @@ void P::RunqPut(G* gp, bool next) {
   }
 
   while (true) {
-    uint32 h = atomic::acquire_load32(&runq_head_);
-    uint32 t = atomic::acquire_load32(&runq_tail_);
+    uint32_t h = atomic::acquire_load32(&runq_head_);
+    uint32_t t = atomic::acquire_load32(&runq_tail_);
 
     if (t - h < static_cast<uint32>(kRunqCapacity)) {
       runq_[t % static_cast<uint32>(kRunqCapacity)] = gp;
@@ -75,8 +75,8 @@ G* P::RunqGet(bool* inherit_time) {
 
   while (true) {
     // load-acquire, synchronize with other consumers
-    uint32 h = atomic::acquire_load32(&runq_head_);
-    uint32 t = atomic::relaxed_load32(&runq_tail_);
+    uint32_t h = atomic::acquire_load32(&runq_head_);
+    uint32_t t = atomic::relaxed_load32(&runq_tail_);
     if (t == h) {
       if (inherit_time != NULL)
         *inherit_time = false;
@@ -92,9 +92,9 @@ G* P::RunqGet(bool* inherit_time) {
   }
 }
 
-bool P::RunqPutSlow(G* gp, uint32 h, uint32 t) {
+bool P::RunqPutSlow(G* gp, uint32_t h, uint32_t t) {
   G* batch[kRunqCapacity / 2 + 1];
-  uint32 n = t - h;
+  uint32_t n = t - h;
   n = n / 2;
 
   if (n != static_cast<uint32>(kRunqCapacity / 2)) {
@@ -102,7 +102,7 @@ bool P::RunqPutSlow(G* gp, uint32 h, uint32 t) {
     LOG(FATAL) << "RunqPutSlow: queue is not full";
   }
 
-  for (uint32 i = 0; i < n; i++) {
+  for (uint32_t i = 0; i < n; i++) {
     batch[i] = runq_[(h + i) % static_cast<uint32>(kRunqCapacity)].Pointer();
   }
 
@@ -112,7 +112,7 @@ bool P::RunqPutSlow(G* gp, uint32 h, uint32 t) {
   }
   batch[n] = gp;
 
-  for (uint32 i = 0; i < n; i++) {
+  for (uint32_t i = 0; i < n; i++) {
     batch[i]->SetSchedLink(batch[i + 1]);
   }
 
@@ -121,14 +121,14 @@ bool P::RunqPutSlow(G* gp, uint32 h, uint32 t) {
   return true;
 }
 
-uint32 P::RunqGrab(GUintptr* batch, int batch_size, uint32 batch_head,
+uint32_t P::RunqGrab(GUintptr* batch, int batch_size, uint32_t batch_head,
                    bool steal_nextg) {
   while (true) {
     // load-acquire, synchronize with other consumers
-    uint32 h = atomic::acquire_load32(&runq_head_);
+    uint32_t h = atomic::acquire_load32(&runq_head_);
     // load-acquire, synchronize with the producer
-    uint32 t = atomic::acquire_load32(&runq_tail_);
-    uint32 n = t - h;
+    uint32_t t = atomic::acquire_load32(&runq_tail_);
+    uint32_t n = t - h;
     n = n - n / 2;
     if (n == 0) {
       if (steal_nextg) {
@@ -159,7 +159,7 @@ uint32 P::RunqGrab(GUintptr* batch, int batch_size, uint32 batch_head,
       continue;
     }
 
-    for (uint32 i  = 0; i < n; i++) {
+    for (uint32_t i  = 0; i < n; i++) {
       GUintptr g = runq_[(h + i) % static_cast<uint32>(kRunqCapacity)];
       batch[(batch_head + i) % static_cast<uint32>(batch_size)] = g;
     }
@@ -172,8 +172,8 @@ uint32 P::RunqGrab(GUintptr* batch, int batch_size, uint32 batch_head,
 
 // Steal half of elements from local runnable queue of p2
 G* P::RunqSteal(P* p2 , bool steal_nextg ) {
-  uint32 t = runq_tail_;
-  uint32 n = p2->RunqGrab(&runq_[0], kRunqCapacity, t, steal_nextg);
+  uint32_t t = runq_tail_;
+  uint32_t n = p2->RunqGrab(&runq_[0], kRunqCapacity, t, steal_nextg);
   if (n == 0) {
     return NULL;
   }
@@ -183,7 +183,7 @@ G* P::RunqSteal(P* p2 , bool steal_nextg ) {
     return gp;
   }
   // load-acquire, synchronize with consumers
-  uint32 h = atomic::acquire_load32(&runq_head_);
+  uint32_t h = atomic::acquire_load32(&runq_head_);
   if (t - h + n >= static_cast<uint32>(kRunqCapacity)) {
     LOG(FATAL) << "runqsteal: runq overflow";
   }
@@ -195,7 +195,7 @@ G* P::RunqSteal(P* p2 , bool steal_nextg ) {
 void P::MoveRunqToGlobal() {
 }
 
-bool P::CasStatus(uint32 old_status, uint32 new_status) {
+bool P::CasStatus(uint32_t old_status, uint32_t new_status) {
   return atomic::cas32(&status_, old_status, new_status);
 }
 

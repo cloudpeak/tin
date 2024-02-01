@@ -4,7 +4,6 @@
 
 #pragma once
 #include <stdlib.h>
-#include "base/basictypes.h"
 
 namespace tin {
 namespace runtime {
@@ -44,11 +43,11 @@ class Note {
   void Wakeup();
   void Sleep();
   void Clear();
-  bool TimedSleep(int64 ns);
-  bool TimedSleepG(int64 ns);
+  bool TimedSleep(int64_t ns);
+  bool TimedSleepG(int64_t ns);
 
  private:
-  bool SleepInternal(int64 ns);
+  bool SleepInternal(int64_t ns);
  private:
   uintptr_t key;
   DISALLOW_COPY_AND_ASSIGN(Note);

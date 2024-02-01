@@ -4,8 +4,7 @@
 
 #pragma once
 
-#include "base/basictypes.h"
-#include "base/memory/scoped_ptr.h"
+
 #include "base/memory/ref_counted.h"
 #include "tin/time/time.h"
 #include "tin/net/tcp_conn.h"
@@ -21,7 +20,7 @@ class TCPListenerImpl
   TCPListenerImpl(NetFD* netfd, int backlog);
   ~TCPListenerImpl();
 
-  void SetDeadline(int64 t);
+  void SetDeadline(int64_t t);
   TcpConn Accept();
   void Close();
 

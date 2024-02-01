@@ -3,9 +3,8 @@
 // found in the LICENSE file.
 
 #include <utility>
+#include <functional>
 
-#include "base/memory/scoped_ptr.h"
-#include "base/strings/string_util.h"
 #include "context/zcontext.h"
 #include "tin/runtime/m.h"
 #include "tin/runtime/p.h"
@@ -28,10 +27,11 @@ Greenlet::~Greenlet() {
 }
 
 void Greenlet::SetName(const char* name) {
-  if (name != NULL)
+  // TODO
+/*  if (name != NULL)
     base::strlcpy(name_, name, arraysize(name_));
   else
-    base::strlcpy(name_, "greenlet", arraysize(name_));
+    base::strlcpy(name_, "greenlet", arraysize(name_));*/
 }
 
 Timer* Greenlet::GetTimer() {
@@ -41,8 +41,11 @@ Timer* Greenlet::GetTimer() {
   return timer_;
 }
 
+
+
+
 Greenlet* Greenlet::Create(GreenletFunc entry,
-                           base::Closure* closure,
+                           std::function<void()>*  closure,
                            bool sysg0 /*= false*/,
                            intptr_t args /*= 0*/,
                            bool joinable /*= false*/,
@@ -87,8 +90,8 @@ void Greenlet::StaticProc(intptr_t args) {
 }
 
 void Greenlet::Proc() {
-  if (!closure_.is_null()) {
-    closure_.Run();
+  if (closure_) {
+    closure_();
   } else {
     retval_ = entry_(args_);
   }
@@ -110,7 +113,7 @@ void SpawnSimple(GreenletFunc entry, void* args,  const char* name) {
                    name);
 }
 
-void SpawnSimple(base::Closure closure,  const char* name) {
+void SpawnSimple(std::function<void()> closure,  const char* name) {
   Greenlet::Create(NULL,
                    &closure,
                    false,
@@ -120,9 +123,10 @@ void SpawnSimple(base::Closure closure,  const char* name) {
                    name);
 }
 
+
 }  // namespace runtime
 
-void RuntimeSpawn(base::Closure* closure) {
+void RuntimeSpawn(std::function<void()>* closure) {
   runtime::Greenlet::Create(NULL,
                             closure,
                             false,

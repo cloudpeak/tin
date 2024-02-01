@@ -2,7 +2,9 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "base/logging.h"
+#include <absl/log/check.h>
+#include <absl/log/log.h>
+
 #include "tin/sync/atomic.h"
 #include "tin/runtime/raw_mutex.h"
 #include "tin/runtime/semaphore.h"
@@ -22,12 +24,12 @@ WaitGroup::WaitGroup(int delta /*= 0*/)
 WaitGroup::~WaitGroup() {
 }
 
-void WaitGroup::Add(int32 delta) {
-  uint64 delta64 = delta;
+void WaitGroup::Add(int32_t delta) {
+  uint64_t delta64 = delta;
   delta64 <<= 32;
-  uint64 state = state_.fetch_add(delta64) + delta64;
-  int32 v = static_cast<int32>(state >> 32);  // high 32 bits: counter.
-  uint32 w = static_cast<uint32>(state);  // lower 32 bits: waiter.
+  uint64_t state = state_.fetch_add(delta64) + delta64;
+  int32_t v = static_cast<int32>(state >> 32);  // high 32 bits: counter.
+  uint32_t w = static_cast<uint32>(state);  // lower 32 bits: waiter.
   if (v < 0) {
     LOG(FATAL) << "sync: negative WaitGroup counter";
   }
@@ -52,9 +54,9 @@ void WaitGroup::Done() {
 
 void WaitGroup::Wait() {
   while (true) {
-    uint64 state = state_;
-    int32 v = static_cast<int32>(state >> 32);  // high 32 bits: counter.
-    uint32 w = static_cast<uint32>(state);  // lower 32 bits: waiter.
+    uint64_t state = state_;
+    int32_t v = static_cast<int32>(state >> 32);  // high 32 bits: counter.
+    uint32_t w = static_cast<uint32>(state);  // lower 32 bits: waiter.
     (void)w;
     if (v == 0)
       return;

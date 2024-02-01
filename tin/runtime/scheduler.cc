@@ -2,10 +2,11 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "base/logging.h"
-#include "base/memory/aligned_memory.h"
-#include "base/sys_info.h"
-#include "base/threading/platform_thread.h"
+
+//#include "base/memory/aligned_memory.h"
+
+#include <thread>
+#include <cstdlib>
 
 #include "context/zcontext.h"
 #include "tin/sync/atomic.h"
@@ -42,7 +43,8 @@ Scheduler::Scheduler()
     allp_[i] = NULL;
   }
 }
-
+#include <cstdio>
+#include <cstdlib>
 // call it after world is stopped.
 P* Scheduler::ResizeProc(int nprocs) {
   int old = rtm_conf->MaxProcs();
@@ -55,7 +57,7 @@ P* Scheduler::ResizeProc(int nprocs) {
     P* pp = allp_[i];
     if (pp == NULL) {
       // placement new, cache-line alignment.
-      void* ptr = base::AlignedAlloc(sizeof(P), 64);
+      void* ptr = _aligned_malloc(sizeof(P), 64); // TODO
       pp = new(ptr) P(i);
       atomic::store(reinterpret_cast<uintptr_t*>(&allp_[i]),
                     reinterpret_cast<uintptr_t>(pp));
@@ -135,7 +137,7 @@ void Scheduler::GlobalRunqPutHead(G* gp) {
 // Put a batch of runnable goroutines on the global runnable queue.
 // Sched must be locked.
 
-void Scheduler::GlobalRunqBatch(G* ghead, G* gtail, int32 n) {
+void Scheduler::GlobalRunqBatch(G* ghead, G* gtail, int32_t n) {
   gtail->SetSchedLink(NULL);
   if (!runq_tail_.IsNull()) {
     runq_tail_.Pointer()->SetSchedLink(ghead);
@@ -148,12 +150,12 @@ void Scheduler::GlobalRunqBatch(G* ghead, G* gtail, int32 n) {
 
 // Try get a batch of G's from the global runnable queue.
 // Sched must be locked.
-G* Scheduler::GlobalRunqGet(P* p, int32 maximium) {
+G* Scheduler::GlobalRunqGet(P* p, int32_t maximium) {
   if (runq_size_ == 0) {
     return NULL;
   }
 
-  int32 n = runq_size_ / rtm_conf->MaxProcs() + 1;
+  int32_t n = runq_size_ / rtm_conf->MaxProcs() + 1;
   if (n > runq_size_) {
     n = runq_size_;
   }
@@ -331,7 +333,7 @@ stop: {
 
   if (NetPollInited() && atomic::exchange32(&last_poll_, 0) != 0) {
     gp = NetPoll(true);
-    uint32 now = static_cast<uint32>(MonoNow() / tin::kMillisecond);
+    uint32_t now = static_cast<uint32>(MonoNow() / tin::kMillisecond);
     if (now == 0)
       now = 1;
     atomic::relaxed_store32(&last_poll_, now);
@@ -485,7 +487,7 @@ void Scheduler::OnSwitch(G* curg) {
 }
 
 int Scheduler::Init() {
-  ResizeProc(base::SysInfo::NumberOfProcessors());
+  ResizeProc(std::thread::hardware_concurrency());
   return 0;
 }
 
@@ -614,7 +616,7 @@ void Scheduler::ResetSpinning() {
     LOG(FATAL) << "resetspinning: not a spinning m";
   }
   gp->M()->SetSpinning(false);
-  uint32 nr_spinning = atomic::Inc32(&nr_spinning_, -1);
+  uint32_t nr_spinning = atomic::Inc32(&nr_spinning_, -1);
   if (static_cast<int32>(nr_spinning) < 0) {
     LOG(FATAL) << "ResetSpinning: negative nr_spinning";
   }
@@ -623,7 +625,7 @@ void Scheduler::ResetSpinning() {
   }
 }
 
-uint32 Scheduler::LastPollTime() {
+uint32_t Scheduler::LastPollTime() {
   return atomic::acquire_load32(&last_poll_);
 }
 

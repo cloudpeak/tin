@@ -2,7 +2,9 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "base/logging.h"
+#include <absl/log/check.h>
+#include <absl/log/log.h>
+
 #include "tin/sync/atomic.h"
 #include "tin/runtime/raw_mutex.h"
 #include "tin/runtime/spin.h"
@@ -13,9 +15,9 @@
 namespace tin {
 
 namespace {
-const int32 kMutexLocked = 1;  // mutex is locked
-const int32 kMutexWoken = 2;
-const int32 kMutexWaiterShift = 2;
+const int32_t kMutexLocked = 1;  // mutex is locked
+const int32_t kMutexWoken = 2;
+const int32_t kMutexWaiterShift = 2;
 }
 
 Mutex::Mutex()
@@ -31,10 +33,10 @@ void Mutex::Lock() {
     return;
   }
   bool awoke = false;
-  int32 iter = 0;
+  int32_t iter = 0;
   while (true) {
-    int32 old_state = state_;
-    int32 new_state = old_state | kMutexLocked;
+    int32_t old_state = state_;
+    int32_t new_state = old_state | kMutexLocked;
     if ((old_state & kMutexLocked) != 0) {
       if (tin::runtime::CanSpin(iter)) {
         // Active spinning makes sense.
@@ -73,12 +75,12 @@ void Mutex::Lock() {
 
 void Mutex::Unlock() {
   // Fast path: drop lock bit
-  int32 new_state = atomic::Inc32(&state_, -kMutexLocked);
+  int32_t new_state = atomic::Inc32(&state_, -kMutexLocked);
   if (((new_state + kMutexLocked)&kMutexLocked) == 0) {
     LOG(FATAL) << "sync: unlock of unlocked mutex";
   }
 
-  int32 old_state = new_state;
+  int32_t old_state = new_state;
   while (true) {
     // If there are no waiters or a goroutine has already
     // been woken or grabbed the lock, no need to wake anyone.

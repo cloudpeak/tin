@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include "base/logging.h"
 #include "base/memory/ref_counted.h"
 #include "tin/runtime/raw_mutex.h"
 #include "tin/runtime/timer/timer_queue.h"
@@ -26,13 +25,13 @@ struct PollDescriptor : public base::RefCountedThreadSafe<PollDescriptor> {
 
   uintptr_t rg;
   Timer rt;
-  int64 rd;
+  int64_t rd;
 
   uintptr_t wg;
   Timer wt;
-  int64 wd;
+  int64_t wd;
 
-  uint32 user;
+  uint32_t user;
 
  private:
   DISALLOW_COPY_AND_ASSIGN(PollDescriptor);

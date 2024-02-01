@@ -4,7 +4,6 @@
 
 #include <memory>
 
-#include "base/basictypes.h"
 #include "tin/config/config.h"
 #include "tin/runtime/util.h"
 #include "tin/runtime/stack/fixedsize_stack.h"

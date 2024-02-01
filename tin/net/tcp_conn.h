@@ -4,8 +4,7 @@
 
 #pragma once
 
-#include "base/basictypes.h"
-#include "base/memory/scoped_ptr.h"
+
 #include "base/memory/ref_counted.h"
 #include "tin/time/time.h"
 #include "tin/io/io.h"
@@ -35,11 +34,11 @@ class TcpConnImpl
   // detail error, see tin::GetErrorCode()
   int Write(const void* buf, int nbytes);
 
-  void SetDeadline(int64 t);
+  void SetDeadline(int64_t t);
 
-  void SetReadDeadline(int64 t);
+  void SetReadDeadline(int64_t t);
 
-  void SetWriteDeadline(int64 t);
+  void SetWriteDeadline(int64_t t);
 
   bool SetKeepAlive(bool enable, int sec);
 
@@ -61,13 +60,13 @@ class TcpConnImpl
 
   void Close();
 
-  int64 TotalReadBytes() const {
+  int64_t TotalReadBytes() const {
     return total_read_bytes_;
   }
 
  private:
   NetFD* netfd_;
-  int64 total_read_bytes_;
+  int64_t total_read_bytes_;
   DISALLOW_COPY_AND_ASSIGN(TcpConnImpl);
 };
 

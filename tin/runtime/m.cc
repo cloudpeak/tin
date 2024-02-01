@@ -4,7 +4,8 @@
 
 #include <utility>
 
-#include "base/logging.h"
+#include <absl/functional/bind_front.h>
+
 #include "context/zcontext.h"
 #include "tin/sync/atomic.h"
 #include "tin/config/config.h"
@@ -56,8 +57,8 @@ void* M::G0StaticProc(intptr_t args) {
 }
 
 void* M::G0Proc() {
-  if (!mstart_fn_.is_null())
-    mstart_fn_.Run();
+  if (mstart_fn_)
+    mstart_fn_();
   if (nextp_ != NULL && !IsM0()) {
     AcquireP(nextp_);
     nextp_ = NULL;
@@ -108,7 +109,7 @@ void mspinning() {
   GetM()->SetSpinning(true);
 }
 
-M* M::New(base::Closure fn, tin::runtime::P* p) {
+M* M::New(std::function<void()> fn, tin::runtime::P* p) {
   M* m = Allocate(p);
   m->nextp_ = p;
   std::swap(m->mstart_fn_, fn);
@@ -135,9 +136,10 @@ void M::Start(tin::runtime::P* p, bool spinning) {
     return;
 
   if (m == NULL) {
-    base::Closure closure;
+    std::function<void()> closure;
     if (spinning) {
-      closure = base::Bind(&mspinning);
+      // closure = base::Bind(&mspinning);
+      closure = absl::bind_front(&mspinning);
     }
     M::New(closure, p);
     return;

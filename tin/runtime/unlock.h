@@ -5,7 +5,6 @@
 #pragma once
 #include <cstdlib>
 
-#include "base/basictypes.h"
 #include "tin/runtime/util.h"
 
 namespace tin {
@@ -22,6 +21,10 @@ class UnLockInfo {
     , arg2_(NULL)
     , owner_(NULL) {
   }
+
+  UnLockInfo(const UnLockInfo&) = delete;
+  UnLockInfo& operator=(const UnLockInfo&) = delete;
+
   UnlockFunc F() const {
     return f_;
   }
@@ -86,7 +89,6 @@ class UnLockInfo {
   void* arg1_;
   void* arg2_;
   G* owner_;
-  DISALLOW_COPY_AND_ASSIGN(UnLockInfo);
 };
 
 }  // namespace runtime

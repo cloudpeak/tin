@@ -2,9 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "base/logging.h"
-#include "base/compiler_specific.h"
-#include "base/basictypes.h"
+#include <absl/log/log.h>
+#include <absl/log/check.h>
 
 #include "tin/sync/atomic.h"
 #include "tin/runtime/runtime.h"
@@ -26,7 +25,7 @@ struct ALIGNAS(64) SemaRoot {
   RawMutex  lock;
   Sudog* head;
   Sudog* tail;
-  uint32 nwait;  // Number of waiters. Read w/o the lock.
+  uint32_t nwait;  // Number of waiters. Read w/o the lock.
 
   void queue(uint32* addr, Sudog* s);
   void dequeue(Sudog* s);
@@ -74,7 +73,7 @@ SemaRoot* semroot(uint32* addr) {
 
 bool CanSemAcquire(uint32* addr) {
   while (true) {
-    uint32 v = atomic::load32(addr);
+    uint32_t v = atomic::load32(addr);
     if (v == 0) {
       return false;
     }
@@ -85,8 +84,8 @@ bool CanSemAcquire(uint32* addr) {
 }
 
 namespace {
-const uint32 kWakedUpByReleaser = 1;
-const uint32 kWakedupByTimer = 2;
+const uint32_t kWakedUpByReleaser = 1;
+const uint32_t kWakedupByTimer = 2;
 }
 
 void OnSemDeadlineReached(void* arg, uintptr_t seq) {
@@ -107,7 +106,7 @@ void OnSemDeadlineReached(void* arg, uintptr_t seq) {
     Ready(gp);
 }
 
-void SemSetDeadline(G* gp, Sudog* s, int64 deadline) {
+void SemSetDeadline(G* gp, Sudog* s, int64_t deadline) {
   Timer* timer = gp->GetTimer();
   timer->f = OnSemDeadlineReached;
   timer->when = NanoFromNow(deadline);
@@ -225,7 +224,7 @@ void SyncSema::Acquire() {
   }
 }
 
-void SyncSema::Release(uint32 n) {
+void SyncSema::Release(uint32_t n) {
   lock_.Lock();
   while (n > 0 && head_ != NULL && head_->nrelease < 0) {
     // Have pending acquire, satisfy it.

@@ -4,7 +4,6 @@
 
 #pragma once
 #include <string>
-#include "base/strings/string_piece.h"
 #include "tin/net/fd_mutex.h"
 #include "tin/net/poll_desc.h"
 #include "tin/net/address_list.h"
@@ -39,13 +38,13 @@ class NetFDCommon {
 
   int Close();
 
-  int SetDeadline(int64 t);
+  int SetDeadline(int64_t t);
 
-  int SetReadDeadline(int64 t);
+  int SetReadDeadline(int64_t t);
 
-  int SetWriteDeadline(int64 t);
+  int SetWriteDeadline(int64_t t);
 
-  int SetDeadlineImpl(int64 t, int mode);
+  int SetDeadlineImpl(int64_t t, int mode);
 
   void Decref();
 

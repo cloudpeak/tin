@@ -6,8 +6,8 @@
 
 #include <utility>
 
-#include "base/bind.h"
-#include "base/logging.h"
+#include <absl/log/log.h>
+#include <absl/log/check.h>
 #include "tin/net/sys_addrinfo.h"
 
 namespace tin {
@@ -24,7 +24,7 @@ AddressList::AddressList(const IPEndPoint& endpoint) {
 
 // static
 AddressList AddressList::CreateFromIPAddress(const IPAddress& address,
-    uint16 port) {
+    uint16_t port) {
   return AddressList(IPEndPoint(address, port));
 }
 
@@ -59,7 +59,7 @@ AddressList AddressList::CreateFromAddrinfo(const struct addrinfo* head) {
 }
 
 // static
-AddressList AddressList::CopyWithPort(const AddressList& list, uint16 port) {
+AddressList AddressList::CopyWithPort(const AddressList& list, uint16_t port) {
   AddressList out;
   out.set_canonical_name(list.canonical_name());
   for (size_t i = 0; i < list.size(); ++i)

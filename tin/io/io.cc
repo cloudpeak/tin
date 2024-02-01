@@ -40,7 +40,7 @@ int Write(Writer* writer, void* buf, int len) {
   return writer->Write(buf, len);
 }
 
-int WriteString(Writer* writer, const base::StringPiece& str) {
+int WriteString(Writer* writer, const absl::string_view& str) {
   return writer->Write(str.data(), static_cast<int>(str.size()));
 }
 

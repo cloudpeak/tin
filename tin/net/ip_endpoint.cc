@@ -12,9 +12,9 @@
 #include <netinet/in.h>
 #endif
 
-#include "base/logging.h"
-#include "base/stl_util.h"
-#include "base/strings/string_number_conversions.h"
+#include <absl/log/log.h>
+#include <absl/log/check.h>
+
 #include "base/sys_byteorder.h"
 #include "tin/net/ip_address.h"
 
@@ -104,7 +104,8 @@ int IPEndPoint::GetSockAddrFamily() const {
   case IPAddress::kIPv6AddressSize:
     return AF_INET6;
   default:
-    NOTREACHED() << "Bad IP address";
+    // NOTREACHED() << "Bad IP address";
+
     return AF_UNSPEC;
   }
 }
@@ -122,7 +123,7 @@ bool IPEndPoint::ToSockAddr(struct sockaddr* address,
     memset(addr, 0, sizeof(struct sockaddr_in));
     addr->sin_family = AF_INET;
     addr->sin_port = base::HostToNet16(port_);
-    memcpy(&addr->sin_addr, vector_as_array(&address_.bytes()),
+    memcpy(&addr->sin_addr, &address_.bytes()[0], // vector_as_array
            IPAddress::kIPv4AddressSize);
     break;
   }
@@ -135,7 +136,7 @@ bool IPEndPoint::ToSockAddr(struct sockaddr* address,
     memset(addr6, 0, sizeof(struct sockaddr_in6));
     addr6->sin6_family = AF_INET6;
     addr6->sin6_port = base::HostToNet16(port_);
-    memcpy(&addr6->sin6_addr, vector_as_array(&address_.bytes()),
+    memcpy(&addr6->sin6_addr, &address_.bytes()[0], // vector_as_array(&address_.bytes()),
            IPAddress::kIPv6AddressSize);
     break;
   }

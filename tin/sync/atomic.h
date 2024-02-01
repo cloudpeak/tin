@@ -3,7 +3,9 @@
 // found in the LICENSE file.
 
 #pragma once
+#include <cstdint>
 #include "base/atomicops.h"
+
 
 namespace tin {
 namespace atomic {
@@ -156,85 +158,85 @@ inline uintptr_t load(volatile const uintptr_t* ptr) {
 
 // 32 bit ops.
 inline bool acquire_cas32(volatile int32* ptr,
-                          int32 old_value,
-                          int32 new_value) {
+                          int32_t old_value,
+                          int32_t new_value) {
   return Acquire_CompareAndSwap(ptr, old_value, new_value) == old_value;
 }
 
 inline bool release_cas32(volatile int32* ptr,
-                          int32 old_value,
-                          int32 new_value) {
+                          int32_t old_value,
+                          int32_t new_value) {
   return Release_CompareAndSwap(ptr, old_value, new_value) == old_value;
 }
 
 inline bool cas32(volatile int32* ptr,
-                  int32 old_value,
-                  int32 new_value) {
+                  int32_t old_value,
+                  int32_t new_value) {
   base::subtle::MemoryBarrier();  // add release semantics.
   return Acquire_CompareAndSwap(ptr, old_value, new_value) == old_value;
 }
 
 // exchange32.
-inline int32 acquire_exchange32(volatile int32* ptr, int32 new_value) {
-  int32 old_value = NoBarrier_AtomicExchange(ptr, new_value);
+inline int32_t acquire_exchange32(volatile int32* ptr, int32_t new_value) {
+  int32_t old_value = NoBarrier_AtomicExchange(ptr, new_value);
   base::subtle::MemoryBarrier();
   return old_value;
 }
 
-inline int32 release_exchange32(volatile int32* ptr, int32 new_value) {
+inline int32_t release_exchange32(volatile int32* ptr, int32_t new_value) {
   base::subtle::MemoryBarrier();
-  int32 old_value = NoBarrier_AtomicExchange(ptr, new_value);
+  int32_t old_value = NoBarrier_AtomicExchange(ptr, new_value);
   return old_value;
 }
 
-inline int32 exchange32(volatile int32* ptr, int32 new_value) {
+inline int32_t exchange32(volatile int32* ptr, int32_t new_value) {
   base::subtle::MemoryBarrier();
-  int32 old_value = NoBarrier_AtomicExchange(ptr, new_value);
+  int32_t old_value = NoBarrier_AtomicExchange(ptr, new_value);
   base::subtle::MemoryBarrier();
   return old_value;
 }
 
 // store32.
-inline void relaxed_store32(volatile int32* ptr, int32 value) {
+inline void relaxed_store32(volatile int32* ptr, int32_t value) {
   return NoBarrier_Store(ptr, value);
 }
 
-inline void acquire_store32(volatile int32* ptr, int32 value) {
+inline void acquire_store32(volatile int32* ptr, int32_t value) {
   return Acquire_Store(ptr, value);
 }
 
-inline void release_store32(volatile int32* ptr, int32 value) {
+inline void release_store32(volatile int32* ptr, int32_t value) {
   return Release_Store(ptr, value);
 }
 
-inline void store32(volatile int32* ptr, int32 value) {
+inline void store32(volatile int32* ptr, int32_t value) {
   base::subtle::MemoryBarrier();  // add release semantics.
   return Acquire_Store(ptr, value);
 }
 
 // load32
-inline int32 relaxed_load32(volatile const int32* ptr) {
+inline int32_t relaxed_load32(volatile const int32* ptr) {
   return NoBarrier_Load(ptr);
 }
 
-inline int32 acquire_load32(volatile const int32* ptr) {
+inline int32_t acquire_load32(volatile const int32* ptr) {
   return Acquire_Load(ptr);
 }
 
-inline int32 release_load32(volatile const int32* ptr) {
+inline int32_t release_load32(volatile const int32* ptr) {
   return Release_Load(ptr);
 }
 
-inline int32 load32(volatile const int32* ptr) {
+inline int32_t load32(volatile const int32* ptr) {
   base::subtle::MemoryBarrier();  // add release semantics.
   return Acquire_Load(ptr);
 }
 
-inline int32 relaxed_Inc32(volatile int32* ptr, int32 increment) {
+inline int32_t relaxed_Inc32(volatile int32* ptr, int32_t increment) {
   return NoBarrier_AtomicIncrement(ptr, increment);
 }
 
-inline int32 Inc32(volatile int32* ptr, int32 increment) {
+inline int32_t Inc32(volatile int32* ptr, int32_t increment) {
   return Barrier_AtomicIncrement(ptr, increment);
 }
 
@@ -242,77 +244,77 @@ inline int32 Inc32(volatile int32* ptr, int32 increment) {
 // uint32
 
 inline bool acquire_cas32(volatile uint32* ptr,
-                          uint32 old_value,
-                          uint32 new_value) {
+                          uint32_t old_value,
+                          uint32_t new_value) {
   return acquire_cas32((volatile int32*)(ptr), old_value, new_value);
 }
 
 inline bool release_cas32(volatile uint32* ptr,
-                          uint32 old_value,
-                          uint32 new_value) {
+                          uint32_t old_value,
+                          uint32_t new_value) {
   return release_cas32((volatile int32*)(ptr), old_value, new_value);
 }
 
 inline bool cas32(volatile uint32* ptr,
-                  uint32 old_value,
-                  uint32 new_value) {
+                  uint32_t old_value,
+                  uint32_t new_value) {
   return cas32((volatile int32*)(ptr), old_value, new_value);
 }
 
 // exchange32.
-inline uint32 acquire_exchange32(volatile uint32* ptr, uint32 new_value) {
+inline uint32_t acquire_exchange32(volatile uint32* ptr, uint32_t new_value) {
   return acquire_exchange32((volatile int32*)(ptr), new_value);
 }
 
-inline uint32 release_exchange32(volatile uint32* ptr, uint32 new_value) {
+inline uint32_t release_exchange32(volatile uint32* ptr, uint32_t new_value) {
   return release_exchange32((volatile int32*)(ptr), new_value);
 }
 
-inline uint32 exchange32(volatile uint32* ptr, uint32 new_value) {
+inline uint32_t exchange32(volatile uint32* ptr, uint32_t new_value) {
   return exchange32((volatile int32*)(ptr), new_value);
 }
 
 // store32.
-inline void relaxed_store32(volatile uint32* ptr, uint32 value) {
+inline void relaxed_store32(volatile uint32* ptr, uint32_t value) {
   relaxed_store32((volatile int32*)ptr, value);
 }
 
-inline void acquire_store32(volatile uint32* ptr, uint32 value) {
+inline void acquire_store32(volatile uint32* ptr, uint32_t value) {
   acquire_store32((volatile int32*)ptr, value);
 }
 
-inline void release_store32(volatile uint32* ptr, uint32 value) {
+inline void release_store32(volatile uint32* ptr, uint32_t value) {
   release_store32((volatile int32*)ptr, value);
 }
 
-inline void store32(volatile uint32* ptr, uint32 value) {
+inline void store32(volatile uint32* ptr, uint32_t value) {
   base::subtle::MemoryBarrier();  // add release semantics.
   store32((volatile int32*)ptr, value);
 }
 
 // load32
-inline uint32 relaxed_load32(volatile const uint32* ptr) {
+inline uint32_t relaxed_load32(volatile const uint32* ptr) {
   return relaxed_load32((volatile int32*)ptr);
 }
 
-inline uint32 acquire_load32(volatile const uint32* ptr) {
+inline uint32_t acquire_load32(volatile const uint32* ptr) {
   return acquire_load32((volatile int32*)ptr);
 }
 
-inline uint32 release_load32(volatile const uint32* ptr) {
+inline uint32_t release_load32(volatile const uint32* ptr) {
   return release_load32((volatile int32*)ptr);
 }
 
-inline uint32 load32(volatile const uint32* ptr) {
+inline uint32_t load32(volatile const uint32* ptr) {
   base::subtle::MemoryBarrier();  // add release semantics.
   return load32((volatile int32*)ptr);
 }
 
-inline int32 relaxed_Inc32(volatile uint32* ptr, uint32 increment) {
+inline int32_t relaxed_Inc32(volatile uint32* ptr, uint32_t increment) {
   return relaxed_Inc32((volatile int32*)ptr, (int32)increment);  // NOLINT
 }
 
-inline int32 Inc32(volatile uint32* ptr, uint32 increment) {
+inline int32_t Inc32(volatile uint32* ptr, uint32_t increment) {
   return Inc32((volatile int32*)ptr, (int32)increment);  // NOLINT
 }
 

@@ -6,26 +6,25 @@
 
 #include <vector>
 
-#include "base/basictypes.h"
-#include "base/strings/string_piece.h"
+#include <absl/strings/string_view.h>
 #include "tin/net/address_family.h"
 #include "tin/net/ip_address.h"
 
 namespace tin {
 namespace net {
 
-int ResolveHostname(const base::StringPiece& hostname, AddressFamily af,
+int ResolveHostname(const absl::string_view& hostname, AddressFamily af,
                     std::vector<IPAddress>* addresses);
 
-IPAddress ResolveHostname4(const base::StringPiece& hostname);
+IPAddress ResolveHostname4(const absl::string_view& hostname);
 
-IPAddress ResolveHostname6(const base::StringPiece& hostname);
+IPAddress ResolveHostname6(const absl::string_view& hostname);
 
-IPAddress ResolveHostname(const base::StringPiece& hostname);
+IPAddress ResolveHostname(const absl::string_view& hostname);
 
-IPAddress ResolveHostname(const base::StringPiece& hostname);
+IPAddress ResolveHostname(const absl::string_view& hostname);
 
-IPAddress ResolveHostname(const base::StringPiece& hostname, AddressFamily af);
+IPAddress ResolveHostname(const absl::string_view& hostname, AddressFamily af);
 
 }  // namespace net
 }  // namespace tin

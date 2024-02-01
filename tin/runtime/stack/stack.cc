@@ -4,7 +4,9 @@
 
 #include <cstdlib>
 
-#include "base/logging.h"
+#include <absl/log/check.h>
+#include <absl/log/log.h>
+
 #include "tin/runtime/stack/fixedsize_stack.h"
 #include "tin/runtime/stack/protected_fixedsize_stack.h"
 

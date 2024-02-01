@@ -19,7 +19,7 @@ void Close(PollDescriptor* pd);
 int Reset(PollDescriptor* pd, int mode);
 void Unblock(PollDescriptor* pd);
 void WaitCanceled(PollDescriptor* pd, int mode);
-void SetDeadline(PollDescriptor* pd, int64 d, int mode);
+void SetDeadline(PollDescriptor* pd, int64_t d, int mode);
 
 }  // namespace pollops
 }  // namespace runtime

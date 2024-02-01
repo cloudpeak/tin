@@ -3,7 +3,7 @@
 // found in the LICENSE file.
 
 #pragma once
-#include "base/basictypes.h"
+#include <cstdint>
 
 namespace tin {
 
@@ -26,18 +26,18 @@ const char* GetErrorStr();
 // Yield conflicts with Windows macro Yield.
 void Sched();
 
-void NanoSleep(int64 ns);
+void NanoSleep(int64_t ns);
 
 // sleep for ms milliseconds.
-void Sleep(int64 ms);
+void Sleep(int64_t ms);
 
 // unix time, posix time, in nano seconds.
-int64 Now();
+int64_t Now();
 
 // monotonic time, system up time, in nano seconds.
-int64 MonoNow();
+int64_t MonoNow();
 
 // unix time, posix time, in seconds.
-int32 NowSeconds();
+int32_t NowSeconds();
 
 }  // namespace tin

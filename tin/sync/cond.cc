@@ -2,7 +2,9 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "base/logging.h"
+#include <absl/log/check.h>
+#include <absl/log/log.h>
+
 #include "tin/sync/atomic.h"
 #include "tin/runtime/raw_mutex.h"
 
@@ -27,11 +29,11 @@ void Cond::Broascast() {
 
 void Cond::SignalImpl(bool all) {
   while (true) {
-    uint32 old_waiters = atomic::load32(&waiters_);
+    uint32_t old_waiters = atomic::load32(&waiters_);
     if (old_waiters == 0) {
       return;
     }
-    uint32 new_waiters = old_waiters - 1;
+    uint32_t new_waiters = old_waiters - 1;
     if (all) {
       new_waiters = 0;
     }

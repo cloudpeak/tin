@@ -5,8 +5,8 @@
 #pragma once
 
 #include "base/at_exit.h"
-#include "base/synchronization/waitable_event.h"
 #include "base/threading/thread_local.h"
+#include "absl/synchronization/notification.h"
 
 #include "tin/tin.h"
 #include "tin/sync/atomic_flag.h"
@@ -44,7 +44,7 @@ class Env {
   char** argv_;
   tin::Config* conf_;
   int num_processors_;
-  base::WaitableEvent main_signal_;
+  absl::Notification main_signal_;
   tin::AtomicFlag exit_flag_;
   DISALLOW_COPY_AND_ASSIGN(Env);
 };

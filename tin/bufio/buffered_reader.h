@@ -4,10 +4,10 @@
 
 #pragma once
 
+#include <stdint.h>
 #include <vector>
 #include <map>
 
-#include "base/basictypes.h"
 #include "tin/io/io.h"
 #include "tin/io/io_buffer.h"
 
@@ -34,7 +34,7 @@ class BufferedReader {
     return last_read_;
   }
 
-  uint64 TotalBytesStat() const {
+  uint64_t TotalBytesStat() const {
     return total_bytes_stat_;
   }
 
@@ -42,7 +42,7 @@ class BufferedReader {
   IOBuffer buffer_;
   int last_read_;
   tin::io::Reader* reader_;
-  uint64 total_bytes_stat_;
+  uint64_t total_bytes_stat_;
 };
 
 }  // namespace tin

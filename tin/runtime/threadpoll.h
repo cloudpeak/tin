@@ -7,11 +7,11 @@
 #include <vector>
 #include <deque>
 
-#include "base/basictypes.h"
+#include <absl/synchronization/notification.h>
+#include <absl/synchronization/mutex.h>
+
 #include "base/memory/singleton.h"
-#include "base/synchronization/lock.h"
-#include "base/synchronization/waitable_event.h"
-#include "base/synchronization/condition_variable.h"
+
 #include "tin/runtime/env.h"
 
 namespace tin {
@@ -65,8 +65,9 @@ class ThreadPoll {
   int num_threads_;
   std::vector<M*> threads_;
   std::deque<Work*> tasks_;
-  base::Lock lock_;
-  base::WaitableEvent dry_;
+  absl::Mutex lock_;
+
+  absl::Notification dry_;
   DISALLOW_COPY_AND_ASSIGN(ThreadPoll);
 };
 

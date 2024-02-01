@@ -7,7 +7,6 @@
 
 #include <string>
 
-#include "base/compiler_specific.h"
 #include "tin/net/address_family.h"
 #include "tin/net/ip_address.h"
 #include "tin/net/sys_addrinfo.h"
@@ -24,13 +23,13 @@ class  IPEndPoint {
  public:
   IPEndPoint();
   ~IPEndPoint();
-  IPEndPoint(const IPAddress& address, uint16 port);
+  IPEndPoint(const IPAddress& address, uint16_t port);
   IPEndPoint(const IPEndPoint& endpoint);
 
   const IPAddress& address() const {
     return address_;
   }
-  uint16 port() const {
+  uint16_t port() const {
     return port_;
   }
 
@@ -48,14 +47,14 @@ class  IPEndPoint {
   //    the address that was copied into |address|.
   // Returns true on success, false on failure.
   bool ToSockAddr(struct sockaddr* address, socklen_t* address_length) const
-  WARN_UNUSED_RESULT;
+  ABSL_MUST_USE_RESULT;
 
   // Convert from a sockaddr struct.
   // |address| is the address.
   // |address_length| is the length of |address|.
   // Returns true on success, false on failure.
   bool FromSockAddr(const struct sockaddr* address, socklen_t address_length)
-  WARN_UNUSED_RESULT;
+  ABSL_MUST_USE_RESULT;
 
   // Returns value as a string (e.g. "127.0.0.1:80"). Returns the empty string
   // when |address_| is invalid (the port will be ignored).
@@ -70,7 +69,7 @@ class  IPEndPoint {
 
  private:
   IPAddress address_;
-  uint16 port_;
+  uint16_t port_;
 };
 
 }  // namespace net

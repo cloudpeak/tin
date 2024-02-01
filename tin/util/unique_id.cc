@@ -16,8 +16,8 @@ class UniqueIdGenerator {
     return Singleton<UniqueIdGenerator>::get();
   }
 
-  uint64 Next() {
-    uint64 uid = uid_.fetch_add(1) + 1;
+  uint64_t Next() {
+    uint64_t uid = uid_.fetch_add(1) + 1;
     return uid;
   }
 
@@ -31,7 +31,7 @@ class UniqueIdGenerator {
   friend struct DefaultSingletonTraits<UniqueIdGenerator>;
 };
 
-uint64 GetUniqueId() {
+uint64_t GetUniqueId() {
   return UniqueIdGenerator::GetInstance()->Next();
 }
 

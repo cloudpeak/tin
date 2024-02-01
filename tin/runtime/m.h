@@ -5,11 +5,9 @@
 #pragma once
 
 #include <list>
+#include <absl/log/log.h>
+#include <absl/log/check.h>
 
-#include "base/basictypes.h"
-#include "base/memory/scoped_ptr.h"
-#include "base/callback.h"
-#include "base/bind.h"
 #include "base/threading/platform_thread.h"
 #include "base/synchronization/waitable_event.h"
 #include "context/zcontext.h"
@@ -98,7 +96,7 @@ class M : public base::PlatformThread::Delegate {
     return unlock_info_.get();
   }
 
-  static M* New(base::Closure fn, tin::runtime::P* p);
+  static M* New(std::function<void()> fn, tin::runtime::P* p);
 
   static void Start(tin::runtime::P* p, bool spinning);
 
@@ -161,13 +159,13 @@ class M : public base::PlatformThread::Delegate {
   G* curg_;
   G* g0_;
   G* locked_g_;
-  base::Closure mstart_fn_;
+  std::function<void()> mstart_fn_;
   zcontext_t sys_context_;
   base::PlatformThreadHandle sys_thread_handle_;
   scoped_ptr<UnLockInfo> unlock_info_;
   bool is_m0_;
   std::list<G*> dead_queue_;
-  uint32 locked_;
+  uint32_t locked_;
   DISALLOW_COPY_AND_ASSIGN(M);
 };
 

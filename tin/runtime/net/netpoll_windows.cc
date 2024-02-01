@@ -4,7 +4,9 @@
 
 #include <WinSock2.h>
 
-#include "base/logging.h"
+#include <absl/log/check.h>
+#include <absl/log/log.h>
+
 #include "tin/platform/platform_win.h"
 #include "tin/runtime/runtime.h"
 
@@ -21,16 +23,16 @@ struct NetOP {
   OVERLAPPED ol;
   // used by NetPoll
   PollDescriptor* pd;
-  int32 mode;
-  int32 eno;
-  uint32 qty;
+  int32_t mode;
+  int32_t eno;
+  uint32_t qty;
 };
 
 struct overlappedEntry {
   uintptr_t key;
   NetOP* op;
   uintptr_t internal;
-  uint32 qty;
+  uint32_t qty;
 };
 
 HANDLE iocphandle = INVALID_HANDLE_VALUE;
@@ -53,14 +55,14 @@ void NetPollPreDeinit() {
   iocphandle = INVALID_HANDLE_VALUE;
 }
 
-int32 NetPollOpen(uintptr_t fd, PollDescriptor* pd) {
+int32_t NetPollOpen(uintptr_t fd, PollDescriptor* pd) {
   if (CreateIoCompletionPort((HANDLE)fd, iocphandle, 0, 0) == 0) {
     return static_cast<int32>(GetLastError());
   }
   return 0;
 }
 
-int32 NetPollClose(uintptr_t fd) {
+int32_t NetPollClose(uintptr_t fd) {
   // nothing to do
   return 0;
 }
@@ -69,11 +71,11 @@ void NetPollArm(PollDescriptor* pd, int mode) {
   LOG(FATAL) << "unused";
 }
 
-void handlecompletion(G** gpp, NetOP* op, DWORD error_no, uint32 qty) {
+void handlecompletion(G** gpp, NetOP* op, DWORD error_no, uint32_t qty) {
   if (op == NULL) {
     LOG(FATAL) << "NetPoll: GetQueuedCompletionStatus returned op == nil";
   }
-  int32 mode = op->mode;
+  int32_t mode = op->mode;
   if (mode != 'r' && mode != 'w') {
     LOG(FATAL) << "NetPoll: GetQueuedCompletionStatus returned invalid mode";
   }

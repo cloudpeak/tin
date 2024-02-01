@@ -2,7 +2,9 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "base/logging.h"
+#include <absl/log/check.h>
+#include <absl/log/log.h>
+
 #include "tin/sync/atomic.h"
 #include "tin/runtime/raw_mutex.h"
 #include "tin/runtime/semaphore.h"
@@ -12,7 +14,7 @@
 namespace tin {
 
 namespace {
-const int32 kRWMutexMaxReaders = 1 << 30;
+const int32_t kRWMutexMaxReaders = 1 << 30;
 }
 
 RWMutex::RWMutex()
@@ -32,7 +34,7 @@ void RWMutex::RLock() {
 }
 
 void RWMutex::RUnlock() {
-  int32 r = atomic::Inc32(&reader_count_, -1);
+  int32_t r = atomic::Inc32(&reader_count_, -1);
   if (r < 0) {
     if (r + 1 == 0 || r + 1 == -kRWMutexMaxReaders) {
       LOG(FATAL) << "sync: RUnlock of unlocked RWMutex";
@@ -45,7 +47,7 @@ void RWMutex::RUnlock() {
 
 void RWMutex::Lock() {
   w_.Lock();
-  int32 r =
+  int32_t r =
     atomic::Inc32(&reader_count_, -kRWMutexMaxReaders) + kRWMutexMaxReaders;
   if (r != 0 && atomic::Inc32(&reader_wait_, r) != 0) {
     runtime::SemAcquire(&writer_sem_);
@@ -53,12 +55,12 @@ void RWMutex::Lock() {
 }
 
 void RWMutex::Unlock() {
-  int32 r = atomic::Inc32(&reader_count_, kRWMutexMaxReaders);
+  int32_t r = atomic::Inc32(&reader_count_, kRWMutexMaxReaders);
   if (r >= kRWMutexMaxReaders) {
     LOG(FATAL) << "sync: Unlock of unlocked RWMutex";
   }
 
-  for (int32 i = 0; i < r; i++) {
+  for (int32_t i = 0; i < r; i++) {
     runtime::SemRelease(&reader_sem);
   }
   w_.Unlock();

@@ -4,8 +4,6 @@
 
 #pragma once
 
-#include "base/basictypes.h"
-
 #include "tin/runtime/util.h"
 #include "tin/runtime/guintptr.h"
 
@@ -30,7 +28,7 @@ class P {
     return id_;
   }
 
-  int32 RunqCapacity() const {
+  int32_t RunqCapacity() const {
     return kRunqCapacity;
   }
 
@@ -64,19 +62,19 @@ class P {
     m_ = m;
   }
 
-  void SetStatus(uint32 status) {
+  void SetStatus(uint32_t status) {
     status_ = status;
   }
 
-  uint32 GetStatus() {
+  uint32_t GetStatus() {
     return status_;
   }
 
-  uint32 SchedTick() const {
+  uint32_t SchedTick() const {
     return sched_tick_;
   }
 
-  void SetSchedTick(uint32 sched_tick) {
+  void SetSchedTick(uint32_t sched_tick) {
     sched_tick_ = sched_tick;
   }
 
@@ -84,25 +82,25 @@ class P {
     sched_tick_++;
   }
 
-  bool CasStatus(uint32 old_status, uint32 new_status);
+  bool CasStatus(uint32_t old_status, uint32_t new_status);
 
  private:
-  bool RunqPutSlow(G* gp, uint32 h, uint32 t);
-  uint32 RunqGrab(GUintptr* batch, int batch_size, uint32 batch_head,
+  bool RunqPutSlow(G* gp, uint32_t h, uint32_t t);
+  uint32_t RunqGrab(GUintptr* batch, int batch_size, uint32_t batch_head,
                   bool steal_nextg);
 
  private:
   enum {
     kRunqCapacity = 256
   };
-  uint32 runq_head_;
-  uint32 runq_tail_;
+  uint32_t runq_head_;
+  uint32_t runq_tail_;
   GUintptr runq_[kRunqCapacity];
   GUintptr run_next_;
   P* link_;
   int id_;
-  uint32 status_;
-  uint32 sched_tick_;
+  uint32_t status_;
+  uint32_t sched_tick_;
   tin::runtime::M* m_;
   DISALLOW_COPY_AND_ASSIGN(P);
 };

@@ -3,7 +3,9 @@
 // found in the LICENSE file.
 
 #include "build/build_config.h"
-#include "base/logging.h"
+#include <absl/log/log.h>
+#include <absl/log/check.h>
+#include  <absl/strings/string_view.h>
 
 #include "tin/net/sys_socket.h"
 #include "tin/error/error.h"
@@ -43,15 +45,15 @@ int TcpConnImpl::Write(const void* buf, int nbytes) {
   return nwritten;
 }
 
-void TcpConnImpl::SetDeadline(int64 t) {
+void TcpConnImpl::SetDeadline(int64_t t) {
   netfd_->SetDeadline(t);
 }
 
-void TcpConnImpl::SetReadDeadline(int64 t) {
+void TcpConnImpl::SetReadDeadline(int64_t t) {
   netfd_->SetReadDeadline(t);
 }
 
-void TcpConnImpl::SetWriteDeadline(int64 t) {
+void TcpConnImpl::SetWriteDeadline(int64_t t) {
   netfd_->SetWriteDeadline(t);
 }
 
