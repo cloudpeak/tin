@@ -41,7 +41,7 @@ void HandleClient(tin::net::TcpConn conn) {
   scoped_ptr<char[]> buf(new char[kIOBufferSize]);
 
   // set read, write deadline.
-  const int64 kRWDeadline = 20 * tin::kSecond;
+  const int64_t kRWDeadline = 20 * tin::kSecond;
   conn->SetDeadline(kRWDeadline);
   while (true) {
     int n = conn->Read(buf.get(), kIOBufferSize);
