@@ -10,8 +10,8 @@
 #include "tin/net/ip_endpoint.h"
 #include "tin/net/sockaddr_storage.h"
 
-namespace tin {
-namespace net {
+
+namespace tin::net {
 
 const uintptr_t kInvalidSocket = uintptr_t(~0);
 
@@ -21,6 +21,9 @@ class NetFDCommon {
               AddressFamily family,
               int sotype,
               const std::string& net);
+
+  NetFDCommon(const NetFDCommon&) = delete;
+  NetFDCommon& operator=(const NetFDCommon&) = delete;
 
   virtual ~NetFDCommon();
 
@@ -68,12 +71,9 @@ class NetFDCommon {
   int is_connected_;
   std::string  net_;
   PollDesc pd_;
-
- private:
-  DISALLOW_COPY_AND_ASSIGN(NetFDCommon);
 };
-}  // namespace net
-}  // namespace tin
+} // namespace tin::net
+
 
 
 

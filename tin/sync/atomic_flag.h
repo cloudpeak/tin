@@ -5,7 +5,7 @@
 #pragma once
 #include <stdlib.h>
 
-#include "base/basictypes.h"
+#include "cstdint"
 
 #include "tin/sync/atomic.h"
 

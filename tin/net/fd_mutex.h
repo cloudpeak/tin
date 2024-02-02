@@ -3,7 +3,7 @@
 // found in the LICENSE file.
 
 #pragma once
-#include "base/basictypes.h"
+#include "cstdint"
 #include "quark/atomic.hpp"
 
 namespace tin {

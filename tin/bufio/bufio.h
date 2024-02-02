@@ -6,11 +6,12 @@
 
 #include <cstdlib>
 #include <cstdint>
-#include "base/strings/string_piece.h"
+#include <absl/strings/string_view.h>
+
 #include "tin/io/io.h"
 
-namespace tin {
-namespace bufio {
+
+namespace tin::bufio {
 
 const int kDefaultReaderBufSize = 4096;
 
@@ -34,14 +35,14 @@ class Reader : public tin::io::Reader {
   virtual int Read(void* buf, int nbytes);
 
   // return error code.
-  int ReadSlice(uint8_t delim, base::StringPiece* line);
+  int ReadSlice(uint8_t delim, absl::string_view* line);
 
   // return error code.
-  int ReadLine(base::StringPiece* line, bool* is_prefix);
+  int ReadLine(absl::string_view* line, bool* is_prefix);
 
   int ReadByte(uint8_t* c);
   int UnreadByte();
-  int Peek(int n, base::StringPiece* piece);
+  int Peek(int n, absl::string_view* piece);
 
   // inline functions
   int buffered() const { return write_idx_ - read_idx_; }
@@ -65,6 +66,10 @@ class Reader : public tin::io::Reader {
   int ReadErr();
   void Fill();
 
+  static absl::string_view ToStringPiece(const uint8_t* p, absl::string_view::size_type n) {
+    return {reinterpret_cast<const char*>(p),n};
+  }
+
  private:
   uint8_t* storage_;
   int storage_size_;
@@ -83,8 +88,8 @@ class Writer : public tin::io::Writer {
 
 
 
-}  // namespace bufio
-}  // namespace tin
+} // namespace tin::bufio
+
 
 
 

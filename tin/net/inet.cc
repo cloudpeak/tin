@@ -12,7 +12,7 @@
 #include <arpa/inet.h>
 #endif
 
-#include "base/basictypes.h"
+#include "cstdint"
 #include "base/strings/string_util.h"
 #include "base/sys_byteorder.h"
 #include "tin/error/error.h"

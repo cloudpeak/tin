@@ -3,7 +3,7 @@
 // found in the LICENSE file.
 
 #include <time.h>
-#include "base/basictypes.h"
+#include "cstdint"
 #include "base/time/time.h"
 
 namespace tin {

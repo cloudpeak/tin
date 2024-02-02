@@ -95,8 +95,8 @@ int NetFDCommon::SetDeadlineImpl(int64_t t, int mode) {
   int64_t now = MonoNow();
   int64_t d = now + t;
   // test overflow.
-  if (kint64max - now < t) {
-    d = kint64max;
+  if (std::numeric_limits<int64_t>::max() - now < t) {
+    d = std::numeric_limits<int64_t>::max();
   }
   if (t == 0) {
     d = 0;

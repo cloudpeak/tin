@@ -4,7 +4,6 @@
 
 #include <sys/epoll.h>
 #include <fcntl.h>
-#include "base/logging.h"
 #include "base/posix/eintr_wrapper.h"
 #include "tin/runtime/runtime.h"
 #include "tin/runtime/posix_util.h"

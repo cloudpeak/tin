@@ -4,7 +4,7 @@
 
 #include <fcntl.h>
 
-#include "base/logging.h"
+
 #include "base/bind.h"
 #include "base/callback.h"
 #include "base/synchronization/once.h"

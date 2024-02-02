@@ -6,8 +6,7 @@
 #include <limits.h>
 #include <utility>
 
-#include "base/basictypes.h"
-#include "base/logging.h"
+#include "cstdint"
 #include <absl/strings/string_view.h>
 #include "base/strings/string_piece.h"
 #include "base/strings/string_split.h"

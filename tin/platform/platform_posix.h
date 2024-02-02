@@ -7,7 +7,7 @@
 #include <string>
 
 #include "build/build_config.h"
-#include "base/basictypes.h"
+#include "cstdint"
 
 namespace tin {
 

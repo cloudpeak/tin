@@ -14,7 +14,9 @@
 
 #include <vector>
 
-#include "base/logging.h"
+#include <absl/log/log.h>
+#include <absl/log/check.h>
+
 #include "tin/error/error.h"
 #include "tin/runtime/util.h"
 #include "tin/runtime/runtime.h"
