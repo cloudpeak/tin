@@ -57,7 +57,7 @@ struct Operation {
   SockaddrStorage* sa;
   DWORD flags;
   uintptr_t handle;  // listen socket handle.
-  scoped_ptr<sockaddr_storage[]> accept_buf;
+  std::unique_ptr<sockaddr_storage[]> accept_buf;
   int32_t rsan;
   tin::Chan<int> err_chan;
 };

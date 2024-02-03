@@ -4,8 +4,6 @@
 
 #pragma once
 
-#include "base/at_exit.h"
-#include "base/threading/thread_local.h"
 #include "absl/synchronization/notification.h"
 
 #include "tin/tin.h"
@@ -46,7 +44,7 @@ class Env {
   int num_processors_;
   absl::Notification main_signal_;
   tin::AtomicFlag exit_flag_;
-  DISALLOW_COPY_AND_ASSIGN(Env);
+//  DISALLOW_COPY_AND_ASSIGN(Env);
 };
 
 class Scheduler;
@@ -56,7 +54,7 @@ class TimerQueue;
 extern Env* rtm_env;
 extern Scheduler* sched;
 extern TimerQueue* timer_q;
-extern base::ThreadLocalPointer<Greenlet>* glet_tls;
+extern thread_local Greenlet* glet_tls;
 extern tin::Config* rtm_conf;
 
 int InitializeEnv(EntryFn fn, int argc, char** argv, Config* new_conf);

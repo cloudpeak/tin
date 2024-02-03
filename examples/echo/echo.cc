@@ -1,5 +1,7 @@
 #include "tin/all.h"
 
+#include <absl/log/globals.h>
+
 // case 0
 void HandleClient0(tin::net::TcpConn conn) {
   // Set TCP Read Write buffer.
@@ -230,11 +232,12 @@ int main(int argc, char** argv) {
   tin::Initialize();
 
   // set logging level.
-  logging::SetMinLogLevel(-1);
+  // logging::SetMinLogLevel(-1);
+  absl::SetMinLogLevel(absl::LogSeverityAtLeast::kInfo);
 
   // set max p count.
   tin::Config config = tin::DefaultConfig();
-  config.SetMaxProcs(base::SysInfo::NumberOfProcessors());
+  config.SetMaxProcs(static_cast<int>(std::thread::hardware_concurrency()));
 
   // start the world.
   tin::PowerOn(TinMain, argc, argv, &config);

@@ -2,8 +2,10 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "base/bind.h"
-#include "absl/functional/bind_front.h"
+#include <absl/log/log.h>
+#include <absl/log/check.h>
+#include <absl/functional/bind_front.h>
+
 #include "tin/runtime/util.h"
 #include "tin/runtime/runtime.h"
 #include "tin/runtime/scheduler.h"
@@ -36,8 +38,8 @@ int64_t NanoFromNow(int64_t deadline) {
   int64_t now = MonoNow();
   int64_t when = now + deadline;
   // if infinite or int64_t overflow
-  if (deadline == -1 || (now > kint64max - deadline)) {
-    when = kint64max;
+  if (deadline == -1 || (now > std::numeric_limits<int64_t>::max() - deadline)) {
+    when = std::numeric_limits<int64_t>::max();
   }
   return when;
 }
@@ -61,7 +63,7 @@ void TimerQueue::AddTimer(Timer* t) {
 
 void TimerQueue::AddTimerLocked(Timer* t) {
   if (t->when < 0) {
-    t->when = kint64max;
+    t->when = std::numeric_limits<int64_t>::max();
   }
 
   t->i = Length();

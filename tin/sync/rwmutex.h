@@ -3,8 +3,9 @@
 // found in the LICENSE file.
 
 #pragma once
-#include <stdlib.h>
-#include <stdint.h>
+#include <cstdlib>
+#include <cstdint>
+#include <atomic>
 #include "tin/sync/mutex.h"
 
 namespace tin {
@@ -25,7 +26,7 @@ class RWMutex {
   uint32_t reader_sem;     // semaphore for readers to wait for completing writers
   int32_t  reader_count_;  // number of pending readers
   int32_t  reader_wait_;   // number of departing readers
-  DISALLOW_COPY_AND_ASSIGN(RWMutex);
+ // DISALLOW_COPY_AND_ASSIGN(RWMutex);
 };
 
 class MutexReaderGuard {
@@ -40,7 +41,7 @@ class MutexReaderGuard {
 
  private:
   RWMutex* lock_;
-  DISALLOW_COPY_AND_ASSIGN(MutexReaderGuard);
+ // DISALLOW_COPY_AND_ASSIGN(MutexReaderGuard);
 };
 
 class MutexWriterGuard {
@@ -55,7 +56,7 @@ class MutexWriterGuard {
 
  private:
   RWMutex* lock_;
-  DISALLOW_COPY_AND_ASSIGN(MutexWriterGuard);
+//  DISALLOW_COPY_AND_ASSIGN(MutexWriterGuard);
 };
 
 }  // namespace tin

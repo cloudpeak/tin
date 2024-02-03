@@ -2,26 +2,28 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "base/logging.h"
+#include <absl/log/log.h>
+#include <absl/log/check.h>
+
 #include "tin/net/fd_mutex.h"
 #include "tin/runtime/runtime.h"
 
 namespace tin {
 
-void RuntimeSemacquire(uint32* addr);
-void RuntimeSemrelease(uint32* addr);
+void RuntimeSemacquire(uint32_t* addr);
+void RuntimeSemrelease(uint32_t* addr);
 
 namespace net {
 
-const uint64_t kMutexClosed  = (uint64)1LL << 0;  // NOLINT
-const uint64_t kMutexRLock   = (uint64)1LL << 1;  // NOLINT
-const uint64_t kMutexWLock   = (uint64)1LL << 2;  // NOLINT
-const uint64_t kMutexRef     = (uint64)1LL << 3;  // NOLINT
-const uint64_t kMutexRefMask = (uint64)((1LL << 20) - 1) << 3;  // NOLINT
-const uint64_t kMutexRWait   = (uint64)1LL << 23;  // NOLINT
-const uint64_t kMutexRMask   = (uint64)((1LL << 20) - 1) << 23;  // NOLINT
-const uint64_t kMutexWWait   = (uint64)1LL << 43;  // NOLINT
-const uint64_t kMutexWMask   = (uint64)((1LL << 20) - 1) << 43;  // NOLINT
+const uint64_t kMutexClosed  = (uint64_t)1LL << 0;  // NOLINT
+const uint64_t kMutexRLock   = (uint64_t)1LL << 1;  // NOLINT
+const uint64_t kMutexWLock   = (uint64_t)1LL << 2;  // NOLINT
+const uint64_t kMutexRef     = (uint64_t)1LL << 3;  // NOLINT
+const uint64_t kMutexRefMask = (uint64_t)((1LL << 20) - 1) << 3;  // NOLINT
+const uint64_t kMutexRWait   = (uint64_t)1LL << 23;  // NOLINT
+const uint64_t kMutexRMask   = (uint64_t)((1LL << 20) - 1) << 23;  // NOLINT
+const uint64_t kMutexWWait   = (uint64_t)1LL << 43;  // NOLINT
+const uint64_t kMutexWMask   = (uint64_t)((1LL << 20) - 1) << 43;  // NOLINT
 
 bool FdMutex::Incref() {
   while (true) {
@@ -84,7 +86,7 @@ bool FdMutex::Deref() {
 
 bool FdMutex::RWLock(bool read) {
   uint64_t mutex_bit, mutex_wait, mutex_mask;
-  uint32* mutex_sema;
+  uint32_t* mutex_sema;
   if (read) {
     mutex_bit = kMutexRLock;
     mutex_wait = kMutexRWait;
@@ -127,7 +129,7 @@ bool FdMutex::RWLock(bool read) {
 
 bool FdMutex::RWUnlock(bool read) {
   uint64_t mutex_bit, mutex_wait, mutex_mask;
-  uint32* mutex_sema;
+  uint32_t* mutex_sema;
   if (read) {
     mutex_bit = kMutexRLock;
     mutex_wait = kMutexRWait;

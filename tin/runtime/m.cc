@@ -34,7 +34,6 @@ M::M()
   , locked_g_(NULL)
   , mstart_fn_()
   , sys_context_(NULL)
-  , sys_thread_handle_()
   , unlock_info_(new UnLockInfo)
   , is_m0_(0)
   , dead_queue_()
@@ -47,7 +46,7 @@ M::~M() {
 
 void M::EnsureSemaphoreExists() {
   if (!wait_sema_) {
-    wait_sema_.reset(new base::WaitableEvent(false, false));
+    wait_sema_.reset(new absl::Notification(false));
   }
 }
 
@@ -77,7 +76,6 @@ M* M::Allocate(tin::runtime::P* p) {
 }
 
 void M::OnSysThreadStart() {
-  base::PlatformThread::SetName("Machine");
 }
 
 void M::OnSysThreadStop() {
@@ -95,7 +93,7 @@ void M::ThreadMain() {
                          rtm_conf->StackSize(),
                          "sysg0");
   g0_->SetM(this);
-  glet_tls->Set(g0_);
+  glet_tls = g0_;
   // switch to g0
   jump_zcontext(&sys_context_,
                 *g0_->MutableContext(),
@@ -113,16 +111,15 @@ M* M::New(std::function<void()> fn, tin::runtime::P* p) {
   M* m = Allocate(p);
   m->nextp_ = p;
   std::swap(m->mstart_fn_, fn);
-  bool ok = base::PlatformThread::Create(kDefaultOSThreadStackSize,
-                                         m,
-                                         &m->sys_thread_handle_);
-  (void)ok;
+  std::thread t(&M::ThreadMain, m);
+  m->sys_thread_handle_ = std::move(t);
   return m;
 }
 
 void M::Join() {
-  if (!sys_thread_handle_.is_null())
-    base::PlatformThread::Join(sys_thread_handle_);
+  if (sys_thread_handle_.joinable()) {
+    sys_thread_handle_.join();
+  }
 }
 
 void M::Start(tin::runtime::P* p, bool spinning) {

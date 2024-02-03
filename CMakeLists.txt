@@ -49,6 +49,7 @@ if(MSVC)
 endif()
 
 find_package(absl REQUIRED)
+find_package(cliff REQUIRED)
 
 include_directories(
 		${CMAKE_INSTALL_PREFIX}/include
@@ -310,12 +311,11 @@ add_library(tin ${SOURCES})
 
 
 
-
+file(GLOB ABSL_LIBS "${CMAKE_INSTALL_PREFIX}/lib/*absl_*")
 if (WIN32)
 set(DEP_LIBS tin base quark zcontext DbgHelp.lib Psapi.lib Mswsock.lib ws2_32.lib version.lib
-		absl::strings
-		absl::str_format
-		absl::log
+	${ABSL_LIBS}
+	cliff.lib
 )
 
 if(${MSVC_VERSION} GREATER 1500)

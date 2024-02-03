@@ -21,7 +21,7 @@ class WaitGroup {
  private:
   quark::atomic_uint64_t state_;
   uint32_t sem_;
-  DISALLOW_COPY_AND_ASSIGN(WaitGroup);
+  //DISALLOW_COPY_AND_ASSIGN(WaitGroup);
 };
 
 

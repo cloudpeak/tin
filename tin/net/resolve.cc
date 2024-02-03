@@ -103,7 +103,7 @@ int ResolveHostname(const absl::string_view& hostname,
     tin::SetErrorCode(TIN_EINVAL);
     return -1;
   }
-  scoped_ptr<ResolveHostnameWork> work(
+  std::unique_ptr<ResolveHostnameWork> work(
     new ResolveHostnameWork(hostname, family, addresses));
   SubmitGetAddrInfoGletWork(work.get());
   return work->Result();

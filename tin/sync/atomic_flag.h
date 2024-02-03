@@ -30,7 +30,7 @@ class AtomicFlag {
 
  private:
   uint32_t flag_;
-  DISALLOW_COPY_AND_ASSIGN(AtomicFlag);
+  //DISALLOW_COPY_AND_ASSIGN(AtomicFlag);
 };
 
 }  // namespace tin

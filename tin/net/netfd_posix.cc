@@ -5,11 +5,6 @@
 #include <fcntl.h>
 
 
-#include "base/bind.h"
-#include "base/callback.h"
-#include "base/synchronization/once.h"
-#include "base/strings/string_util.h"
-#include "base/posix/eintr_wrapper.h"
 
 #include "tin/error/error.h"
 #include "tin/runtime/env.h"

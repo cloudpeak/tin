@@ -34,9 +34,9 @@ struct Sudog {
   }
 };
 
-bool SemAcquire(uint32* addr);
+bool SemAcquire(uint32_t* addr);
 
-void SemRelease(uint32* addr);
+void SemRelease(uint32_t* addr);
 
 class SyncSema {
  public:
@@ -52,7 +52,7 @@ class SyncSema {
   RawMutex lock_;
   Sudog* head_;
   Sudog* tail_;
-  DISALLOW_COPY_AND_ASSIGN(SyncSema);
+ // DISALLOW_COPY_AND_ASSIGN(SyncSema);
 };
 
 }  // namespace runtime

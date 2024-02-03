@@ -2,6 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+#include <absl/time/clock.h>
+
 #include "tin/sync/atomic.h"
 #include "tin/time/time.h"
 #include "tin/runtime/runtime.h"
@@ -15,7 +17,7 @@ namespace runtime {
 
 void SysMon() {
   while (!rtm_env->ExitFlag()) {
-    base::PlatformThread::Sleep(base::TimeDelta::FromMilliseconds(8));
+    absl::SleepFor(absl::Milliseconds(8));
     uint32_t last_poll = sched->LastPollTime();
     uint32_t now = static_cast<uint32>(MonoNow() / tin::kMillisecond);
     if (now == 0)

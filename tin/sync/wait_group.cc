@@ -28,8 +28,8 @@ void WaitGroup::Add(int32_t delta) {
   uint64_t delta64 = delta;
   delta64 <<= 32;
   uint64_t state = state_.fetch_add(delta64) + delta64;
-  int32_t v = static_cast<int32>(state >> 32);  // high 32 bits: counter.
-  uint32_t w = static_cast<uint32>(state);  // lower 32 bits: waiter.
+  int32_t v = static_cast<int32_t>(state >> 32);  // high 32 bits: counter.
+  uint32_t w = static_cast<uint32_t>(state);  // lower 32 bits: waiter.
   if (v < 0) {
     LOG(FATAL) << "sync: negative WaitGroup counter";
   }
@@ -55,8 +55,8 @@ void WaitGroup::Done() {
 void WaitGroup::Wait() {
   while (true) {
     uint64_t state = state_;
-    int32_t v = static_cast<int32>(state >> 32);  // high 32 bits: counter.
-    uint32_t w = static_cast<uint32>(state);  // lower 32 bits: waiter.
+    int32_t v = static_cast<int32_t>(state >> 32);  // high 32 bits: counter.
+    uint32_t w = static_cast<uint32_t>(state);  // lower 32 bits: waiter.
     (void)w;
     if (v == 0)
       return;

@@ -9,8 +9,8 @@
 
 #include <absl/synchronization/notification.h>
 #include <absl/synchronization/mutex.h>
+#include <absl/base/call_once.h>
 
-#include "base/memory/singleton.h"
 
 #include "tin/runtime/env.h"
 
@@ -25,7 +25,7 @@ class  Work {
   virtual ~Work() { }
   virtual void Run() = 0;
  private:
-  DISALLOW_COPY_AND_ASSIGN(Work);
+  //DISALLOW_COPY_AND_ASSIGN(Work);
 };
 
 class GletWork : public Work {
@@ -48,19 +48,21 @@ class GletWork : public Work {
 void SubmitGletWork(GletWork* work);
 void SubmitGetAddrInfoGletWork(GletWork* work);
 
+
 class ThreadPoll {
  public:
-  ThreadPoll();
+    ThreadPoll(const ThreadPoll&) = delete;
+    ThreadPoll& operator=(const ThreadPoll&) = delete;
 
-  static ThreadPoll* GetInstance() {
-    return Singleton<ThreadPoll>::get();
-  }
+    static ThreadPoll* GetInstance();
 
   void Start();
   void JoinAll();
   void AddWork(Work* work);
   void Run();
 
+private:
+    ThreadPoll();
  private:
   int num_threads_;
   std::vector<M*> threads_;
@@ -68,7 +70,6 @@ class ThreadPoll {
   absl::Mutex lock_;
 
   absl::Notification dry_;
-  DISALLOW_COPY_AND_ASSIGN(ThreadPoll);
 };
 
 }  // namespace runtime

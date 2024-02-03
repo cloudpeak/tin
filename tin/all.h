@@ -8,16 +8,12 @@
 #define _SILENCE_STDEXT_HASH_DEPRECATION_WARNINGS
 #endif
 
+#include <absl/log/log.h>
+#include <absl/log/check.h>
+
 #include "tin/net/sys_socket.h"
 
-#include "base/rand_util.h"
-#include "base/logging.h"
-#include "base/sys_byteorder.h"
-#include "base/sys_info.h"
-#include "base/callback.h"
-#include "base/memory/ref_counted.h"
-#include "base/bind.h"
-#include "base/threading/platform_thread.h"
+#include "cliff/base/sys_byteorder.h"
 
 #include "tin/error/error.h"
 #include "tin/time/time.h"
@@ -34,4 +30,6 @@
 #include "tin/runtime/runtime.h"
 
 #include "tin/tin.h"
+
+#include <thread>
 

@@ -2,14 +2,14 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include <signal.h>
-#include <stdlib.h>
+#include <csignal>
+#include <cstdlib>
+#include <thread>
 
 #include "build/build_config.h"
 
 #include <absl/functional/bind_front.h>
 
-#include "base/sys_info.h"
 #include "tin/runtime/util.h"
 #include "tin/runtime/timer/timer_queue.h"
 #include "tin/runtime/greenlet.h"
@@ -30,7 +30,7 @@ Env::Env()
 }
 
 void Env::PreInit() {
-  num_processors_ = base::SysInfo::NumberOfProcessors();
+  num_processors_ = static_cast<int>(std::thread::hardware_concurrency());
 }
 
 int Env::Initialize(EntryFn fn, int argc, char** argv, tin::Config* new_conf) {
@@ -41,7 +41,7 @@ int Env::Initialize(EntryFn fn, int argc, char** argv, tin::Config* new_conf) {
   SignalInit();
   sched = new Scheduler;
   timer_q = new TimerQueue;
-  glet_tls = new base::ThreadLocalPointer<Greenlet>;
+  glet_tls = new Greenlet;
   ThreadPoll::GetInstance()->Start();
   M::New(absl::bind_front(&SysInit), NULL);
 
@@ -108,7 +108,8 @@ void DeInitializeEnv() {
 Env* rtm_env = NULL;
 Scheduler* sched = NULL;
 TimerQueue* timer_q = NULL;
-base::ThreadLocalPointer<Greenlet>* glet_tls = NULL;
+thread_local Greenlet* glet_tls = NULL;
+
 tin::Config* rtm_conf = NULL;
 
 }  // namespace runtime

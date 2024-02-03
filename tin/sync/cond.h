@@ -29,7 +29,7 @@ class Cond {
   Mutex* lock_;
   runtime::SyncSema sem_;
   uint32_t waiters_;
-  DISALLOW_COPY_AND_ASSIGN(Cond);
+//  DISALLOW_COPY_AND_ASSIGN(Cond);
 };
 
 }  // namespace tin

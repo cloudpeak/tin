@@ -3,15 +3,16 @@
 // found in the LICENSE file.
 
 
-#include <limits.h>
+#include <climits>
+#include <cstdint>
 #include <utility>
 
-#include "cstdint"
+#include <absl/base/macros.h>
+#include <absl/log/log.h>
+#include <absl/log/check.h>
 #include <absl/strings/string_view.h>
-#include "base/strings/string_piece.h"
-#include "base/strings/string_split.h"
-#include "base/strings/stringprintf.h"
-#include "base/stl_util.h"
+#include "absl/strings/str_format.h"
+#include "absl/strings/str_cat.h"
 
 #include "tin/net/inet.h"
 #include "tin/net/ip_address.h"
@@ -21,13 +22,13 @@ namespace {
 
 // The prefix for IPv6 mapped IPv4 addresses.
 // https://tools.ietf.org/html/rfc4291#section-2.5.5.2
-const uint8 kIPv4MappedPrefix[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xFF, 0xFF};
+const uint8_t kIPv4MappedPrefix[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xFF, 0xFF};
 
 // Note that this function assumes:
 // * |ip_address| is at least |prefix_length_in_bits| (bits) long;
 // * |ip_prefix| is at least |prefix_length_in_bits| (bits) long.
-bool IPAddressPrefixCheck(const std::vector<uint8>& ip_address,
-                          const uint8* ip_prefix,
+bool IPAddressPrefixCheck(const std::vector<uint8_t>& ip_address,
+                          const uint8_t* ip_prefix,
                           size_t prefix_length_in_bits) {
   // Compare all the bytes that fall entirely within the prefix.
   size_t num_entire_bytes_in_prefix = prefix_length_in_bits / 8;
@@ -40,7 +41,7 @@ bool IPAddressPrefixCheck(const std::vector<uint8>& ip_address,
   // which is only partially masked.
   size_t remaining_bits = prefix_length_in_bits % 8;
   if (remaining_bits != 0) {
-    uint8 mask = 0xFF << (8 - remaining_bits);
+    uint8_t mask = 0xFF << (8 - remaining_bits);
     size_t i = num_entire_bytes_in_prefix;
     if ((ip_address[i] & mask) != (ip_prefix[i] & mask))
       return false;
@@ -58,11 +59,11 @@ bool IPAddressPrefixCheck(const std::vector<uint8>& ip_address,
 
 namespace {
 struct ReservedIPv4Range {
-  const uint8 address[4];
+  const uint8_t address[4];
   size_t prefix_length_in_bits;
 };
 }
-bool IsReservedIPv4(const std::vector<uint8>& ip_address) {
+bool IsReservedIPv4(const std::vector<uint8_t>& ip_address) {
   // Different IP versions have different range reservations.
   DCHECK_EQ(tin::net::IPAddress::kIPv4AddressSize, ip_address.size());
   static const ReservedIPv4Range kReservedIPv4Ranges[] = {
@@ -73,9 +74,9 @@ bool IsReservedIPv4(const std::vector<uint8>& ip_address) {
     {{224, 0, 0, 0}, 3}
   };
 
-  for (unsigned i = 0; i < arraysize(kReservedIPv4Ranges); ++i) {
-    if (IPAddressPrefixCheck(ip_address, kReservedIPv4Ranges[i].address,
-                             kReservedIPv4Ranges[i].prefix_length_in_bits)) {
+  for (auto kReservedIPv4Range : kReservedIPv4Ranges) {
+    if (IPAddressPrefixCheck(ip_address, kReservedIPv4Range.address,
+                             kReservedIPv4Range.prefix_length_in_bits)) {
       return true;
     }
   }
@@ -91,12 +92,12 @@ bool IsReservedIPv4(const std::vector<uint8>& ip_address) {
 
 namespace {
 struct PublicIPv6Range {
-  const uint8 address_prefix[2];
+  const uint8_t address_prefix[2];
   size_t prefix_length_in_bits;
 };
 }
 
-bool IsReservedIPv6(const std::vector<uint8>& ip_address) {
+bool IsReservedIPv6(const std::vector<uint8_t>& ip_address) {
   // Different IP versions have different range reservations.
   DCHECK_EQ(tin::net::IPAddress::kIPv6AddressSize, ip_address.size());
   static const PublicIPv6Range kPublicIPv6Ranges[] = {
@@ -106,9 +107,9 @@ bool IsReservedIPv6(const std::vector<uint8>& ip_address) {
     {{0xff, 0}, 8},
   };
 
-  for (unsigned i = 0; i < arraysize(kPublicIPv6Ranges); ++i) {
-    if (IPAddressPrefixCheck(ip_address, kPublicIPv6Ranges[i].address_prefix,
-                             kPublicIPv6Ranges[i].prefix_length_in_bits)) {
+  for (auto kPublicIPv6Range : kPublicIPv6Ranges) {
+    if (IPAddressPrefixCheck(ip_address, kPublicIPv6Range.address_prefix,
+                             kPublicIPv6Range.prefix_length_in_bits)) {
       return false;
     }
   }
@@ -117,12 +118,12 @@ bool IsReservedIPv6(const std::vector<uint8>& ip_address) {
 }
 
 bool ParseIPLiteralToBytes(const absl::string_view& ip_literal,
-                           std::vector<uint8>* bytes) {
+                           std::vector<uint8_t>* bytes) {
   // |ip_literal| could be either an IPv4 or an IPv6 literal. If it contains
   // a colon however, it must be an IPv6 address.
   bool ipv4 = ip_literal.find(':') == absl::string_view::npos;
   bytes->resize(ipv4 ? 4 : 16);  // 128 bits.
-  return tin::net::INetPToN(ipv4, ip_literal.data(), vector_as_array(bytes));
+  return tin::net::INetPToN(ipv4, ip_literal.data(), &bytes[0]);
 }
 
 }  // namespace
@@ -131,13 +132,13 @@ namespace net {
 
 IPAddress::IPAddress() {}
 
-IPAddress::IPAddress(const std::vector<uint8>& address)
+IPAddress::IPAddress(const std::vector<uint8_t>& address)
   : ip_address_(address) {}
 
-IPAddress::IPAddress(const uint8* address, size_t address_len)
+IPAddress::IPAddress(const uint8_t* address, size_t address_len)
   : ip_address_(address, address + address_len) {}
 
-IPAddress::IPAddress(uint8 b0, uint8 b1, uint8 b2, uint8 b3) {
+IPAddress::IPAddress(uint8_t b0, uint8_t b1, uint8_t b2, uint8_t b3) {
   ip_address_.reserve(4);
   ip_address_.push_back(b0);
   ip_address_.push_back(b1);
@@ -145,26 +146,26 @@ IPAddress::IPAddress(uint8 b0, uint8 b1, uint8 b2, uint8 b3) {
   ip_address_.push_back(b3);
 }
 
-IPAddress::IPAddress(uint8 b0,
-                     uint8 b1,
-                     uint8 b2,
-                     uint8 b3,
-                     uint8 b4,
-                     uint8 b5,
-                     uint8 b6,
-                     uint8 b7,
-                     uint8 b8,
-                     uint8 b9,
-                     uint8 b10,
-                     uint8 b11,
-                     uint8 b12,
-                     uint8 b13,
-                     uint8 b14,
-                     uint8 b15) {
-  const uint8 address[] = {b0, b1, b2,  b3,  b4,  b5,  b6,  b7,
+IPAddress::IPAddress(uint8_t b0,
+                     uint8_t b1,
+                     uint8_t b2,
+                     uint8_t b3,
+                     uint8_t b4,
+                     uint8_t b5,
+                     uint8_t b6,
+                     uint8_t b7,
+                     uint8_t b8,
+                     uint8_t b9,
+                     uint8_t b10,
+                     uint8_t b11,
+                     uint8_t b12,
+                     uint8_t b13,
+                     uint8_t b14,
+                     uint8_t b15) {
+  const uint8_t address[] = {b0, b1, b2,  b3,  b4,  b5,  b6,  b7,
                            b8, b9, b10, b11, b12, b13, b14, b15
                           };
-  ip_address_.assign(address, address + arraysize(address));
+  ip_address_.assign(address, address + ABSL_ARRAYSIZE(address));
 }
 
 
@@ -208,7 +209,7 @@ bool IPAddress::IsIPv4MappedIPv6() const {
 }
 
 bool IPAddress::AssignFromIPLiteral(const absl::string_view& ip_literal) {
-  std::vector<uint8> number;
+  std::vector<uint8_t> number;
 
   if (!ParseIPLiteralToBytes(ip_literal, &number))
     return false;
@@ -219,13 +220,13 @@ bool IPAddress::AssignFromIPLiteral(const absl::string_view& ip_literal) {
 
 // static
 IPAddress IPAddress::IPv4Localhost() {
-  static const uint8 kLocalhostIPv4[] = {127, 0, 0, 1};
+  static const uint8_t kLocalhostIPv4[] = {127, 0, 0, 1};
   return IPAddress(kLocalhostIPv4);
 }
 
 // static
 IPAddress IPAddress::IPv6Localhost() {
-  static const uint8 kLocalhostIPv6[] = {0, 0, 0, 0, 0, 0, 0, 0,
+  static const uint8_t kLocalhostIPv6[] = {0, 0, 0, 0, 0, 0, 0, 0,
                                          0, 0, 0, 0, 0, 0, 0, 1
                                         };
   return IPAddress(kLocalhostIPv6);
@@ -233,7 +234,7 @@ IPAddress IPAddress::IPv6Localhost() {
 
 // static
 IPAddress IPAddress::AllZeros(size_t num_zero_bytes) {
-  return IPAddress(std::vector<uint8>(num_zero_bytes));
+  return IPAddress(std::vector<uint8_t>(num_zero_bytes));
 }
 
 // static
@@ -265,35 +266,35 @@ bool IPAddress::operator<(const IPAddress& that) const {
 
 std::string IPAddress::ToString() const {
   std::string str;
-  InetNToP(IsIPv4(), vector_as_array(&ip_address_), &str);
+  InetNToP(IsIPv4(), &ip_address_[0], &str);
   return str;
 }
 
-std::string IPAddressToStringWithPort(const IPAddress& address, uint16 port) {
+std::string IPAddressToStringWithPort(const IPAddress& address, uint16_t port) {
   std::string address_str = address.ToString();
   if (address_str.empty())
     return address_str;
 
   if (address.IsIPv6()) {
     // Need to bracket IPv6 addresses since they contain colons.
-    return base::StringPrintf("[%s]:%d", address_str.c_str(), port);
+    return absl::StrCat("[", address_str, "]:", port);
   }
-  return base::StringPrintf("%s:%d", address_str.c_str(), port);
+  return absl::StrCat(address_str, ":", port);
 }
 
 std::string IPAddressToPackedString(const IPAddress& address) {
   return std::string(reinterpret_cast<const char*>(
-                       vector_as_array(&address.bytes())), address.size());
+                       &address.bytes()[0]), address.size());
 }
 
 IPAddress ConvertIPv4ToIPv4MappedIPv6(const IPAddress& address) {
   DCHECK(address.IsIPv4());
   // IPv4-mapped addresses are formed by:
   // <80 bits of zeros>  + <16 bits of ones> + <32-bit IPv4 address.
-  std::vector<uint8> bytes;
+  std::vector<uint8_t> bytes;
   bytes.reserve(16);
   bytes.insert(bytes.end(), kIPv4MappedPrefix,
-               kIPv4MappedPrefix + arraysize(kIPv4MappedPrefix));
+               kIPv4MappedPrefix + ABSL_ARRAYSIZE(kIPv4MappedPrefix));
   bytes.insert(bytes.end(), address.bytes().begin(), address.bytes().end());
   return IPAddress(bytes);
 }
@@ -301,8 +302,8 @@ IPAddress ConvertIPv4ToIPv4MappedIPv6(const IPAddress& address) {
 IPAddress ConvertIPv4MappedIPv6ToIPv4(const IPAddress& address) {
   DCHECK(address.IsIPv4MappedIPv6());
 
-  return IPAddress(std::vector<uint8>(
-                     address.bytes().begin() + arraysize(kIPv4MappedPrefix),
+  return IPAddress(std::vector<uint8_t>(
+                     address.bytes().begin() + ABSL_ARRAYSIZE(kIPv4MappedPrefix),
                      address.bytes().end()));
 }
 
@@ -329,7 +330,7 @@ bool IPAddressMatchesPrefix(const IPAddress& ip_address,
   }
 
   return IPAddressPrefixCheck(ip_address.bytes(),
-                              vector_as_array(&ip_prefix.bytes()),
+                              &ip_prefix.bytes()[0],
                               prefix_length_in_bits);
 }
 
@@ -357,13 +358,12 @@ unsigned CommonPrefixLength(const IPAddress& a1, const IPAddress& a2) {
         return static_cast<unsigned>(i * CHAR_BIT + j);
       diff <<= 1;
     }
-    NOTREACHED();
   }
   return static_cast<unsigned>(a1.size() * CHAR_BIT);
 }
 
 unsigned MaskPrefixLength(const IPAddress& mask) {
-  std::vector<uint8> all_ones(mask.size(), 0xFF);
+  std::vector<uint8_t> all_ones(mask.size(), 0xFF);
   return CommonPrefixLength(mask, IPAddress(all_ones));
 }
 

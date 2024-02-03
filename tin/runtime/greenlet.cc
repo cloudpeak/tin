@@ -5,6 +5,8 @@
 #include <utility>
 #include <functional>
 
+#include <cliff/strings/string_util.h>
+
 #include "context/zcontext.h"
 #include "tin/runtime/m.h"
 #include "tin/runtime/p.h"
@@ -28,10 +30,10 @@ Greenlet::~Greenlet() {
 
 void Greenlet::SetName(const char* name) {
   // TODO
-/*  if (name != NULL)
-    base::strlcpy(name_, name, arraysize(name_));
+  if (name != NULL)
+    cliff::strlcpy(name_, name, ABSL_ARRAYSIZE(name_));
   else
-    base::strlcpy(name_, "greenlet", arraysize(name_));*/
+    cliff::strlcpy(name_, "greenlet", ABSL_ARRAYSIZE(name_));
 }
 
 Timer* Greenlet::GetTimer() {
@@ -54,7 +56,7 @@ Greenlet* Greenlet::Create(GreenletFunc entry,
   // joinable, not implement
   if (stack_size == 0)
     stack_size = kDefaultStackSize;
-  scoped_ptr<Greenlet> glet(new Greenlet);
+  std::unique_ptr<Greenlet> glet(new Greenlet);
   {
     glet->flags_ = 0;
     glet->args_ = 0;
@@ -79,7 +81,7 @@ Greenlet* Greenlet::Create(GreenletFunc entry,
     sched->WakePIfNecessary();
   } else {
     glet->SetG0Flag();
-    glet_tls->Set(glet.get());
+    glet_tls = glet.get();
   }
   return glet.release();
 }

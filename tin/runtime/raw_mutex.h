@@ -19,7 +19,7 @@ class RawMutex {
  private:
   uintptr_t key;
   M* owner_;
-  DISALLOW_COPY_AND_ASSIGN(RawMutex);
+//   DISALLOW_COPY_AND_ASSIGN(RawMutex);
 };
 
 class  RawMutexGuard {
@@ -34,7 +34,7 @@ class  RawMutexGuard {
 
  private:
   RawMutex* lock_;
-  DISALLOW_COPY_AND_ASSIGN(RawMutexGuard);
+ // DISALLOW_COPY_AND_ASSIGN(RawMutexGuard);
 };
 
 class Note {
@@ -50,7 +50,7 @@ class Note {
   bool SleepInternal(int64_t ns);
  private:
   uintptr_t key;
-  DISALLOW_COPY_AND_ASSIGN(Note);
+ // DISALLOW_COPY_AND_ASSIGN(Note);
 };
 
 }  // namespace runtime

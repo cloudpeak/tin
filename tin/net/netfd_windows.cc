@@ -158,7 +158,7 @@ class WinIoServer {
 
  private:
   Chan<IoSrvReq> chan_;
-  DISALLOW_COPY_AND_ASSIGN(WinIoServer);
+ // DISALLOW_COPY_AND_ASSIGN(WinIoServer);
 };
 
 int WinIoServer::ExecIO(Operation* op, int* n) {
@@ -307,7 +307,7 @@ int NetFD::Init() {
     return err;
   if (hasLoadSetFileCompletionNotificationModes) {
     // We do not use events, so we can skip them always.
-    uint8 flags = FILE_SKIP_SET_EVENT_ON_HANDLE;
+    uint8_t flags = FILE_SKIP_SET_EVENT_ON_HANDLE;
     // It's not safe to skip completion notifications for UDP:
     if (global_skip_sync_notificaton && net_ == "tcp") {
       flags |= FILE_SKIP_COMPLETION_PORT_ON_SUCCESS;
@@ -510,7 +510,7 @@ int NetFD::Listen(int backlog /*= 511*/) {
 // note: me is listen socket.
 int NetFD::AcceptOne(Operation* op, NetFD** new_fd) {
   int err = 0;
-  scoped_ptr<NetFD> net_fd(NewFD(family_, sotype_, &err));
+  std::unique_ptr<NetFD> net_fd(NewFD(family_, sotype_, &err));
   if (!net_fd) {
     return err;
   }

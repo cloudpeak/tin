@@ -34,7 +34,7 @@ struct PollDescriptor : public base::RefCountedThreadSafe<PollDescriptor> {
   uint32_t user;
 
  private:
-  DISALLOW_COPY_AND_ASSIGN(PollDescriptor);
+  //DISALLOW_COPY_AND_ASSIGN(PollDescriptor);
 };
 
 inline PollDescriptor* NewPollDescriptor() {

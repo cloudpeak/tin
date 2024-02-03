@@ -48,6 +48,16 @@ void SubmitGetAddrInfoGletWork(GletWork* work) {
   SetErrorCode(TinGetaddrinfoTranslateError(work->LastError()));
 }
 
+absl::once_flag thread_poll_once;
+
+ThreadPoll* ThreadPoll::GetInstance() {
+  static ThreadPoll* instance = nullptr;
+  absl::call_once(thread_poll_once, []() {
+      instance = new ThreadPoll();
+  });
+  return instance;
+}
+
 // ThreadPoll implementation.
 ThreadPoll::ThreadPoll()
   : num_threads_(64)

@@ -19,7 +19,7 @@ bool CanSpin(int i) {
   if (i >= spin::kActiveSpin ||
       rtm_env->NumberOfProcessors() <= 1 ||
       max_proc <=
-      static_cast<int32>(sched->NrIdleP() + sched->NrSpinning() + 1)) {
+      static_cast<int32_t>(sched->NrIdleP() + sched->NrSpinning() + 1)) {
     return false;
   }
   if (!GetG()->M()->P()->RunqEmpty()) {

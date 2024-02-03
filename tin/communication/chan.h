@@ -78,7 +78,7 @@ class Channel
       runtime::RawMutexGuard guard(&lock_);
       std::swap(queue, queue_);
     }
-    ClearQueue(queue, base::is_pointer<T>());
+    ClearQueue(queue, std::is_pointer<T>());
     runtime::SemRelease(&free_space_sem_);
     runtime::SemRelease(&used_space_sem_);
   }
@@ -88,11 +88,11 @@ class Channel
   }
 
  private:
-  void ClearQueue(std::deque<T>& queue, base::false_type) {  // NOLINT
+  void ClearQueue(std::deque<T>& queue, std::false_type) {  // NOLINT
     queue.clear();
   }
 
-  void ClearQueue(std::deque<T>& queue, base::true_type) {  // NOLINT
+  void ClearQueue(std::deque<T>& queue, std::true_type) {  // NOLINT
     for (typename std::deque<T>::iterator iter = queue.begin();
          iter != queue.end();
          ++iter) {

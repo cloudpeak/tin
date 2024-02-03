@@ -15,8 +15,7 @@
 #include <fcntl.h>
 #include <time.h>
 
-#include "base/logging.h"
-#include "base/posix/eintr_wrapper.h"
+
 #include "tin/runtime/runtime.h"
 #include "tin/runtime/posix_util.h"
 #include "tin/runtime/net/NetPoll.h"

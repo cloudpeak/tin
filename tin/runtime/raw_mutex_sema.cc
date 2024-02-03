@@ -3,8 +3,8 @@
 // found in the LICENSE file.
 
 
-#include "base/sys_info.h"
 
+#include <thread>
 
 #include "tin/sync/atomic.h"
 #include "tin/runtime/runtime.h"
@@ -66,7 +66,7 @@ void RawMutex::Lock() {
       if (i < spin) {
         YieldLogicProcessor(spin::kActiveSpinCount);
       } else if (i < spin + spin::kPassiveSpin) {
-        base::PlatformThread::YieldCurrentThread();
+        std::this_thread::yield();
       } else {
         // Someone else has it.
         // l->waitm points to a linked list of M's waiting
@@ -247,18 +247,17 @@ int32_t SemaSleep(int64_t ns) {
     }
   }
   if (us == -1) {
-    m->WaitSemaphore()->Wait();
+    m->WaitSemaphore()->WaitForNotification();
   } else {
-    base::TimeDelta delta = base::TimeDelta::FromMicroseconds(us);
-    if (!m->WaitSemaphore()->TimedWait(delta)) {
-      return -1;
-    }
+    // us is in microseconds.
+    absl::Duration duration = absl::Microseconds(us);
+    m->WaitSemaphore()->WaitForNotificationWithTimeout(duration);
   }
   return 0;
 }
 
 void SemaWakeup(M* m) {
-  m->WaitSemaphore()->Signal();
+  m->WaitSemaphore()->Notify();
 }
 
 }  // namespace runtime

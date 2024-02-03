@@ -19,7 +19,7 @@ class Mutex {
  private:
   int32_t state_;
   uint32_t sema_;
-  DISALLOW_COPY_AND_ASSIGN(Mutex);
+//  DISALLOW_COPY_AND_ASSIGN(Mutex);
 };
 
 class  MutexGuard {
@@ -34,7 +34,7 @@ class  MutexGuard {
 
  private:
   Mutex* lock_;
-  DISALLOW_COPY_AND_ASSIGN(MutexGuard);
+ // DISALLOW_COPY_AND_ASSIGN(MutexGuard);
 };
 
 

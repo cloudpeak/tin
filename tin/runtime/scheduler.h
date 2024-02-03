@@ -58,7 +58,7 @@ class Scheduler {
   }
 
   uint32_t LastPollTime();
-  uint32* MutableLastPollTime() {
+  uint32_t* MutableLastPollTime() {
     return &last_poll_;
   }
 
@@ -89,7 +89,7 @@ class Scheduler {
   P** allp_;
 
   friend class SchedulerLocker;
-  DISALLOW_COPY_AND_ASSIGN(Scheduler);
+//  DISALLOW_COPY_AND_ASSIGN(Scheduler);
 };
 
 

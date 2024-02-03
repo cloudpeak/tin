@@ -114,19 +114,19 @@ class Greenlet {
   GUintptr schedlink_;
   tin::runtime::M* m_;
   tin::runtime::M* lockedm_;
-  base::Closure cb_;
+  std::function<void()>  cb_;
   GreenletFunc entry_;
   std::function<void()> closure_;
   intptr_t args_;
   void* retval_;
   char name_[32];
-  scoped_ptr<Stack> stack_;
+  std::unique_ptr<Stack> stack_;
   zcontext_t context_;
   int state_;
   int32_t flags_;
   int error_code_;
   Timer* timer_;
-  DISALLOW_COPY_AND_ASSIGN(Greenlet);
+//  DISALLOW_COPY_AND_ASSIGN(Greenlet);
 };
 
 void SpawnSimple(GreenletFunc entry, void* args = NULL,
@@ -135,7 +135,7 @@ void SpawnSimple(std::function<void()> closure,  const char* name = NULL);
 
 }  // namespace runtime
 
-void RuntimeSpawn(base::Closure* closure);
+void RuntimeSpawn(std::function<void()>* closure);
 
 }  // namespace tin
 
