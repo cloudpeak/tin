@@ -24,6 +24,8 @@ typedef class P AliasP;
 class P {
  public:
   explicit P(int id);
+  P(const P&) = delete;
+  P& operator=(const P&) = delete;
   int Id() const {
     return id_;
   }
@@ -102,7 +104,6 @@ class P {
   uint32_t status_;
   uint32_t sched_tick_;
   tin::runtime::M* m_;
-//  DISALLOW_COPY_AND_ASSIGN(P);
 };
 
 }  // namespace runtime

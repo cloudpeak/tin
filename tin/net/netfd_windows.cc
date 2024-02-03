@@ -127,6 +127,11 @@ class WinIoServer {
   WinIoServer()
     : chan_(MakeChan<IoSrvReq>()) {
   }
+
+    // Disable copy (and move) semantics.
+  WinIoServer(const WinIoServer&) = delete;
+  WinIoServer& operator=(const WinIoServer&) = delete;
+
   void Start() {
    // runtime::SpawnSimple(
      // base::Bind(&WinIoServer::ProcessRemoteIO, base::Unretained(this)));
@@ -158,7 +163,6 @@ class WinIoServer {
 
  private:
   Chan<IoSrvReq> chan_;
- // DISALLOW_COPY_AND_ASSIGN(WinIoServer);
 };
 
 int WinIoServer::ExecIO(Operation* op, int* n) {

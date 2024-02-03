@@ -22,10 +22,10 @@ class M;
 class  Work {
  public:
   Work() { }
+  Work(const Work&) = delete;
+  Work& operator=(const Work&) = delete;
   virtual ~Work() { }
   virtual void Run() = 0;
- private:
-  //DISALLOW_COPY_AND_ASSIGN(Work);
 };
 
 class GletWork : public Work {

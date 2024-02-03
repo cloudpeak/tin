@@ -4,16 +4,20 @@
 
 #pragma once
 
-#include "base/memory/ref_counted.h"
+#include <cliff/memory/ref_counted.h>
+
 #include "tin/runtime/raw_mutex.h"
 #include "tin/runtime/timer/timer_queue.h"
+#include <atomic>
 
 
-namespace tin {
-namespace runtime {
+namespace tin::runtime {
 
-struct PollDescriptor : public base::RefCountedThreadSafe<PollDescriptor> {
+
+ struct PollDescriptor : public cliff::RefCountedThreadSafe {
   PollDescriptor();
+  PollDescriptor(const PollDescriptor&) = delete;
+  PollDescriptor& operator=(const PollDescriptor&) = delete;
 
   ~PollDescriptor() {
     // LOG(INFO) << "PollDescriptor destructor";
@@ -33,8 +37,6 @@ struct PollDescriptor : public base::RefCountedThreadSafe<PollDescriptor> {
 
   uint32_t user;
 
- private:
-  //DISALLOW_COPY_AND_ASSIGN(PollDescriptor);
 };
 
 inline PollDescriptor* NewPollDescriptor() {
@@ -43,8 +45,8 @@ inline PollDescriptor* NewPollDescriptor() {
   return descriptor;
 }
 
-}  // namespace runtime
-}  // namespace tin
+} // namespace tin::runtime
+
 
 
 

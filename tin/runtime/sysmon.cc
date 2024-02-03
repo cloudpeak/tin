@@ -19,7 +19,7 @@ void SysMon() {
   while (!rtm_env->ExitFlag()) {
     absl::SleepFor(absl::Milliseconds(8));
     uint32_t last_poll = sched->LastPollTime();
-    uint32_t now = static_cast<uint32>(MonoNow() / tin::kMillisecond);
+    uint32_t now = static_cast<uint32_t>(MonoNow() / tin::kMillisecond);
     if (now == 0)
       now = 1;
     // no worry about uint32_t wrapping, it's well defined in C++ standard.

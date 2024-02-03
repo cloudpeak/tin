@@ -18,6 +18,8 @@ class Cond {
     : lock_(lock)
     , waiters_(0) {
   }
+  Cond(const Cond&) = delete;
+  Cond& operator=(const Cond&) = delete;
   void Wait();
   void Signal();
   void Broascast();
@@ -29,7 +31,6 @@ class Cond {
   Mutex* lock_;
   runtime::SyncSema sem_;
   uint32_t waiters_;
-//  DISALLOW_COPY_AND_ASSIGN(Cond);
 };
 
 }  // namespace tin

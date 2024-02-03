@@ -36,6 +36,8 @@ typedef void* (*GreenletFunc)(intptr_t);
 class Greenlet {
  public:
   Greenlet();
+  Greenlet(const Greenlet&) = delete;
+  Greenlet& operator=(const Greenlet&) = delete;
 
   ~Greenlet();
 
@@ -126,7 +128,6 @@ class Greenlet {
   int32_t flags_;
   int error_code_;
   Timer* timer_;
-//  DISALLOW_COPY_AND_ASSIGN(Greenlet);
 };
 
 void SpawnSimple(GreenletFunc entry, void* args = NULL,

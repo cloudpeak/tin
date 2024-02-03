@@ -16,6 +16,8 @@ namespace runtime {
 class Env {
  public:
   Env();
+  Env(const Env&) = delete;
+  Env& operator=(const Env&) = delete;
   int Initialize(EntryFn fn, int argc, char** argv, Config* new_conf);
   void Deinitialize();
   tin::Config* GetConfig() const {
@@ -44,7 +46,6 @@ class Env {
   int num_processors_;
   absl::Notification main_signal_;
   tin::AtomicFlag exit_flag_;
-//  DISALLOW_COPY_AND_ASSIGN(Env);
 };
 
 class Scheduler;

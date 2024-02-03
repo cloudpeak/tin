@@ -19,6 +19,8 @@ class M;
 class Scheduler {
  public:
   Scheduler();
+  Scheduler(const Scheduler&) = delete;
+  Scheduler& operator=(const Scheduler&) = delete;
 
   G* FindRunnable(bool* inherit_time);
 
@@ -89,7 +91,6 @@ class Scheduler {
   P** allp_;
 
   friend class SchedulerLocker;
-//  DISALLOW_COPY_AND_ASSIGN(Scheduler);
 };
 
 

@@ -133,7 +133,6 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
 
 set(SOURCES 
 tin/io/io.cc
-tin/io/ioutil.cc
 tin/io/io_buffer.cc
 tin/net/address_family.cc
 tin/net/address_list.cc
@@ -232,7 +231,6 @@ if (WIN32)
 		tin/error/error.h
 		tin/error/error_inl.h
 		tin/io/io.h
-		tin/io/ioutil.h
 		tin/io/io_buffer.h
 		tin/net/address_family.h
 		tin/net/address_list.h

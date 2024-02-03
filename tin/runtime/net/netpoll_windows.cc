@@ -57,7 +57,7 @@ void NetPollPreDeinit() {
 
 int32_t NetPollOpen(uintptr_t fd, PollDescriptor* pd) {
   if (CreateIoCompletionPort((HANDLE)fd, iocphandle, 0, 0) == 0) {
-    return static_cast<int32>(GetLastError());
+    return static_cast<int32_t>(GetLastError());
   }
   return 0;
 }

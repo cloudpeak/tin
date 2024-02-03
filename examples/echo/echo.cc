@@ -10,7 +10,7 @@ void HandleClient0(tin::net::TcpConn conn) {
 
   // user space buffer size.
   const int kIOBufferSize = 4 * 1024;
-  scoped_ptr<char[]> buf(new char[kIOBufferSize]);
+  std::unique_ptr<char[]> buf(new char[kIOBufferSize]);
 
   // set read, write deadline.
   const int64_t kRWDeadline = 20 * tin::kSecond;
@@ -53,7 +53,7 @@ void HandleClient1(tin::net::TcpConn conn) {
 
   // user space buffer size.
   const int kIOBufferSize = 4 * 1024;
-  scoped_ptr<char[]> buf(new char[kIOBufferSize]);
+  std::unique_ptr<char[]> buf(new char[kIOBufferSize]);
 
   // record read,  write timestamp.
   int64_t last_set_recv_time = tin::MonoNow();
@@ -113,7 +113,7 @@ void HandleClient2(tin::net::TcpConn conn) {
 
   // user space buffer size.
   const int kIOBufferSize = 4 * 1024;
-  scoped_ptr<char[]> buf(new char[kIOBufferSize]);
+  std::unique_ptr<char[]> buf(new char[kIOBufferSize]);
 
   // record read, write timestamp.
   int64_t last_recv_time = tin::MonoNow();
@@ -207,7 +207,7 @@ void Dispatch(tin::net::TcpConn conn, const int64_t id) {
 }
 
 int TinMain(int argc, char** argv) {
-  const uint16 kPort = 2222;
+  const uint16_t kPort = 2222;
   bool use_ipv6 = false;
   tin::net::TCPListener listener =
     tin::net::ListenTcp(use_ipv6 ? "0:0:0:0:0:0:0:0" : "0.0.0.0", kPort);

@@ -16,6 +16,8 @@ class AtomicFlag {
   explicit AtomicFlag(bool flag = false)
     : flag_(flag ? 1 : 0) {
   }
+  AtomicFlag(const AtomicFlag&) = delete;
+  AtomicFlag& operator=(const AtomicFlag&) = delete;
   ~AtomicFlag() {
   }
 
@@ -30,7 +32,6 @@ class AtomicFlag {
 
  private:
   uint32_t flag_;
-  //DISALLOW_COPY_AND_ASSIGN(AtomicFlag);
 };
 
 }  // namespace tin

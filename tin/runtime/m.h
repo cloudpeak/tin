@@ -23,6 +23,8 @@ typedef class M AliasM;
 
 class M  {
  public:
+  M(const M&) = delete;
+  M& operator=(const M&) = delete;
   virtual ~M();
 
   bool GetSpinning() const {
@@ -165,7 +167,6 @@ class M  {
   bool is_m0_;
   std::list<G*> dead_queue_;
   uint32_t locked_;
-  //DISALLOW_COPY_AND_ASSIGN(M);
 };
 
 } // namespace tin::runtime

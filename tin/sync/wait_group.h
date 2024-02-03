@@ -12,6 +12,8 @@ namespace tin {
 class WaitGroup {
  public:
   explicit WaitGroup(int delta = 0);
+  WaitGroup(const WaitGroup&) = delete;
+  WaitGroup& operator=(const WaitGroup&) = delete;
   ~WaitGroup();
 
   void Add(int32_t delta);
@@ -21,7 +23,6 @@ class WaitGroup {
  private:
   quark::atomic_uint64_t state_;
   uint32_t sem_;
-  //DISALLOW_COPY_AND_ASSIGN(WaitGroup);
 };
 
 

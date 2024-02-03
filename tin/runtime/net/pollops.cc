@@ -170,7 +170,7 @@ void SetDeadline(PollDescriptor* pd, int64_t d, int mode) {
   G* wg = NULL;
   // full memory barrier between stores to rd/wd
   // and load of rg/wg in NetPollUnblock
-  base::subtle::MemoryBarrier();
+  std::atomic_thread_fence(std::memory_order_seq_cst);
   if (pd->rd < 0) {
     rg = NetPollUnblock(pd, 'r', false);
   }
@@ -199,7 +199,7 @@ void Unblock(PollDescriptor* pd) {
   G* wg = NULL;
   // full memory barrier between stores to rd/wd
   // and load of rg/wg in NetPollUnblock
-  base::subtle::MemoryBarrier();
+  std::atomic_thread_fence(std::memory_order_seq_cst);
 
   rg = NetPollUnblock(pd, 'r', false);
   wg = NetPollUnblock(pd, 'w', false);

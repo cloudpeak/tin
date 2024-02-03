@@ -13,7 +13,10 @@ namespace tin {
 class RWMutex {
  public:
   RWMutex();
+  RWMutex(const RWMutex&) = delete;
+  RWMutex& operator=(const RWMutex&) = delete;
   ~RWMutex();
+
 
   void RLock();
   void RUnlock();
@@ -26,7 +29,6 @@ class RWMutex {
   uint32_t reader_sem;     // semaphore for readers to wait for completing writers
   int32_t  reader_count_;  // number of pending readers
   int32_t  reader_wait_;   // number of departing readers
- // DISALLOW_COPY_AND_ASSIGN(RWMutex);
 };
 
 class MutexReaderGuard {
@@ -35,13 +37,14 @@ class MutexReaderGuard {
     : lock_(lock) {
     lock->RLock();
   }
+  MutexReaderGuard(const MutexReaderGuard&) = delete;
+  MutexReaderGuard& operator=(const MutexReaderGuard&) = delete;
   inline ~MutexReaderGuard() {
     lock_->RUnlock();
   }
 
  private:
   RWMutex* lock_;
- // DISALLOW_COPY_AND_ASSIGN(MutexReaderGuard);
 };
 
 class MutexWriterGuard {
@@ -50,13 +53,14 @@ class MutexWriterGuard {
     : lock_(lock) {
     lock->Lock();
   }
+  MutexWriterGuard(const MutexWriterGuard&) = delete;
+  MutexWriterGuard& operator=(const MutexWriterGuard&) = delete;
   inline ~MutexWriterGuard() {
     lock_->Unlock();
   }
 
  private:
   RWMutex* lock_;
-//  DISALLOW_COPY_AND_ASSIGN(MutexWriterGuard);
 };
 
 }  // namespace tin

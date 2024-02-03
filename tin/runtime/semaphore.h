@@ -44,7 +44,8 @@ class SyncSema {
     : head_(NULL)
     , tail_(NULL) {
   }
-
+  SyncSema(const SyncSema&) = delete;
+  SyncSema& operator=(const SyncSema&) = delete;
   void Acquire();
   void Release(uint32_t n);
 
@@ -52,7 +53,6 @@ class SyncSema {
   RawMutex lock_;
   Sudog* head_;
   Sudog* tail_;
- // DISALLOW_COPY_AND_ASSIGN(SyncSema);
 };
 
 }  // namespace runtime

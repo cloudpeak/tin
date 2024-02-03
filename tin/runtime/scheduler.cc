@@ -3,8 +3,6 @@
 // found in the LICENSE file.
 
 
-//#include "base/memory/aligned_memory.h"
-
 #include <thread>
 #include <cstdlib>
 
@@ -35,7 +33,7 @@ Scheduler::Scheduler()
   , mcount_(0)
   , max_mcount_(10000)
   , last_poll_(0) {
-  last_poll_ = static_cast<uint32>(MonoNow() / tin::kMillisecond);
+  last_poll_ = static_cast<uint32_t>(MonoNow() / tin::kMillisecond);
   if (last_poll_ == 0)
     last_poll_ = 1;
   allp_ = new P*[kTinProcsLimit];
@@ -43,8 +41,7 @@ Scheduler::Scheduler()
     allp_[i] = NULL;
   }
 }
-#include <cstdio>
-#include <cstdlib>
+
 // call it after world is stopped.
 P* Scheduler::ResizeProc(int nprocs) {
   int old = rtm_conf->MaxProcs();
@@ -267,7 +264,7 @@ top:
   // when GOMAXPROCS>>1 but the program parallelism is low.
 
   if (!curm->GetSpinning() && (2 * atomic::relaxed_load32(&nr_spinning_)) >=
-      (static_cast<uint32>(rtm_conf->MaxProcs()) -
+      (static_cast<uint32_t>(rtm_conf->MaxProcs()) -
        atomic::relaxed_load32(&nr_idlep_))) {
     goto stop;
   }
@@ -333,7 +330,7 @@ stop: {
 
   if (NetPollInited() && atomic::exchange32(&last_poll_, 0) != 0) {
     gp = NetPoll(true);
-    uint32_t now = static_cast<uint32>(MonoNow() / tin::kMillisecond);
+    uint32_t now = static_cast<uint32_t>(MonoNow() / tin::kMillisecond);
     if (now == 0)
       now = 1;
     atomic::relaxed_store32(&last_poll_, now);
@@ -539,7 +536,7 @@ void Scheduler::HandoffP(P* p) {
     return;
   }
 
-  if ((nr_idlep_ == static_cast<uint32>(rtm_conf->MaxProcs() - 1))
+  if ((nr_idlep_ == static_cast<uint32_t>(rtm_conf->MaxProcs() - 1))
       && atomic::load32(&last_poll_) != 0) {
     lock_.Unlock();
     StartM(p, false);
@@ -617,7 +614,7 @@ void Scheduler::ResetSpinning() {
   }
   gp->M()->SetSpinning(false);
   uint32_t nr_spinning = atomic::Inc32(&nr_spinning_, -1);
-  if (static_cast<int32>(nr_spinning) < 0) {
+  if (static_cast<int32_t>(nr_spinning) < 0) {
     LOG(FATAL) << "ResetSpinning: negative nr_spinning";
   }
   if (nr_spinning == 0 && atomic::load32(&nr_idlep_) > 0) {

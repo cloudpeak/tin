@@ -18,7 +18,6 @@
 #include "tin/error/error.h"
 #include "tin/time/time.h"
 #include "tin/communication/chan.h"
-#include "tin/io/ioutil.h"
 #include "tin/net/resolve.h"
 #include "tin/net/dialer.h"
 #include "tin/net/netfd.h"
