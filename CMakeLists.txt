@@ -48,8 +48,6 @@ if(MSVC)
     message("MSVC version is: ${MSVC_VERSION}")
 endif()
 
-find_package(absl REQUIRED)
-find_package(cliff REQUIRED)
 
 include_directories(
 		${CMAKE_INSTALL_PREFIX}/include
