@@ -2,8 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "base/memory/singleton.h"
-#include "base/atomicops.h"
+#include <atomic>
+
 #include "tin/sync/mutex.h"
 #include "tin/util/unique_id.h"
 #include "quark/atomic.hpp"
@@ -12,27 +12,24 @@ namespace tin {
 
 class UniqueIdGenerator {
  public:
-  static UniqueIdGenerator* GetInstance() {
-    return Singleton<UniqueIdGenerator>::get();
-  }
 
-  uint64 Next() {
-    uint64 uid = uid_.fetch_add(1) + 1;
-    return uid;
-  }
-
- private:
   UniqueIdGenerator()
     : uid_(0) {
   }
+
+  uint64_t Next() {
+    uint64_t uid = uid_.fetch_add(1) + 1;
+    return uid;
+    }
  private:
   mutable tin::Mutex mutex_;
-  quark::atomic_uint64_t uid_;
-  friend struct DefaultSingletonTraits<UniqueIdGenerator>;
+  std::atomic<uint64_t> uid_;
 };
 
-uint64 GetUniqueId() {
-  return UniqueIdGenerator::GetInstance()->Next();
+UniqueIdGenerator UniqueIdGeneratorInst;
+
+uint64_t GetUniqueId() {
+  return UniqueIdGeneratorInst.Next();
 }
 
 }  // namespace tin.

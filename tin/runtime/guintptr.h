@@ -4,12 +4,11 @@
 
 #pragma once
 
-#include "build/build_config.h"
-#include "base/compiler_specific.h"
+#include <base/compiler_specific.h>
+#include "cliff/build/build_config.h"
 #include "tin/runtime/util.h"
 
-namespace tin {
-namespace runtime {
+namespace tin::runtime {
 
 // note, GUintptr is POD type, memset on GUintptr should be OK.
 class ALIGNAS(SIZE_OF_POINTER) GUintptr {
@@ -71,8 +70,8 @@ class ALIGNAS(SIZE_OF_POINTER) GUintptr {
 };
 
 
-}  // namespace runtime
-}  // namespace tin
+} // namespace tin::runtime
+
 
 
 

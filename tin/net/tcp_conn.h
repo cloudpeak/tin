@@ -4,9 +4,8 @@
 
 #pragma once
 
-#include "base/basictypes.h"
-#include "base/memory/scoped_ptr.h"
-#include "base/memory/ref_counted.h"
+#include <memory>
+
 #include "tin/time/time.h"
 #include "tin/io/io.h"
 
@@ -16,12 +15,15 @@ namespace net {
 class NetFD;
 
 class TcpConnImpl
-  : public base::RefCountedThreadSafe<TcpConnImpl>
+  : public std::enable_shared_from_this<TcpConnImpl>
   , public tin::io::IOReadWriter {
  public:
   explicit TcpConnImpl(NetFD* netfd);
 
   virtual ~TcpConnImpl();
+
+  TcpConnImpl(const TcpConnImpl&) = delete;
+  TcpConnImpl& operator=(const TcpConnImpl&) = delete;
 
   // note: Read full or partial on success, or read partial on failure.
   // return value : indicate n bytes written. n >= 0.
@@ -35,11 +37,11 @@ class TcpConnImpl
   // detail error, see tin::GetErrorCode()
   int Write(const void* buf, int nbytes);
 
-  void SetDeadline(int64 t);
+  void SetDeadline(int64_t t);
 
-  void SetReadDeadline(int64 t);
+  void SetReadDeadline(int64_t t);
 
-  void SetWriteDeadline(int64 t);
+  void SetWriteDeadline(int64_t t);
 
   bool SetKeepAlive(bool enable, int sec);
 
@@ -61,26 +63,36 @@ class TcpConnImpl
 
   void Close();
 
-  int64 TotalReadBytes() const {
+  int64_t TotalReadBytes() const {
     return total_read_bytes_;
   }
 
  private:
   NetFD* netfd_;
-  int64 total_read_bytes_;
-  DISALLOW_COPY_AND_ASSIGN(TcpConnImpl);
+  int64_t total_read_bytes_;
 };
 
-class TcpConn
-  : public scoped_refptr<TcpConnImpl> {
- public:
-  explicit TcpConn(TcpConnImpl* t)
-    : scoped_refptr<TcpConnImpl>(t) {
-  }
+
+class TcpConn {
+public:
+    TcpConn(TcpConnImpl* conn)
+      : impl_(conn) {
+    }
+
+    TcpConn(const TcpConn& other)
+      : impl_(other.impl_) {
+    }
+
+    TcpConnImpl*  operator->() {
+      return impl_.get();
+    }
+
+private:
+    std::shared_ptr<TcpConnImpl> impl_;
 };
 
 inline TcpConn MakeTcpConn(TcpConnImpl* conn) {
-  return TcpConn(conn);
+  return {conn};
 }
 
 }  // namespace net

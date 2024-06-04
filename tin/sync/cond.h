@@ -5,7 +5,7 @@
 #pragma once
 #include <stdlib.h>
 
-#include "base/basictypes.h"
+#include <cstdint>
 
 #include "tin/runtime/semaphore.h"
 #include "tin/sync/mutex.h"
@@ -18,6 +18,8 @@ class Cond {
     : lock_(lock)
     , waiters_(0) {
   }
+  Cond(const Cond&) = delete;
+  Cond& operator=(const Cond&) = delete;
   void Wait();
   void Signal();
   void Broascast();
@@ -28,8 +30,7 @@ class Cond {
  private:
   Mutex* lock_;
   runtime::SyncSema sem_;
-  uint32 waiters_;
-  DISALLOW_COPY_AND_ASSIGN(Cond);
+  uint32_t waiters_;
 };
 
 }  // namespace tin

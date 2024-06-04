@@ -2,7 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "base/threading/platform_thread.h"
+#include <absl/time/clock.h>
+
 #include "tin/sync/atomic.h"
 #include "tin/time/time.h"
 #include "tin/runtime/runtime.h"
@@ -16,12 +17,12 @@ namespace runtime {
 
 void SysMon() {
   while (!rtm_env->ExitFlag()) {
-    base::PlatformThread::Sleep(base::TimeDelta::FromMilliseconds(8));
-    uint32 last_poll = sched->LastPollTime();
-    uint32 now = static_cast<uint32>(MonoNow() / tin::kMillisecond);
+    absl::SleepFor(absl::Milliseconds(8));
+    uint32_t last_poll = sched->LastPollTime();
+    uint32_t now = static_cast<uint32_t>(MonoNow() / tin::kMillisecond);
     if (now == 0)
       now = 1;
-    // no worry about uint32 wrapping, it's well defined in C++ standard.
+    // no worry about uint32_t wrapping, it's well defined in C++ standard.
     if (NetPollInited() && last_poll != 0 && (last_poll + 10 < now)) {
       atomic::cas32(sched->MutableLastPollTime(), last_poll, now);
       G* gp = NetPoll(false);

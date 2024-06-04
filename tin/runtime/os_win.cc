@@ -3,7 +3,7 @@
 // found in the LICENSE file.
 
 #include <windows.h>
-#include "base/basictypes.h"
+#include <cstdint>
 
 namespace tin {
 
@@ -11,22 +11,22 @@ const uintptr_t kInterruptTime = 0x7ffe0008;
 const uintptr_t kSystemTime = 0x7ffe0014;
 
 struct KSYSTEMIME {
-  uint32 LowPart;
-  int32 High1Time;
-  int32 High2Time;
+  uint32_t LowPart;
+  int32_t High1Time;
+  int32_t High2Time;
 };
 
-int64 SysTime(uintptr_t addr) {
+int64_t SysTime(uintptr_t addr) {
   const KSYSTEMIME* time_addr = reinterpret_cast<const KSYSTEMIME*>(addr);
   KSYSTEMIME t;
-  int64 time;
+  int64_t time;
   while (true) {
     t.High1Time = time_addr->High1Time;
     t.LowPart = time_addr->LowPart;
     t.High2Time = time_addr->High2Time;
     if (t.High1Time == t.High2Time) {
-      time = static_cast<int64>(t.High1Time) << 32 |
-             static_cast<int64>(t.LowPart);
+      time = static_cast<int64_t>(t.High1Time) << 32 |
+             static_cast<int64_t>(t.LowPart);
       break;
     }
   }
@@ -34,17 +34,17 @@ int64 SysTime(uintptr_t addr) {
 }
 
 
-int64 Now() {
+int64_t Now() {
   return (SysTime(kSystemTime) - 116444736000000000) * 100;
 }
 
-int64 MonoNow() {
+int64_t MonoNow() {
   return SysTime(kInterruptTime) * 100;
 }
 
-int32 NowSeconds() {
-  int64 millisecond = Now() / 1000000000;
-  return static_cast<uint32>(millisecond);
+int32_t NowSeconds() {
+  int64_t millisecond = Now() / 1000000000;
+  return static_cast<uint32_t>(millisecond);
 }
 
 }  // namespace tin

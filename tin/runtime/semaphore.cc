@@ -2,9 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "base/logging.h"
-#include "base/compiler_specific.h"
-#include "base/basictypes.h"
+#include <absl/log/log.h>
+#include <absl/log/check.h>
 
 #include "tin/sync/atomic.h"
 #include "tin/runtime/runtime.h"
@@ -26,13 +25,13 @@ struct ALIGNAS(64) SemaRoot {
   RawMutex  lock;
   Sudog* head;
   Sudog* tail;
-  uint32 nwait;  // Number of waiters. Read w/o the lock.
+  uint32_t nwait;  // Number of waiters. Read w/o the lock.
 
-  void queue(uint32* addr, Sudog* s);
+  void queue(uint32_t* addr, Sudog* s);
   void dequeue(Sudog* s);
 };
 
-void SemaRoot::queue(uint32* addr, Sudog* s) {
+void SemaRoot::queue(uint32_t* addr, Sudog* s) {
   s->address = addr;
   s->gp = GetG();
   s->elem = addr;
@@ -68,13 +67,13 @@ const int kSemTabSize = 251;
 
 SemaRoot kSemTable[kSemTabSize];
 
-SemaRoot* semroot(uint32* addr) {
+SemaRoot* semroot(uint32_t* addr) {
   return &kSemTable[(uintptr_t(addr) >> 3) % kSemTabSize];
 }
 
-bool CanSemAcquire(uint32* addr) {
+bool CanSemAcquire(uint32_t* addr) {
   while (true) {
-    uint32 v = atomic::load32(addr);
+    uint32_t v = atomic::load32(addr);
     if (v == 0) {
       return false;
     }
@@ -85,8 +84,8 @@ bool CanSemAcquire(uint32* addr) {
 }
 
 namespace {
-const uint32 kWakedUpByReleaser = 1;
-const uint32 kWakedupByTimer = 2;
+const uint32_t kWakedUpByReleaser = 1;
+const uint32_t kWakedupByTimer = 2;
 }
 
 void OnSemDeadlineReached(void* arg, uintptr_t seq) {
@@ -107,7 +106,7 @@ void OnSemDeadlineReached(void* arg, uintptr_t seq) {
     Ready(gp);
 }
 
-void SemSetDeadline(G* gp, Sudog* s, int64 deadline) {
+void SemSetDeadline(G* gp, Sudog* s, int64_t deadline) {
   Timer* timer = gp->GetTimer();
   timer->f = OnSemDeadlineReached;
   timer->when = NanoFromNow(deadline);
@@ -115,7 +114,7 @@ void SemSetDeadline(G* gp, Sudog* s, int64 deadline) {
   timer_q->AddTimer(timer);
 }
 
-bool SemAcquire(uint32* addr) {
+bool SemAcquire(uint32_t* addr) {
   G* gp = GetG();
   if (gp != gp->M()->CurG()) {
     LOG(FATAL) << "SemAcquire not on the G stack";
@@ -159,7 +158,7 @@ bool SemAcquire(uint32* addr) {
   return !interruptd;
 }
 
-void SemRelease(uint32* addr) {
+void SemRelease(uint32_t* addr) {
   SemaRoot* root = semroot(addr);
   atomic::Inc32(addr, 1);
   if (atomic::load32(&root->nwait) == 0) {
@@ -225,7 +224,7 @@ void SyncSema::Acquire() {
   }
 }
 
-void SyncSema::Release(uint32 n) {
+void SyncSema::Release(uint32_t n) {
   lock_.Lock();
   while (n > 0 && head_ != NULL && head_->nrelease < 0) {
     // Have pending acquire, satisfy it.
@@ -241,7 +240,7 @@ void SyncSema::Release(uint32 n) {
   if (n > 0) {
     Sudog* w = new Sudog;
     w->gp = GetG();
-    w->nrelease = static_cast<int32>(n);
+    w->nrelease = static_cast<int32_t>(n);
     w->next = NULL;
     if (tail_ == NULL) {
       head_ = w;
@@ -258,11 +257,11 @@ void SyncSema::Release(uint32 n) {
 
 }  // namespace runtime
 
-void RuntimeSemacquire(uint32* addr) {
+void RuntimeSemacquire(uint32_t* addr) {
   runtime::SemAcquire(addr);
 }
 
-void RuntimeSemrelease(uint32* addr) {
+void RuntimeSemrelease(uint32_t* addr) {
   runtime::SemRelease(addr);
 }
 }  // namespace tin

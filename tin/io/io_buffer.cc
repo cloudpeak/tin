@@ -2,7 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "base/logging.h"
+#include <absl/log/log.h>
+#include <absl/log/check.h>
 #include "tin/io/io_buffer.h"
 
 // Some of the following member functions are marked inlined, even though they

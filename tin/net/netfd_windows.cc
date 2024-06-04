@@ -6,11 +6,9 @@
 #include <Mswsock.h>
 #include <mstcpip.h>
 
-#include "base/logging.h"
-#include "base/bind.h"
-#include "base/callback.h"
-#include "base/synchronization/once.h"
-#include "base/strings/string_util.h"
+#include <absl/log/log.h>
+#include <absl/log/check.h>
+#include <absl/base/call_once.h>
 #include "tin/net/net.h"
 #include "tin/net/sockaddr_storage.h"
 #include "tin/net/ip_address.h"
@@ -32,11 +30,11 @@ namespace {
 WinIoServer* rsrv = NULL;
 WinIoServer* wsrv = NULL;
 
-base::OnceType start_server_once_flag = ONCE_INIT;
+absl::once_flag start_server_once_flag;
 
 SockaddrStorage addr_ipv4_any;
 SockaddrStorage addr_ipv6_any;
-base::OnceType addr_any_init_once_flag = ONCE_INIT;
+absl::once_flag addr_any_init_once_flag;
 
 void InitAddrAny() {
   IPEndPoint addr4(IPAddress::IPv4AllZeros(), 0);
@@ -46,7 +44,7 @@ void InitAddrAny() {
 }
 
 SockaddrStorage* GetAddrAny(int family) {
-  base::CallOnce(&addr_any_init_once_flag, InitAddrAny);
+ absl::call_once(addr_any_init_once_flag, InitAddrAny);
   return family == ADDRESS_FAMILY_IPV4 ? &addr_ipv4_any : &addr_ipv6_any;
 }
 }  // namespace
@@ -129,9 +127,15 @@ class WinIoServer {
   WinIoServer()
     : chan_(MakeChan<IoSrvReq>()) {
   }
+
+    // Disable copy (and move) semantics.
+  WinIoServer(const WinIoServer&) = delete;
+  WinIoServer& operator=(const WinIoServer&) = delete;
+
   void Start() {
-    runtime::SpawnSimple(
-      base::Bind(&WinIoServer::ProcessRemoteIO, base::Unretained(this)));
+   // runtime::SpawnSimple(
+     // base::Bind(&WinIoServer::ProcessRemoteIO, base::Unretained(this)));
+    // std::bind(&WinIoServer::ProcessRemoteIO, this));
   }
 
   int ExecIO(Operation* o, int* n);
@@ -159,7 +163,6 @@ class WinIoServer {
 
  private:
   Chan<IoSrvReq> chan_;
-  DISALLOW_COPY_AND_ASSIGN(WinIoServer);
 };
 
 int WinIoServer::ExecIO(Operation* op, int* n) {
@@ -295,7 +298,7 @@ NetFD::NetFD(uintptr_t sysfd,
              const std::string& net)
   : NetFDCommon(sysfd, family, sotype, net)
   , skip_sync_notification_(false) {
-  base::CallOnce(&start_server_once_flag, StartWinIOServer);
+  absl::call_once(start_server_once_flag, StartWinIOServer);
 }
 
 NetFD::~NetFD() {
@@ -308,7 +311,7 @@ int NetFD::Init() {
     return err;
   if (hasLoadSetFileCompletionNotificationModes) {
     // We do not use events, so we can skip them always.
-    uint8 flags = FILE_SKIP_SET_EVENT_ON_HANDLE;
+    uint8_t flags = FILE_SKIP_SET_EVENT_ON_HANDLE;
     // It's not safe to skip completion notifications for UDP:
     if (global_skip_sync_notificaton && net_ == "tcp") {
       flags |= FILE_SKIP_COMPLETION_PORT_ON_SUCCESS;
@@ -422,7 +425,7 @@ int NetFD::CloseWrite() {
 }
 
 int NetFD::Connect(SockaddrStorage* laddr, SockaddrStorage* raddr,
-                   int64 deadline) {
+                   int64_t deadline) {
   int err = Init();
   if (err != 0) {
     return err;
@@ -451,7 +454,7 @@ int NetFD::Connect(SockaddrStorage* laddr, SockaddrStorage* raddr,
   return err;
 }
 
-int NetFD::Dial(IPEndPoint* local, IPEndPoint* remote, int64 deadline) {
+int NetFD::Dial(IPEndPoint* local, IPEndPoint* remote, int64_t deadline) {
   int err = 0;
   SockaddrStorage lstorage;
   if (local != NULL) {
@@ -511,7 +514,7 @@ int NetFD::Listen(int backlog /*= 511*/) {
 // note: me is listen socket.
 int NetFD::AcceptOne(Operation* op, NetFD** new_fd) {
   int err = 0;
-  scoped_ptr<NetFD> net_fd(NewFD(family_, sotype_, &err));
+  std::unique_ptr<NetFD> net_fd(NewFD(family_, sotype_, &err));
   if (!net_fd) {
     return err;
   }

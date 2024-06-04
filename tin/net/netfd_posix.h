@@ -4,7 +4,6 @@
 
 #pragma once
 #include <string>
-#include "base/strings/string_piece.h"
 #include "tin/net/fd_mutex.h"
 #include "tin/net/poll_desc.h"
 #include "tin/net/address_list.h"
@@ -38,7 +37,7 @@ class NetFD : public NetFDCommon {
 
   int CloseWrite();
 
-  int Dial(IPEndPoint* local, IPEndPoint* remote, int64 deadline);
+  int Dial(IPEndPoint* local, IPEndPoint* remote, int64_t deadline);
 
   int Bind(const IPEndPoint& address);
 
@@ -57,7 +56,7 @@ class NetFD : public NetFDCommon {
   int SetTCPKeepAlive(bool enable, int sec);
 
  private:
-  int Connect(SockaddrStorage* laddr, SockaddrStorage* raddr, int64 deadline);
+  int Connect(SockaddrStorage* laddr, SockaddrStorage* raddr, int64_t deadline);
   int AcceptImpl(NetFD** newfd);
 };
 

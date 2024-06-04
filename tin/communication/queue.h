@@ -5,8 +5,7 @@
 #pragma once
 #include <iostream>
 #include <deque>
-#include "base/memory/ref_counted.h"
-#include "base/synchronization/cancellation_flag.h"
+#include <memory>
 #include "tin/sync/atomic.h"
 #include "tin/runtime/raw_mutex.h"
 #include "tin/runtime/semaphore.h"
@@ -15,14 +14,14 @@
 
 namespace tin {
 
-const uint32 kDefaultQueueCapacity = 64;
-const uint32 kMaxQueueCapacity = kuint32max;
+const uint32_t kDefaultQueueCapacity = 64;
+const uint32_t kMaxQueueCapacity = kuint32max;
 
 template<class T>
 class QueueImpl
-  : public base::RefCountedThreadSafe<QueueImpl<T> > {
+  : public std::enable_shared_from_this<QueueImpl<T>>  {
  public:
-  explicit QueueImpl(uint32 capacity = kDefaultQueueCapacity)
+  explicit QueueImpl(uint32_t capacity = kDefaultQueueCapacity)
     : capacity_(capacity)
     , full_waiters_(0)
     , empty_waiters_(0)
@@ -30,6 +29,9 @@ class QueueImpl
     , empty_cond_(&lock_)
     , closed_(false) {
   }
+
+  QueueImpl(const QueueImpl&) = delete;
+  QueueImpl& operator=(const QueueImpl&) = delete;
 
   bool Enqueue(const T& t, size_t* size = NULL) {
     MutexGuard guard(&lock_);
@@ -130,39 +132,44 @@ class QueueImpl
     }
   }
 
- private:
-  friend class base::RefCountedThreadSafe<QueueImpl<T>>;
   ~QueueImpl() {
     STLClearElements(&queue_);
     // std::cout << "Channel destructor_______\n";
   }
-  DISALLOW_COPY_AND_ASSIGN(QueueImpl<T>);
+
 
  private:
   mutable Mutex lock_;
   Cond full_cond_;   // producer waiting due to queue is full.
   Cond empty_cond_;  // consumer waiting due to queue is empty.
   std::deque<T> queue_;
-  uint32 capacity_;
+  uint32_t capacity_;
   int full_waiters_;
   int empty_waiters_;
   bool closed_;
 };
 
-
 template <typename T>
-class Queue
-  : public scoped_refptr<QueueImpl<T>> {
- public:
-  explicit Queue(QueueImpl<T>* t)
-    : scoped_refptr<QueueImpl<T>>(t) {
-  }
+class Queue {
+public:
+    explicit Queue(uint32_t max_size = kDefaultQueueCapacity)
+      : impl_(std::make_shared<QueueImpl<T>>(max_size)) {
+    }
+
+    Queue(const Queue& other) : impl_(other.impl_) {
+    }
+
+    QueueImpl<T>* operator->() {
+      return impl_.get();
+    }
+
+private:
+    std::shared_ptr<QueueImpl<T>> impl_;
 };
 
 template <typename T>
-Queue<T> MakeQueue(uint32 max_size =
-                     kDefaultQueueCapacity) {
-  return Queue<T>(new QueueImpl<T>(max_size));
+Queue<T> MakeQueue(uint32_t max_size = kDefaultQueueCapacity) {
+  return Queue<T>(max_size);
 }
 
 }  // namespace tin

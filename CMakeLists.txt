@@ -1,4 +1,7 @@
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+
+set(CMAKE_CXX_STANDARD 17)
+
 # build third party.
 if(NOT BASE03_DIR)
 	set(BASE03_DIR ${CMAKE_CURRENT_SOURCE_DIR}/third_party/base03)
@@ -21,6 +24,9 @@ if(NOT ZCONTEXT_DIR)
 	set_property(TARGET zcontext PROPERTY FOLDER "tin_deps")
 endif()
 
+
+
+
 cmake_minimum_required(VERSION 2.6)
 project(tin CXX)
 
@@ -41,6 +47,15 @@ endif()
 if(MSVC)
     message("MSVC version is: ${MSVC_VERSION}")
 endif()
+
+
+include_directories(
+		${CMAKE_INSTALL_PREFIX}/include
+)
+
+link_directories(
+		${CMAKE_INSTALL_PREFIX}/lib
+)
 
 if (UNIX)
 # posix MACROS
@@ -116,7 +131,6 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
 
 set(SOURCES 
 tin/io/io.cc
-tin/io/ioutil.cc
 tin/io/io_buffer.cc
 tin/net/address_family.cc
 tin/net/address_list.cc
@@ -215,7 +229,6 @@ if (WIN32)
 		tin/error/error.h
 		tin/error/error_inl.h
 		tin/io/io.h
-		tin/io/ioutil.h
 		tin/io/io_buffer.h
 		tin/net/address_family.h
 		tin/net/address_list.h
@@ -292,8 +305,14 @@ source_group_by_dir(SOURCES)
 
 add_library(tin ${SOURCES})
 
+
+
+file(GLOB ABSL_LIBS "${CMAKE_INSTALL_PREFIX}/lib/*absl_*")
 if (WIN32)
-set(DEP_LIBS tin base quark zcontext DbgHelp.lib Psapi.lib Mswsock.lib ws2_32.lib version.lib)
+set(DEP_LIBS tin base quark zcontext DbgHelp.lib Psapi.lib Mswsock.lib ws2_32.lib version.lib
+	${ABSL_LIBS}
+	cliff.lib
+)
 
 if(${MSVC_VERSION} GREATER 1500)
 LIST(APPEND DEP_LIBS

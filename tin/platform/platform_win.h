@@ -9,7 +9,7 @@
 #include <string>
 
 #include "build/build_config.h"
-#include "base/basictypes.h"
+#include "cstdint"
 
 #ifndef _In_reads_bytes_
 #define _In_reads_bytes_(s)

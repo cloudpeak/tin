@@ -4,47 +4,52 @@
 
 #pragma once
 
-#include "base/basictypes.h"
-#include "base/memory/scoped_ptr.h"
-#include "base/memory/ref_counted.h"
+
 #include "tin/time/time.h"
 #include "tin/net/tcp_conn.h"
 
-namespace tin {
-namespace net {
+namespace tin::net {
 
 class NetFD;
 
 class TCPListenerImpl
-  : public base::RefCountedThreadSafe<TCPListenerImpl> {
+  : public std::enable_shared_from_this<TCPListenerImpl> {
  public:
   TCPListenerImpl(NetFD* netfd, int backlog);
   ~TCPListenerImpl();
 
-  void SetDeadline(int64 t);
+  TCPListenerImpl(const TCPListenerImpl&) = delete;
+  TCPListenerImpl& operator=(const TCPListenerImpl&) = delete;
+
+  void SetDeadline(int64_t t);
   TcpConn Accept();
   void Close();
 
  private:
   NetFD* netfd_;
-
- private:
-  DISALLOW_COPY_AND_ASSIGN(TCPListenerImpl);
 };
 
-class TCPListener
-  : public scoped_refptr<TCPListenerImpl> {
- public:
-  explicit TCPListener(TCPListenerImpl* t)
-    : scoped_refptr<TCPListenerImpl>(t) {
+
+class TCPListener {
+public:
+  explicit TCPListener(TCPListenerImpl* conn)
+          : impl_(conn) {
   }
+  TCPListener(const TCPListener& other) = default;
+
+  TCPListenerImpl*  operator->() {
+    return impl_.get();
+  }
+
+private:
+  std::shared_ptr<TCPListenerImpl> impl_;
 };
 
 inline TCPListener MakeTcpListener(TCPListenerImpl* listener) {
   return TCPListener(listener);
 }
 
-}  // namespace net
-}  // namespace tin
+} // namespace tin::net
+
 
 

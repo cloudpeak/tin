@@ -1,5 +1,7 @@
 #include "tin/all.h"
 
+#include <absl/log/globals.h>
+
 // case 0
 void HandleClient0(tin::net::TcpConn conn) {
   // Set TCP Read Write buffer.
@@ -8,10 +10,10 @@ void HandleClient0(tin::net::TcpConn conn) {
 
   // user space buffer size.
   const int kIOBufferSize = 4 * 1024;
-  scoped_ptr<char[]> buf(new char[kIOBufferSize]);
+  std::unique_ptr<char[]> buf(new char[kIOBufferSize]);
 
   // set read, write deadline.
-  const int64 kRWDeadline = 20 * tin::kSecond;
+  const int64_t kRWDeadline = 20 * tin::kSecond;
   conn->SetDeadline(kRWDeadline);
   while (true) {
     int n = conn->Read(buf.get(), kIOBufferSize);
@@ -51,21 +53,21 @@ void HandleClient1(tin::net::TcpConn conn) {
 
   // user space buffer size.
   const int kIOBufferSize = 4 * 1024;
-  scoped_ptr<char[]> buf(new char[kIOBufferSize]);
+  std::unique_ptr<char[]> buf(new char[kIOBufferSize]);
 
   // record read,  write timestamp.
-  int64 last_set_recv_time = tin::MonoNow();
-  int64 last_set_send_time = last_set_recv_time;
+  int64_t last_set_recv_time = tin::MonoNow();
+  int64_t last_set_send_time = last_set_recv_time;
 
   // set read, write deadline.
-  const int64 kRWDeadline = 20 * tin::kSecond;
+  const int64_t kRWDeadline = 20 * tin::kSecond;
   conn->SetDeadline(kRWDeadline);
   while (true) {
     int n = conn->Read(buf.get(), kIOBufferSize);
     int err = tin::GetErrorCode();
     if (n > 0) {
-      int64 now = tin::MonoNow();
-      int64 elapsed = now - last_set_recv_time;
+      int64_t now = tin::MonoNow();
+      int64_t elapsed = now - last_set_recv_time;
       if (elapsed >= 5 * tin::kSecond) {
         conn->SetReadDeadline(kRWDeadline);
         last_set_recv_time = now;
@@ -91,8 +93,8 @@ void HandleClient1(tin::net::TcpConn conn) {
       VLOG(1) << "Write failed due to " << tin::GetErrorStr();
       break;
     } else {
-      int64 now = tin::MonoNow();
-      int64 elapsed = now - last_set_send_time;
+      int64_t now = tin::MonoNow();
+      int64_t elapsed = now - last_set_send_time;
       if (elapsed >= 5 * tin::kSecond) {
         conn->SetWriteDeadline(kRWDeadline);
         last_set_send_time = now;
@@ -111,14 +113,14 @@ void HandleClient2(tin::net::TcpConn conn) {
 
   // user space buffer size.
   const int kIOBufferSize = 4 * 1024;
-  scoped_ptr<char[]> buf(new char[kIOBufferSize]);
+  std::unique_ptr<char[]> buf(new char[kIOBufferSize]);
 
   // record read, write timestamp.
-  int64 last_recv_time = tin::MonoNow();
-  int64 last_send_time = last_recv_time;
+  int64_t last_recv_time = tin::MonoNow();
+  int64_t last_send_time = last_recv_time;
 
   // set read, write deadline.
-  const int64 kRWDeadline = 20 * tin::kSecond;
+  const int64_t kRWDeadline = 20 * tin::kSecond;
   conn->SetDeadline(kRWDeadline);
   while (true) {
     int n = conn->Read(buf.get(), kIOBufferSize);
@@ -128,7 +130,7 @@ void HandleClient2(tin::net::TcpConn conn) {
       last_recv_time = tin::MonoNow();
     }
     if (err == TIN_ETIMEOUT_INTR) {
-      int64 elspsed = tin::MonoNow() - last_recv_time;
+      int64_t elspsed = tin::MonoNow() - last_recv_time;
       // deadline reached.
       if (elspsed >= kRWDeadline) {
         break;
@@ -159,7 +161,7 @@ void HandleClient2(tin::net::TcpConn conn) {
       }
       int err = tin::GetErrorCode();
       if (err == TIN_ETIMEOUT_INTR) {
-        int64 elspsed = tin::MonoNow() - last_send_time;
+        int64_t elspsed = tin::MonoNow() - last_send_time;
         // deadline reached.
         if (elspsed >= kRWDeadline) {
           write_failed = true;
@@ -181,10 +183,10 @@ void HandleClient2(tin::net::TcpConn conn) {
   conn->Close();
 }
 
-void Dispatch(tin::net::TcpConn conn, const int64 id) {
+void Dispatch(tin::net::TcpConn conn, const int64_t id) {
   conn->SetNoDelay(true);
   const int kNumModes = 3;
-  int64 which = id % kNumModes;
+  int64_t which = id % kNumModes;
   switch (which) {
   case 0: {
     tin::Spawn(&HandleClient0, conn);
@@ -205,7 +207,7 @@ void Dispatch(tin::net::TcpConn conn, const int64 id) {
 }
 
 int TinMain(int argc, char** argv) {
-  const uint16 kPort = 2222;
+  const uint16_t kPort = 2222;
   bool use_ipv6 = false;
   tin::net::TCPListener listener =
     tin::net::ListenTcp(use_ipv6 ? "0:0:0:0:0:0:0:0" : "0.0.0.0", kPort);
@@ -213,7 +215,7 @@ int TinMain(int argc, char** argv) {
     LOG(FATAL) << "Listen failed due to " << tin::GetErrorStr();
   }
   LOG(INFO) << "echo server is listening on port: " << kPort;
-  int64 id = 0;
+  int64_t id = 0;
   while (true) {
     tin::net::TcpConn conn = listener->Accept();
     if (tin::GetErrorCode() == 0) {
@@ -230,11 +232,12 @@ int main(int argc, char** argv) {
   tin::Initialize();
 
   // set logging level.
-  logging::SetMinLogLevel(-1);
+  // logging::SetMinLogLevel(-1);
+  absl::SetMinLogLevel(absl::LogSeverityAtLeast::kInfo);
 
   // set max p count.
   tin::Config config = tin::DefaultConfig();
-  config.SetMaxProcs(base::SysInfo::NumberOfProcessors());
+  config.SetMaxProcs(static_cast<int>(std::thread::hardware_concurrency()));
 
   // start the world.
   tin::PowerOn(TinMain, argc, argv, &config);

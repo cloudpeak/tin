@@ -14,7 +14,9 @@
 
 #include <vector>
 
-#include "base/logging.h"
+#include <absl/log/log.h>
+#include <absl/log/check.h>
+
 #include "tin/error/error.h"
 #include "tin/runtime/util.h"
 #include "tin/runtime/runtime.h"
@@ -28,7 +30,7 @@ namespace net {
 
 using namespace runtime;  // NOLINT
 
-int SyncResolveHostname(const base::StringPiece& hostname, AddressFamily af,
+int SyncResolveHostname(const absl::string_view& hostname, AddressFamily af,
                         std::vector<IPAddress>* addresses) {
   int family = ConvertAddressFamily(af);
   addresses->clear();
@@ -67,7 +69,7 @@ int SyncResolveHostname(const base::StringPiece& hostname, AddressFamily af,
 
 class ResolveHostnameWork : public GletWork {
  public:
-  ResolveHostnameWork(const base::StringPiece& hostname,  // NOLINT
+  ResolveHostnameWork(const absl::string_view& hostname,  // NOLINT
                       AddressFamily& family,  // NOLINT
                       std::vector<IPAddress>*& addresses)  // NOLINT
     : result_(0)
@@ -89,26 +91,26 @@ class ResolveHostnameWork : public GletWork {
 
  private:
   int  result_;
-  const base::StringPiece& hostname_;
+  const absl::string_view& hostname_;
   AddressFamily& family_;
   std::vector<IPAddress>*& addresses_;
 };
 
-int ResolveHostname(const base::StringPiece& hostname,
+int ResolveHostname(const absl::string_view& hostname,
                     AddressFamily family,
                     std::vector<IPAddress>* addresses) {
   if (addresses == NULL) {
     tin::SetErrorCode(TIN_EINVAL);
     return -1;
   }
-  scoped_ptr<ResolveHostnameWork> work(
+  std::unique_ptr<ResolveHostnameWork> work(
     new ResolveHostnameWork(hostname, family, addresses));
   SubmitGetAddrInfoGletWork(work.get());
   return work->Result();
 }
 
 // handy functions.
-tin::net::IPAddress ResolveHostname(const base::StringPiece& hostname,
+tin::net::IPAddress ResolveHostname(const absl::string_view& hostname,
                                     AddressFamily af) {
   std::vector<IPAddress> addresses;
   if (ResolveHostname(hostname, af, &addresses) == 0) {
@@ -121,15 +123,15 @@ tin::net::IPAddress ResolveHostname(const base::StringPiece& hostname,
   return IPAddress();
 }
 
-IPAddress ResolveHostname(const base::StringPiece& hostname) {
+IPAddress ResolveHostname(const absl::string_view& hostname) {
   return ResolveHostname(hostname, ADDRESS_FAMILY_UNSPECIFIED);
 }
 
-IPAddress ResolveHostname4(const base::StringPiece& hostname) {
+IPAddress ResolveHostname4(const absl::string_view& hostname) {
   return ResolveHostname(hostname, ADDRESS_FAMILY_IPV4);
 }
 
-IPAddress ResolveHostname6(const base::StringPiece& hostname) {
+IPAddress ResolveHostname6(const absl::string_view& hostname) {
   return ResolveHostname(hostname, ADDRESS_FAMILY_IPV6);
 }
 

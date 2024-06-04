@@ -92,7 +92,7 @@ bool PlatformInit() {
     // http://support.microsoft.com/kb/2568167
     global_skip_sync_notificaton = true;
 
-    int32 protos[2] = { IPPROTO_TCP, 0 };
+    int32_t protos[2] = { IPPROTO_TCP, 0 };
     WSAPROTOCOL_INFO  buf[32];
     DWORD len = sizeof(buf);
     int n = WSAEnumProtocols(&protos[0], &buf[0], &len);

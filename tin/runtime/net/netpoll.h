@@ -26,21 +26,21 @@ void NetPollPreDeinit();
 
 void NetPollDeinit();
 
-int32 NetPollOpen(uintptr_t fd, PollDescriptor* pd);
+int32_t NetPollOpen(uintptr_t fd, PollDescriptor* pd);
 
-int32 NetPollClose(uintptr_t fd);
+int32_t NetPollClose(uintptr_t fd);
 
 void NetPollArm(PollDescriptor* pd, int mode);
 
 G* NetPoll(bool block);
 
-int NetPollCheckErr(PollDescriptor* pd, int32 mode);
+int NetPollCheckErr(PollDescriptor* pd, int32_t mode);
 
-bool NetPollBlock(PollDescriptor* pd, int32 mode, bool waitio);
+bool NetPollBlock(PollDescriptor* pd, int32_t mode, bool waitio);
 
-G* NetPollUnblock(PollDescriptor* pd, int32 mode, bool ioready);
+G* NetPollUnblock(PollDescriptor* pd, int32_t mode, bool ioready);
 
-void NetPollReady(G** gpp, PollDescriptor* pd, int32 mode);
+void NetPollReady(G** gpp, PollDescriptor* pd, int32_t mode);
 
 void NetpollDeadline(void* arg, uintptr_t seq);
 

@@ -4,9 +4,7 @@
 
 #pragma once
 
-#include "base/at_exit.h"
-#include "base/synchronization/waitable_event.h"
-#include "base/threading/thread_local.h"
+#include "absl/synchronization/notification.h"
 
 #include "tin/tin.h"
 #include "tin/sync/atomic_flag.h"
@@ -18,6 +16,8 @@ namespace runtime {
 class Env {
  public:
   Env();
+  Env(const Env&) = delete;
+  Env& operator=(const Env&) = delete;
   int Initialize(EntryFn fn, int argc, char** argv, Config* new_conf);
   void Deinitialize();
   tin::Config* GetConfig() const {
@@ -44,9 +44,8 @@ class Env {
   char** argv_;
   tin::Config* conf_;
   int num_processors_;
-  base::WaitableEvent main_signal_;
+  absl::Notification main_signal_;
   tin::AtomicFlag exit_flag_;
-  DISALLOW_COPY_AND_ASSIGN(Env);
 };
 
 class Scheduler;
@@ -56,7 +55,7 @@ class TimerQueue;
 extern Env* rtm_env;
 extern Scheduler* sched;
 extern TimerQueue* timer_q;
-extern base::ThreadLocalPointer<Greenlet>* glet_tls;
+extern thread_local Greenlet* glet_tls;
 extern tin::Config* rtm_conf;
 
 int InitializeEnv(EntryFn fn, int argc, char** argv, Config* new_conf);

@@ -3,8 +3,9 @@
 // found in the LICENSE file.
 
 #include <algorithm>
+#include <absl/log/check.h>
+#include <absl/log/log.h>
 
-#include "base/logging.h"
 #include "tin/error/error.h"
 #include "tin/runtime/runtime.h"
 #include "tin/bufio/bufio.h"
@@ -14,11 +15,11 @@ namespace {
 const int kMaxConsecutiveEmptyReads = 100;
 }
 
-namespace tin {
-namespace bufio {
+
+namespace tin::bufio {
 
 Reader::Reader(tin::io::Reader* rd, size_t size)
-  : storage_(new uint8[size])
+  : storage_(new uint8_t[size])
   , storage_size_(static_cast<int>(size))
   , read_idx_(0)
   , write_idx_(0)
@@ -32,7 +33,7 @@ Reader::~Reader() {
 }
 
 int Reader::Read(void* buf, int buf_size) {
-  uint8* p = static_cast<uint8*>(buf);
+  uint8_t* p = static_cast<uint8_t*>(buf);
   int n = buf_size;
   if (n == 0) {
     tin::SetErrorCode(ReadErr());
@@ -119,20 +120,22 @@ int Reader::ReadErr() {
   return err;
 }
 
-int Reader::ReadSlice(uint8 delim, base::StringPiece* line) {
+
+
+int Reader::ReadSlice(uint8_t delim, absl::string_view* line) {
   int err = 0;
   while (true) {
     const_iterator it =  std::find(begin(), end(), delim);
     if (it != end()) {
       size_t n = it - begin() + 1;
-      *line = base::ToStringPiece(begin(), n);
+      *line = ToStringPiece(begin(), n);
       read_idx_ += static_cast<int>(n);
       break;
     }
 
     // Pending error?
     if (err_ != 0) {
-      *line = base::ToStringPiece(begin(), buffered());
+      *line = ToStringPiece(begin(), buffered());
       read_idx_ = write_idx_;
       err = ReadErr();
       break;
@@ -141,7 +144,7 @@ int Reader::ReadSlice(uint8 delim, base::StringPiece* line) {
     // Buffer full?
     if (buffered() >= storage_size_) {
       read_idx_ = write_idx_;
-      *line = base::ToStringPiece(begin(), buffered());
+      *line = ToStringPiece(begin(), buffered());
       err = TIN_EBUFFERFULL;
       break;
     }
@@ -157,7 +160,7 @@ int Reader::ReadSlice(uint8 delim, base::StringPiece* line) {
   return err;
 }
 
-int Reader::ReadLine(base::StringPiece* line, bool* is_prefix) {
+int Reader::ReadLine(absl::string_view* line, bool* is_prefix) {
   int err = ReadSlice('\n', line);
   if (err == TIN_EBUFFERFULL) {
     // Handle the case where "\r\n" straddles the buffer.
@@ -178,7 +181,8 @@ int Reader::ReadLine(base::StringPiece* line, bool* is_prefix) {
 
   if (line->empty()) {
     if (err != 0) {
-      line->clear();
+      // line->clear();
+      *line = absl::string_view();
     }
     *is_prefix = false;
     return err;
@@ -197,7 +201,7 @@ int Reader::ReadLine(base::StringPiece* line, bool* is_prefix) {
   return err;
 }
 
-int Reader::Peek(int n, base::StringPiece* piece) {
+int Reader::Peek(int n, absl::string_view* piece) {
   DCHECK_GE(n, 0);
   if (n < 0) {
     LOG(FATAL) << "ErrNegativeCount";
@@ -222,7 +226,7 @@ int Reader::Peek(int n, base::StringPiece* piece) {
     }
   }
   if (piece != NULL)
-    *piece = base::ToStringPiece(begin(), n);
+    *piece = ToStringPiece(begin(), n);
   return err;
 }
 
@@ -237,12 +241,12 @@ int Reader::UnreadByte() {
     // b.r == 0 && b.w == 0
     write_idx_ = 1;
   }
-  *begin() = static_cast<uint8>(last_byte_);
+  *begin() = static_cast<uint8_t>(last_byte_);
   last_byte_ = -1;
   return 0;
 }
 
-int Reader::ReadByte(uint8* c) {
+int Reader::ReadByte(uint8_t* c) {
   while (empty()) {
     if (err_ != 0) {
       *c = 0;
@@ -256,5 +260,5 @@ int Reader::ReadByte(uint8* c) {
   return 0;
 }
 
-}  // namespace bufio
-}  // namespace tin
+} // namespace tin::bufio
+

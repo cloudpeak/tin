@@ -2,8 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "base/logging.h"
-
+#include <absl/log/log.h>
 #include "tin/error/error.h"
 #include "tin/time/time.h"
 #include "tin/net/ip_endpoint.h"
@@ -14,7 +13,7 @@
 namespace tin {
 namespace net {
 
-TcpConn DialTcpInternal(const IPAddress& address, uint16 port, int64 deadline) {
+TcpConn DialTcpInternal(const IPAddress& address, uint16_t port, int64_t deadline) {
   int err = 0;
   AddressFamily family =
     address.IsIPv4() ? ADDRESS_FAMILY_IPV4 : ADDRESS_FAMILY_IPV6;
@@ -22,8 +21,8 @@ TcpConn DialTcpInternal(const IPAddress& address, uint16 port, int64 deadline) {
   if (netfd != NULL) {
     IPEndPoint endpoint(address, port);
     if (deadline == -1)
-      deadline = kint64max;
-    err = netfd->Dial(NULL, &endpoint, kint64max);
+      deadline = UINT64_MAX;
+    err = netfd->Dial(NULL, &endpoint, UINT64_MAX);
     if (err != 0) {
       delete netfd;
       netfd = NULL;
@@ -33,8 +32,8 @@ TcpConn DialTcpInternal(const IPAddress& address, uint16 port, int64 deadline) {
   return MakeTcpConn(new TcpConnImpl(netfd));
 }
 
-TcpConn DialTcpInternal(const base::StringPiece& address, uint16 port,
-                        int64 deadline) {
+TcpConn DialTcpInternal(const absl::string_view& address, uint16_t port,
+                        int64_t deadline) {
   IPAddress ip_address;
   if (!ip_address.AssignFromIPLiteral(address)) {
     SetErrorCode(TIN_EINVAL);
@@ -43,24 +42,24 @@ TcpConn DialTcpInternal(const base::StringPiece& address, uint16 port,
   return DialTcpInternal(ip_address, port, deadline);
 }
 
-TcpConn DialTcp(const IPAddress& address, uint16 port) {
+TcpConn DialTcp(const IPAddress& address, uint16_t port) {
   return DialTcpInternal(address, port, -1);
 }
 
-TcpConn DialTcp(const base::StringPiece& address, uint16 port) {
+TcpConn DialTcp(const absl::string_view& address, uint16_t port) {
   return DialTcpInternal(address, port, -1);
 }
 
-TcpConn DialTcpTimeout(const IPAddress& address, uint16 port, int64 deadline) {
+TcpConn DialTcpTimeout(const IPAddress& address, uint16_t port, int64_t deadline) {
   return DialTcpInternal(address, port, deadline);
 }
 
-TcpConn DialTcpTimeout(const base::StringPiece& address, uint16 port,
-                       int64 deadline) {
+TcpConn DialTcpTimeout(const absl::string_view& address, uint16_t port,
+                       int64_t deadline) {
   return DialTcpInternal(address, port, deadline);
 }
 
-TCPListener ListenTcp(const IPAddress& address, uint16 port, int backlog) {
+TCPListener ListenTcp(const IPAddress& address, uint16_t port, int backlog) {
   int err = 0;
   AddressFamily family =
     address.IsIPv4() ? ADDRESS_FAMILY_IPV4 : ADDRESS_FAMILY_IPV6;
@@ -76,7 +75,9 @@ TCPListener ListenTcp(const IPAddress& address, uint16 port, int backlog) {
     if (err == 0) {
       IPEndPoint endpoint(address, port);
       err = netfd->Bind(endpoint);
-      VLOG_IF(1, err != 0) << "Bind failed: " << tin::GetErrorStr();
+      if(err != 0) {
+        LOG(INFO) << "Bind failed: " << tin::GetErrorStr();
+      }
     }
   }
   if (err == 0) {
@@ -94,7 +95,7 @@ TCPListener ListenTcp(const IPAddress& address, uint16 port, int backlog) {
   return TCPListener(listener);
 }
 
-TCPListener ListenTcp(const base::StringPiece& address, uint16 port,
+TCPListener ListenTcp(const absl::string_view& address, uint16_t port,
                       int backlog) {
   IPAddress ip_address;
   if (!ip_address.AssignFromIPLiteral(address)) {

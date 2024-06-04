@@ -5,7 +5,7 @@
 #pragma once
 #include <stdlib.h>
 
-#include "base/basictypes.h"
+#include "cstdint"
 
 #include "tin/sync/atomic.h"
 
@@ -16,6 +16,8 @@ class AtomicFlag {
   explicit AtomicFlag(bool flag = false)
     : flag_(flag ? 1 : 0) {
   }
+  AtomicFlag(const AtomicFlag&) = delete;
+  AtomicFlag& operator=(const AtomicFlag&) = delete;
   ~AtomicFlag() {
   }
 
@@ -29,8 +31,7 @@ class AtomicFlag {
   }
 
  private:
-  uint32 flag_;
-  DISALLOW_COPY_AND_ASSIGN(AtomicFlag);
+  uint32_t flag_;
 };
 
 }  // namespace tin

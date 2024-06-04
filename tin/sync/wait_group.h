@@ -5,7 +5,6 @@
 #pragma once
 #include <stdlib.h>
 #include "quark/atomic.hpp"
-#include "base/basictypes.h"
 #include "tin/sync/mutex.h"
 
 namespace tin {
@@ -13,16 +12,17 @@ namespace tin {
 class WaitGroup {
  public:
   explicit WaitGroup(int delta = 0);
+  WaitGroup(const WaitGroup&) = delete;
+  WaitGroup& operator=(const WaitGroup&) = delete;
   ~WaitGroup();
 
-  void Add(int32 delta);
+  void Add(int32_t delta);
   void Done();
   void Wait();
 
  private:
   quark::atomic_uint64_t state_;
-  uint32 sem_;
-  DISALLOW_COPY_AND_ASSIGN(WaitGroup);
+  uint32_t sem_;
 };
 
 

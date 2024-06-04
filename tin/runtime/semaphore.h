@@ -4,7 +4,6 @@
 
 #pragma once
 #include <stdlib.h>
-#include "base/basictypes.h"
 #include "tin/runtime/util.h"
 
 
@@ -13,14 +12,14 @@ namespace runtime {
 
 struct Sudog {
   G* gp;
-  uint32* selectdone;
+  uint32_t * selectdone;
   Sudog* next;
   Sudog* prev;
   void* elem;  // data element
-  int32 nrelease;
+  int32_t nrelease;
   Sudog* waitlink;
-  uint32* address;
-  uint32  wakedup;
+  uint32_t* address;
+  uint32_t  wakedup;
 
   Sudog() {
     wakedup = 0;
@@ -35,9 +34,9 @@ struct Sudog {
   }
 };
 
-bool SemAcquire(uint32* addr);
+bool SemAcquire(uint32_t* addr);
 
-void SemRelease(uint32* addr);
+void SemRelease(uint32_t* addr);
 
 class SyncSema {
  public:
@@ -45,15 +44,15 @@ class SyncSema {
     : head_(NULL)
     , tail_(NULL) {
   }
-
+  SyncSema(const SyncSema&) = delete;
+  SyncSema& operator=(const SyncSema&) = delete;
   void Acquire();
-  void Release(uint32 n);
+  void Release(uint32_t n);
 
  private:
   RawMutex lock_;
   Sudog* head_;
   Sudog* tail_;
-  DISALLOW_COPY_AND_ASSIGN(SyncSema);
 };
 
 }  // namespace runtime

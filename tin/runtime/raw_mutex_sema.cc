@@ -2,10 +2,9 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "base/logging.h"
-#include "base/sys_info.h"
-#include "base/threading/platform_thread.h"
-#include "base/synchronization/waitable_event.h"
+
+
+#include <thread>
 
 #include "tin/sync/atomic.h"
 #include "tin/runtime/runtime.h"
@@ -25,7 +24,7 @@ const uintptr_t kLocked = 1;
 namespace tin {
 namespace runtime {
 
-int32 SemaSleep(int64 ns);
+int32_t SemaSleep(int64_t ns);
 void SemaWakeup(M* m);
 
 RawMutex::RawMutex()
@@ -67,7 +66,7 @@ void RawMutex::Lock() {
       if (i < spin) {
         YieldLogicProcessor(spin::kActiveSpinCount);
       } else if (i < spin + spin::kPassiveSpin) {
-        base::PlatformThread::YieldCurrentThread();
+        std::this_thread::yield();
       } else {
         // Someone else has it.
         // l->waitm points to a linked list of M's waiting
@@ -166,7 +165,7 @@ void Note::Clear() {
 }
 
 // g0 timed sleep.
-bool Note::TimedSleep(int64 ns) {
+bool Note::TimedSleep(int64_t ns) {
   G* gp = GetG();
   if (!gp->IsG0()) {
     LOG(FATAL) << "TimedSleep on g0";
@@ -176,7 +175,7 @@ bool Note::TimedSleep(int64 ns) {
   return true;
 }
 
-bool Note::TimedSleepG(int64 ns) {
+bool Note::TimedSleepG(int64_t ns) {
   G* gp = GetG();
   if (gp->IsG0()) {
     LOG(FATAL) << "TimedSleepG on g0";
@@ -188,7 +187,7 @@ bool Note::TimedSleepG(int64 ns) {
   return true;
 }
 
-bool Note::SleepInternal(int64 ns) {
+bool Note::SleepInternal(int64_t ns) {
   G* gp = GetG();
   if (!atomic::cas(&key, 0, reinterpret_cast<uintptr_t>(gp->M()))) {
     // Must be locked (got wakeup).
@@ -202,7 +201,7 @@ bool Note::SleepInternal(int64 ns) {
     return true;
   }
 
-  int64 deadline = MonoNow() + ns;
+  int64_t deadline = MonoNow() + ns;
   while (true) {
     if (SemaSleep(ns) >= 0) {
       return true;
@@ -238,9 +237,9 @@ bool Note::SleepInternal(int64 ns) {
   }
 }
 
-int32 SemaSleep(int64 ns) {
+int32_t SemaSleep(int64_t ns) {
   M* m = GetG()->M();
-  int64 us = ns;
+  int64_t us = ns;
   if (us > 0) {
     us = us / 1000;
     if (us == 0) {
@@ -248,18 +247,17 @@ int32 SemaSleep(int64 ns) {
     }
   }
   if (us == -1) {
-    m->WaitSemaphore()->Wait();
+    m->WaitSemaphore()->WaitForNotification();
   } else {
-    base::TimeDelta delta = base::TimeDelta::FromMicroseconds(us);
-    if (!m->WaitSemaphore()->TimedWait(delta)) {
-      return -1;
-    }
+    // us is in microseconds.
+    absl::Duration duration = absl::Microseconds(us);
+    m->WaitSemaphore()->WaitForNotificationWithTimeout(duration);
   }
   return 0;
 }
 
 void SemaWakeup(M* m) {
-  m->WaitSemaphore()->Signal();
+  m->WaitSemaphore()->Notify();
 }
 
 }  // namespace runtime

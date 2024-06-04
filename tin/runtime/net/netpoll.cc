@@ -2,8 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "base/logging.h"
-
+#include <absl/log/check.h>
+#include <absl/log/log.h>
 #include "tin/sync/atomic.h"
 #include "tin/runtime/runtime.h"
 #include "tin/runtime/greenlet.h"
@@ -14,7 +14,7 @@ namespace tin {
 namespace runtime {
 
 namespace {
-uint32 net_poll_Inited = 0;
+uint32_t net_poll_Inited = 0;
 }
 
 bool NetPollInited() {
@@ -30,7 +30,7 @@ void NetPollDeinit() {
   atomic::store32(&net_poll_Inited, 0);
 }
 
-void NetPollReady(G** gpp, PollDescriptor* pd, int32 mode) {
+void NetPollReady(G** gpp, PollDescriptor* pd, int32_t mode) {
   G* rg = 0;
   G* wg = 0;
 
@@ -51,7 +51,7 @@ void NetPollReady(G** gpp, PollDescriptor* pd, int32 mode) {
   }
 }
 
-int NetPollCheckErr(PollDescriptor* pd, int32 mode) {
+int NetPollCheckErr(PollDescriptor* pd, int32_t mode) {
   if (pd->closing) {
     return 1;  // errClosing
   }
@@ -67,7 +67,7 @@ bool NetPollBlockCommit(void* arg1, void* arg2) {
   return atomic::release_cas(gpp, kPdWait, gp);
 }
 
-bool NetPollBlock(PollDescriptor* pd, int32 mode, bool waitio) {
+bool NetPollBlock(PollDescriptor* pd, int32_t mode, bool waitio) {
   uintptr_t* gpp = &pd->rg;
   if (mode == 'w') {
     gpp = &pd->wg;
@@ -99,7 +99,7 @@ bool NetPollBlock(PollDescriptor* pd, int32 mode, bool waitio) {
   return old == kPdReady;
 }
 
-G* NetPollUnblock(PollDescriptor* pd, int32 mode, bool ioready) {
+G* NetPollUnblock(PollDescriptor* pd, int32_t mode, bool ioready) {
   uintptr_t* gpp = &pd->rg;
   if (mode == 'w') {
     gpp = &pd->wg;

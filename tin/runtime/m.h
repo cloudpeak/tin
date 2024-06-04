@@ -5,27 +5,26 @@
 #pragma once
 
 #include <list>
+#include <thread>
+#include <absl/log/log.h>
+#include <absl/log/check.h>
+#include <absl/synchronization/notification.h>
 
-#include "base/basictypes.h"
-#include "base/memory/scoped_ptr.h"
-#include "base/callback.h"
-#include "base/bind.h"
-#include "base/threading/platform_thread.h"
-#include "base/synchronization/waitable_event.h"
 #include "context/zcontext.h"
 
 #include "tin/runtime/raw_mutex.h"
 #include "tin/runtime/unlock.h"
 
-namespace tin {
-namespace runtime {
+namespace tin::runtime {
 
 class P;
 
 typedef class M AliasM;
 
-class M : public base::PlatformThread::Delegate {
+class M  {
  public:
+  M(const M&) = delete;
+  M& operator=(const M&) = delete;
   virtual ~M();
 
   bool GetSpinning() const {
@@ -46,7 +45,7 @@ class M : public base::PlatformThread::Delegate {
     return next_waitm_;
   }
 
-  base::WaitableEvent* WaitSemaphore() {
+  absl::Notification* WaitSemaphore() {
     return wait_sema_.get();
   }
 
@@ -98,7 +97,7 @@ class M : public base::PlatformThread::Delegate {
     return unlock_info_.get();
   }
 
-  static M* New(base::Closure fn, tin::runtime::P* p);
+  static M* New(std::function<void()> fn, tin::runtime::P* p);
 
   static void Start(tin::runtime::P* p, bool spinning);
 
@@ -124,7 +123,7 @@ class M : public base::PlatformThread::Delegate {
     dead_queue_.push_back(gp);
   }
 
-  uint32* MutableLocked() {
+  uint32_t* MutableLocked() {
     return &locked_;
   }
 
@@ -151,8 +150,8 @@ class M : public base::PlatformThread::Delegate {
 
  private:
   uintptr_t next_waitm_;
-  scoped_ptr<char[]> cache_;
-  scoped_ptr<base::WaitableEvent> wait_sema_;
+  std::unique_ptr<char[]> cache_;
+  std::unique_ptr<absl::Notification> wait_sema_;
   Note park_;
   tin::runtime::P* p_;
   bool spinning_;
@@ -161,18 +160,17 @@ class M : public base::PlatformThread::Delegate {
   G* curg_;
   G* g0_;
   G* locked_g_;
-  base::Closure mstart_fn_;
+  std::function<void()> mstart_fn_;
   zcontext_t sys_context_;
-  base::PlatformThreadHandle sys_thread_handle_;
-  scoped_ptr<UnLockInfo> unlock_info_;
+  std::thread sys_thread_handle_;
+  std::unique_ptr<UnLockInfo> unlock_info_;
   bool is_m0_;
   std::list<G*> dead_queue_;
-  uint32 locked_;
-  DISALLOW_COPY_AND_ASSIGN(M);
+  uint32_t locked_;
 };
 
-}  // namespace runtime
-}   // namespace tin
+} // namespace tin::runtime
+
 
 
 

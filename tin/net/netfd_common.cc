@@ -3,11 +3,6 @@
 // found in the LICENSE file.
 
 #include "tin/net/sys_socket.h"
-#include "base/logging.h"
-#include "base/bind.h"
-#include "base/callback.h"
-#include "base/synchronization/once.h"
-#include "base/strings/string_util.h"
 #include "tin/error/error.h"
 #include "tin/runtime/runtime.h"
 #include "tin/runtime/net/pollops.h"
@@ -84,24 +79,24 @@ void NetFDCommon::WriteUnlock() {
   }
 }
 
-int NetFDCommon::SetDeadline(int64 t) {
+int NetFDCommon::SetDeadline(int64_t t) {
   return SetDeadlineImpl(t, 'r' + 'w');
 }
 
-int NetFDCommon::SetReadDeadline(int64 t) {
+int NetFDCommon::SetReadDeadline(int64_t t) {
   return SetDeadlineImpl(t, 'r');
 }
 
-int NetFDCommon::SetWriteDeadline(int64 t) {
+int NetFDCommon::SetWriteDeadline(int64_t t) {
   return SetDeadlineImpl(t, 'w');
 }
 
-int NetFDCommon::SetDeadlineImpl(int64 t, int mode) {
-  int64 now = MonoNow();
-  int64 d = now + t;
+int NetFDCommon::SetDeadlineImpl(int64_t t, int mode) {
+  int64_t now = MonoNow();
+  int64_t d = now + t;
   // test overflow.
-  if (kint64max - now < t) {
-    d = kint64max;
+  if (std::numeric_limits<int64_t>::max() - now < t) {
+    d = std::numeric_limits<int64_t>::max();
   }
   if (t == 0) {
     d = 0;

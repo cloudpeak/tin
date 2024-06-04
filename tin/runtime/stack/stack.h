@@ -16,7 +16,9 @@ class Stack {
   virtual void* Allocate(size_t size) = 0;
 
  private:
-  DISALLOW_COPY_AND_ASSIGN(Stack);
+  Stack(const Stack&) = delete;
+  Stack& operator=(const Stack&) = delete;
+
 };
 
 enum StackType {

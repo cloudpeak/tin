@@ -4,7 +4,7 @@
 
 #include <iostream>
 
-#include "base/debug/debugger.h"
+
 #include "tin/error/error.h"
 #include "tin/runtime/util.h"
 #include "tin/runtime/greenlet.h"
@@ -53,7 +53,7 @@ void InternalYield() {
 
 void Throw(const char* str) {
   std::cout << str << std::endl;
-  base::debug::BreakDebugger();
+  // base::debug::BreakDebugger(); // TODO
   throw(str);
 }
 
@@ -89,11 +89,11 @@ void Sched() {
   tin::runtime::InternalYield();
 }
 
-void NanoSleep(int64 ns) {
+void NanoSleep(int64_t ns) {
   return tin::runtime::InternalNanoSleep(ns);
 }
 
-void Sleep(int64 ms) {
+void Sleep(int64_t ms) {
   return NanoSleep(ms * 1000 * 1000);
 }
 

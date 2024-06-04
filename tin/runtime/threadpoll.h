@@ -7,11 +7,11 @@
 #include <vector>
 #include <deque>
 
-#include "base/basictypes.h"
-#include "base/memory/singleton.h"
-#include "base/synchronization/lock.h"
-#include "base/synchronization/waitable_event.h"
-#include "base/synchronization/condition_variable.h"
+#include <absl/synchronization/notification.h>
+#include <absl/synchronization/mutex.h>
+#include <absl/base/call_once.h>
+
+
 #include "tin/runtime/env.h"
 
 namespace tin {
@@ -22,10 +22,10 @@ class M;
 class  Work {
  public:
   Work() { }
+  Work(const Work&) = delete;
+  Work& operator=(const Work&) = delete;
   virtual ~Work() { }
   virtual void Run() = 0;
- private:
-  DISALLOW_COPY_AND_ASSIGN(Work);
 };
 
 class GletWork : public Work {
@@ -48,26 +48,28 @@ class GletWork : public Work {
 void SubmitGletWork(GletWork* work);
 void SubmitGetAddrInfoGletWork(GletWork* work);
 
+
 class ThreadPoll {
  public:
-  ThreadPoll();
+    ThreadPoll(const ThreadPoll&) = delete;
+    ThreadPoll& operator=(const ThreadPoll&) = delete;
 
-  static ThreadPoll* GetInstance() {
-    return Singleton<ThreadPoll>::get();
-  }
+    static ThreadPoll* GetInstance();
 
   void Start();
   void JoinAll();
   void AddWork(Work* work);
   void Run();
 
+private:
+    ThreadPoll();
  private:
   int num_threads_;
   std::vector<M*> threads_;
   std::deque<Work*> tasks_;
-  base::Lock lock_;
-  base::WaitableEvent dry_;
-  DISALLOW_COPY_AND_ASSIGN(ThreadPoll);
+  absl::Mutex lock_;
+
+  absl::Notification dry_;
 };
 
 }  // namespace runtime

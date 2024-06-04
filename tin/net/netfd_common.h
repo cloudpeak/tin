@@ -4,15 +4,14 @@
 
 #pragma once
 #include <string>
-#include "base/strings/string_piece.h"
 #include "tin/net/fd_mutex.h"
 #include "tin/net/poll_desc.h"
 #include "tin/net/address_list.h"
 #include "tin/net/ip_endpoint.h"
 #include "tin/net/sockaddr_storage.h"
 
-namespace tin {
-namespace net {
+
+namespace tin::net {
 
 const uintptr_t kInvalidSocket = uintptr_t(~0);
 
@@ -22,6 +21,9 @@ class NetFDCommon {
               AddressFamily family,
               int sotype,
               const std::string& net);
+
+  NetFDCommon(const NetFDCommon&) = delete;
+  NetFDCommon& operator=(const NetFDCommon&) = delete;
 
   virtual ~NetFDCommon();
 
@@ -39,13 +41,13 @@ class NetFDCommon {
 
   int Close();
 
-  int SetDeadline(int64 t);
+  int SetDeadline(int64_t t);
 
-  int SetReadDeadline(int64 t);
+  int SetReadDeadline(int64_t t);
 
-  int SetWriteDeadline(int64 t);
+  int SetWriteDeadline(int64_t t);
 
-  int SetDeadlineImpl(int64 t, int mode);
+  int SetDeadlineImpl(int64_t t, int mode);
 
   void Decref();
 
@@ -69,12 +71,9 @@ class NetFDCommon {
   int is_connected_;
   std::string  net_;
   PollDesc pd_;
-
- private:
-  DISALLOW_COPY_AND_ASSIGN(NetFDCommon);
 };
-}  // namespace net
-}  // namespace tin
+} // namespace tin::net
+
 
 
 

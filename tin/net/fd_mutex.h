@@ -3,7 +3,7 @@
 // found in the LICENSE file.
 
 #pragma once
-#include "base/basictypes.h"
+#include "cstdint"
 #include "quark/atomic.hpp"
 
 namespace tin {
@@ -24,8 +24,8 @@ class FdMutex {
 
  private:
   quark::atomic_uint64_t state_;
-  uint32 rsema_;
-  uint32 wsema_;
+  uint32_t rsema_;
+  uint32_t wsema_;
 };
 
 }  // namespace net

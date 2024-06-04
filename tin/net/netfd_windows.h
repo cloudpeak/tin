@@ -7,7 +7,7 @@
 #include <winsock2.h>
 #include <string>
 
-#include "base/strings/string_piece.h"
+#include <absl/strings/string_view.h>
 #include "tin/platform/platform_win.h"
 #include "tin/net/fd_mutex.h"
 #include "tin/net/poll_desc.h"
@@ -48,8 +48,8 @@ struct Operation {
   int io_type;
   OVERLAPPED overlapped;
   uintptr_t runtime_ctx;
-  int32 mode;
-  int32 error_no;
+  int32_t mode;
+  int32_t error_no;
   DWORD qty;
 
   NetFD* fd;
@@ -57,8 +57,8 @@ struct Operation {
   SockaddrStorage* sa;
   DWORD flags;
   uintptr_t handle;  // listen socket handle.
-  scoped_ptr<sockaddr_storage[]> accept_buf;
-  int32 rsan;
+  std::unique_ptr<sockaddr_storage[]> accept_buf;
+  int32_t rsan;
   tin::Chan<int> err_chan;
 };
 
@@ -85,7 +85,7 @@ class NetFD : public NetFDCommon {
 
   int CloseWrite();
 
-  int Dial(IPEndPoint* local, IPEndPoint* remote, int64 deadline);
+  int Dial(IPEndPoint* local, IPEndPoint* remote, int64_t deadline);
 
   int Bind(const IPEndPoint& address);
 
@@ -106,7 +106,7 @@ class NetFD : public NetFDCommon {
   }
 
  private:
-  int Connect(SockaddrStorage* laddr, SockaddrStorage* raddr, int64 deadline);
+  int Connect(SockaddrStorage* laddr, SockaddrStorage* raddr, int64_t deadline);
   int AcceptOne(Operation* op, NetFD** newfd);
 
  private:

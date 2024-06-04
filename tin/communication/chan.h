@@ -7,21 +7,19 @@
 #include <iostream>
 #include <deque>
 
-#include "base/memory/ref_counted.h"
-#include "base/synchronization/cancellation_flag.h"
 #include "tin/sync/atomic.h"
 #include "tin/runtime/raw_mutex.h"
 #include "tin/runtime/semaphore.h"
 
 
 namespace tin {
-const uint32 kDefaultChanSize = 64;
+const uint32_t kDefaultChanSize = 64;
 
 template<class T>
 class Channel
-  : public base::RefCountedThreadSafe<Channel<T> > {
+  : public  std::enable_shared_from_this<Channel<T>>  {
  public:
-  explicit Channel(uint32 max_size = kDefaultChanSize)
+  explicit Channel(uint32_t max_size = kDefaultChanSize)
     : max_size_(max_size)
     , free_space_sem_(max_size)
     , used_space_sem_(0)
@@ -80,7 +78,7 @@ class Channel
       runtime::RawMutexGuard guard(&lock_);
       std::swap(queue, queue_);
     }
-    ClearQueue(queue, base::is_pointer<T>());
+    ClearQueue(queue, std::is_pointer<T>());
     runtime::SemRelease(&free_space_sem_);
     runtime::SemRelease(&used_space_sem_);
   }
@@ -90,11 +88,11 @@ class Channel
   }
 
  private:
-  void ClearQueue(std::deque<T>& queue, base::false_type) {  // NOLINT
+  void ClearQueue(std::deque<T>& queue, std::false_type) {  // NOLINT
     queue.clear();
   }
 
-  void ClearQueue(std::deque<T>& queue, base::true_type) {  // NOLINT
+  void ClearQueue(std::deque<T>& queue, std::true_type) {  // NOLINT
     for (typename std::deque<T>::iterator iter = queue.begin();
          iter != queue.end();
          ++iter) {
@@ -102,34 +100,38 @@ class Channel
     }
     queue.clear();
   }
-  friend class base::RefCountedThreadSafe<Channel<T> >;
-  ~Channel() {
-    // std::cout << "Channel destructor_______\n";
-  }
-  DISALLOW_COPY_AND_ASSIGN(Channel<T>);
 
+  Channel(const Channel&) = delete;
+  Channel& operator=(const Channel&) = delete;
  private:
-  uint32 free_space_sem_;
-  uint32 used_space_sem_;
+  uint32_t free_space_sem_;
+  uint32_t used_space_sem_;
   runtime::RawMutex lock_;
   std::deque<T> queue_;
-  uint32 max_size_;
-  uint32 closed_;
+  uint32_t max_size_;
+  uint32_t closed_;
 };
 
-
 template <typename T>
-class Chan
-  : public scoped_refptr<Channel<T> > {
- public:
-  explicit Chan(Channel<T>* t)
-    : scoped_refptr<Channel<T> >(t) {
+class Chan {
+public:
+  explicit Chan(uint32_t max_size = kDefaultChanSize) : impl_(std::make_shared<Channel<T>>(max_size)) {}
+
+  Chan(const Chan& other) : impl_(other.impl_) {
   }
+
+  Channel<T>* operator->() {
+      return impl_.get();
+  }
+
+private:
+  std::shared_ptr<Channel<T>> impl_;
 };
 
 template <typename T>
-Chan<T> MakeChan(uint32 max_size = kDefaultChanSize) {
-  return Chan<T>(new Channel<T>(max_size));
+Chan<T> MakeChan(uint32_t max_size = kDefaultChanSize) {
+    return Chan<T>(max_size);
 }
+
 
 }  // namespace tin

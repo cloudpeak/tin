@@ -4,7 +4,8 @@
 
 #include <utility>
 
-#include "base/logging.h"
+#include <absl/functional/bind_front.h>
+
 #include "context/zcontext.h"
 #include "tin/sync/atomic.h"
 #include "tin/config/config.h"
@@ -33,7 +34,6 @@ M::M()
   , locked_g_(NULL)
   , mstart_fn_()
   , sys_context_(NULL)
-  , sys_thread_handle_()
   , unlock_info_(new UnLockInfo)
   , is_m0_(0)
   , dead_queue_()
@@ -46,7 +46,7 @@ M::~M() {
 
 void M::EnsureSemaphoreExists() {
   if (!wait_sema_) {
-    wait_sema_.reset(new base::WaitableEvent(false, false));
+    wait_sema_.reset(new absl::Notification(false));
   }
 }
 
@@ -56,8 +56,8 @@ void* M::G0StaticProc(intptr_t args) {
 }
 
 void* M::G0Proc() {
-  if (!mstart_fn_.is_null())
-    mstart_fn_.Run();
+  if (mstart_fn_)
+    mstart_fn_();
   if (nextp_ != NULL && !IsM0()) {
     AcquireP(nextp_);
     nextp_ = NULL;
@@ -76,7 +76,6 @@ M* M::Allocate(tin::runtime::P* p) {
 }
 
 void M::OnSysThreadStart() {
-  base::PlatformThread::SetName("Machine");
 }
 
 void M::OnSysThreadStop() {
@@ -94,7 +93,7 @@ void M::ThreadMain() {
                          rtm_conf->StackSize(),
                          "sysg0");
   g0_->SetM(this);
-  glet_tls->Set(g0_);
+  glet_tls = g0_;
   // switch to g0
   jump_zcontext(&sys_context_,
                 *g0_->MutableContext(),
@@ -108,20 +107,19 @@ void mspinning() {
   GetM()->SetSpinning(true);
 }
 
-M* M::New(base::Closure fn, tin::runtime::P* p) {
+M* M::New(std::function<void()> fn, tin::runtime::P* p) {
   M* m = Allocate(p);
   m->nextp_ = p;
   std::swap(m->mstart_fn_, fn);
-  bool ok = base::PlatformThread::Create(kDefaultOSThreadStackSize,
-                                         m,
-                                         &m->sys_thread_handle_);
-  (void)ok;
+  std::thread t(&M::ThreadMain, m);
+  m->sys_thread_handle_ = std::move(t);
   return m;
 }
 
 void M::Join() {
-  if (!sys_thread_handle_.is_null())
-    base::PlatformThread::Join(sys_thread_handle_);
+  if (sys_thread_handle_.joinable()) {
+    sys_thread_handle_.join();
+  }
 }
 
 void M::Start(tin::runtime::P* p, bool spinning) {
@@ -135,9 +133,10 @@ void M::Start(tin::runtime::P* p, bool spinning) {
     return;
 
   if (m == NULL) {
-    base::Closure closure;
+    std::function<void()> closure;
     if (spinning) {
-      closure = base::Bind(&mspinning);
+      // closure = base::Bind(&mspinning);
+      closure = absl::bind_front(&mspinning);
     }
     M::New(closure, p);
     return;

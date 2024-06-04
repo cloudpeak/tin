@@ -6,8 +6,7 @@
 
 #include <cstdlib>
 
-#include "base/basictypes.h"
-#include "base/callback.h"
+#include <functional>
 #include "context/zcontext.h"
 #include "tin/config/config.h"
 #include "tin/runtime/util.h"
@@ -37,6 +36,8 @@ typedef void* (*GreenletFunc)(intptr_t);
 class Greenlet {
  public:
   Greenlet();
+  Greenlet(const Greenlet&) = delete;
+  Greenlet& operator=(const Greenlet&) = delete;
 
   ~Greenlet();
 
@@ -100,7 +101,7 @@ class Greenlet {
   Timer* GetTimer();
 
   static Greenlet* Create(GreenletFunc entry,
-                          base::Closure* closure,
+                          std::function<void()>*  closure,
                           bool sysg0 = false,
                           intptr_t args = 0,
                           bool joinable = false,
@@ -115,28 +116,27 @@ class Greenlet {
   GUintptr schedlink_;
   tin::runtime::M* m_;
   tin::runtime::M* lockedm_;
-  base::Closure cb_;
+  std::function<void()>  cb_;
   GreenletFunc entry_;
-  base::Closure closure_;
+  std::function<void()> closure_;
   intptr_t args_;
   void* retval_;
   char name_[32];
-  scoped_ptr<Stack> stack_;
+  std::unique_ptr<Stack> stack_;
   zcontext_t context_;
   int state_;
-  int32 flags_;
+  int32_t flags_;
   int error_code_;
   Timer* timer_;
-  DISALLOW_COPY_AND_ASSIGN(Greenlet);
 };
 
 void SpawnSimple(GreenletFunc entry, void* args = NULL,
                  const char* name = NULL);
-void SpawnSimple(base::Closure closure,  const char* name = NULL);
+void SpawnSimple(std::function<void()> closure,  const char* name = NULL);
 
 }  // namespace runtime
 
-void RuntimeSpawn(base::Closure* closure);
+void RuntimeSpawn(std::function<void()>* closure);
 
 }  // namespace tin
 

@@ -3,15 +3,15 @@
 // found in the LICENSE file.
 
 #pragma once
-#include "base/basictypes.h"
+#include <cstdint>
 
 namespace tin {
 
-const int64 kNanosecond = 1;
-const int64 kMicrosecond = 1000 * kNanosecond;
-const int64 kMillisecond = 1000 * kMicrosecond;
-const int64 kSecond = 1000 * kMillisecond;
-const int64 kMinute = 60 * kSecond;
-const int64 kHour = 60 * kMinute;
+const int64_t kNanosecond = 1;
+const int64_t kMicrosecond = 1000 * kNanosecond;
+const int64_t kMillisecond = 1000 * kMicrosecond;
+const int64_t kSecond = 1000 * kMillisecond;
+const int64_t kMinute = 60 * kSecond;
+const int64_t kHour = 60 * kMinute;
 
 }  // namespace tin

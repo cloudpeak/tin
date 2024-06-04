@@ -6,9 +6,6 @@
 
 #include <cstdlib>
 
-#include "base/basictypes.h"
-#include "base/threading/thread_local.h"
-
 #include "tin/runtime/env.h"
 
 namespace tin {
@@ -20,11 +17,11 @@ class M;
 typedef Greenlet G;
 
 inline G* GetG() {
-  return glet_tls->Get();
+  return glet_tls;
 }
 
 inline void SetG(G* gp) {
-  glet_tls->Set(gp);
+  glet_tls = gp;
 }
 
 P* GetP();

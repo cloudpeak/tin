@@ -4,7 +4,7 @@
 
 #pragma once
 #include <stdlib.h>
-#include "base/basictypes.h"
+#include <stdint.h>
 
 namespace tin {
 
@@ -12,14 +12,15 @@ namespace tin {
 class Mutex {
  public:
   Mutex();
+  Mutex(const Mutex&) = delete;
+  Mutex& operator=(const Mutex&) = delete;
   ~Mutex();
   void Lock();
   void Unlock();
 
  private:
-  int32 state_;
-  uint32 sema_;
-  DISALLOW_COPY_AND_ASSIGN(Mutex);
+  int32_t state_;
+  uint32_t sema_;
 };
 
 class  MutexGuard {
@@ -28,13 +29,14 @@ class  MutexGuard {
     : lock_(lock) {
     lock->Lock();
   }
+  MutexGuard(const MutexGuard&) = delete;
+  MutexGuard& operator=(const MutexGuard&) = delete;
   inline ~MutexGuard() {
     lock_->Unlock();
   }
 
  private:
   Mutex* lock_;
-  DISALLOW_COPY_AND_ASSIGN(MutexGuard);
 };
 
 

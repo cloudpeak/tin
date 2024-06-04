@@ -12,8 +12,6 @@ extern "C" {
 #include <cmath>
 #include <memory>
 
-#include "base/basictypes.h"
-#include "base/sys_info.h"
 #include "tin/config/config.h"
 #include "tin/runtime/util.h"
 

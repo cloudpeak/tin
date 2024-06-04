@@ -2,13 +2,14 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "base/logging.h"
+#include <absl/log/check.h>
+
 #include "tin/error/error.h"
 #include "tin/runtime/runtime.h"
 #include "tin/io/io.h"
 
-namespace tin {
-namespace io {
+
+namespace tin::io {
 
 int ReadAtLeast(Reader* reader, void* buf, int len, int min) {
   if (len < min) {
@@ -40,9 +41,9 @@ int Write(Writer* writer, void* buf, int len) {
   return writer->Write(buf, len);
 }
 
-int WriteString(Writer* writer, const base::StringPiece& str) {
+int WriteString(Writer* writer, const absl::string_view& str) {
   return writer->Write(str.data(), static_cast<int>(str.size()));
 }
 
-}  // namespace io
-}  // namespace tin
+} // namespace tin::io
+

@@ -4,12 +4,7 @@
 
 #include <fcntl.h>
 
-#include "base/logging.h"
-#include "base/bind.h"
-#include "base/callback.h"
-#include "base/synchronization/once.h"
-#include "base/strings/string_util.h"
-#include "base/posix/eintr_wrapper.h"
+
 
 #include "tin/error/error.h"
 #include "tin/runtime/env.h"
@@ -144,7 +139,7 @@ int NetFD::CloseWrite() {
   return Shutdown(SHUT_WR);
 }
 
-int NetFD::Dial(IPEndPoint* local, IPEndPoint* remote, int64 deadline) {
+int NetFD::Dial(IPEndPoint* local, IPEndPoint* remote, int64_t deadline) {
   int err = 0;
   SockaddrStorage lstorage;
   if (local != NULL) {
@@ -281,7 +276,7 @@ int NetFD::EofError(int n, int err) {
   return err;
 }
 int NetFD::Connect(SockaddrStorage* laddr, SockaddrStorage* raddr,
-                   int64 deadline) {
+                   int64_t deadline) {
   (void)laddr;
   errno = 0;
   int err = connect(IntFd(), raddr->addr, raddr->addr_len) == -1 ? errno : 0;

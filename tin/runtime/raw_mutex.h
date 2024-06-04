@@ -3,16 +3,17 @@
 // found in the LICENSE file.
 
 #pragma once
-#include <stdlib.h>
-#include "base/basictypes.h"
+#include <cstdlib>
+#include <cstdint>
 
-namespace tin {
-namespace runtime {
+namespace tin::runtime {
 
 class M;
 class RawMutex {
  public:
   RawMutex();
+  RawMutex(const RawMutex&) = delete;
+  RawMutex& operator=(const RawMutex&) = delete;
   ~RawMutex();
   void Lock();
   void Unlock();
@@ -20,7 +21,6 @@ class RawMutex {
  private:
   uintptr_t key;
   M* owner_;
-  DISALLOW_COPY_AND_ASSIGN(RawMutex);
 };
 
 class  RawMutexGuard {
@@ -29,13 +29,14 @@ class  RawMutexGuard {
     : lock_(lock) {
     lock->Lock();
   }
+  RawMutexGuard(const RawMutexGuard&) = delete;
+  RawMutexGuard& operator=(const RawMutexGuard&) = delete;
   inline ~RawMutexGuard() {
     lock_->Unlock();
   }
 
  private:
   RawMutex* lock_;
-  DISALLOW_COPY_AND_ASSIGN(RawMutexGuard);
 };
 
 class Note {
@@ -44,15 +45,14 @@ class Note {
   void Wakeup();
   void Sleep();
   void Clear();
-  bool TimedSleep(int64 ns);
-  bool TimedSleepG(int64 ns);
+  bool TimedSleep(int64_t ns);
+  bool TimedSleepG(int64_t ns);
 
  private:
-  bool SleepInternal(int64 ns);
+  bool SleepInternal(int64_t ns);
  private:
   uintptr_t key;
-  DISALLOW_COPY_AND_ASSIGN(Note);
 };
 
-}  // namespace runtime
-}  // namespace tin
+} // namespace tin::runtime
+

@@ -2,7 +2,9 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "base/logging.h"
+#include <absl/log/check.h>
+#include <absl/log/log.h>
+
 #include "tin/sync/atomic.h"
 #include "tin/runtime/runtime.h"
 #include "tin/runtime/scheduler.h"
@@ -109,7 +111,7 @@ void DelTimerRefCounted(PollDescriptor* pd, Timer* t) {
     pd->Release();
 }
 
-void SetDeadline(PollDescriptor* pd, int64 d, int mode) {
+void SetDeadline(PollDescriptor* pd, int64_t d, int mode) {
   pd->lock.Lock();
   if (pd->closing) {
     pd->lock.Unlock();
@@ -168,7 +170,7 @@ void SetDeadline(PollDescriptor* pd, int64 d, int mode) {
   G* wg = NULL;
   // full memory barrier between stores to rd/wd
   // and load of rg/wg in NetPollUnblock
-  base::subtle::MemoryBarrier();
+  std::atomic_thread_fence(std::memory_order_seq_cst);
   if (pd->rd < 0) {
     rg = NetPollUnblock(pd, 'r', false);
   }
@@ -197,7 +199,7 @@ void Unblock(PollDescriptor* pd) {
   G* wg = NULL;
   // full memory barrier between stores to rd/wd
   // and load of rg/wg in NetPollUnblock
-  base::subtle::MemoryBarrier();
+  std::atomic_thread_fence(std::memory_order_seq_cst);
 
   rg = NetPollUnblock(pd, 'r', false);
   wg = NetPollUnblock(pd, 'w', false);

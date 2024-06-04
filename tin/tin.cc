@@ -2,22 +2,23 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "base/at_exit.h"
-
 #include "tin/runtime/env.h"
 #include "tin/platform/platform.h"
 
 #include "tin/tin.h"
 
+#include <absl/strings/str_format.h>
+#include <iostream>
 namespace tin {
 
 namespace {
 Config* conf = NULL;
-base::AtExitManager* atexit = NULL;
 }
 
 void Initialize() {
-  atexit = new base::AtExitManager;
+  std::string name = "John"; int age = 25;
+
+  std::string formatted_string = absl::StrFormat("My name is %s and I am %d years old.", name, age); std::cout << formatted_string << std::endl;
   conf = new tin::Config;
   *conf = DefaultConfig();
   PlatformInit();
@@ -40,7 +41,6 @@ int WaitForPowerOff() {
 
 void Deinitialize() {
   delete conf;
-  delete atexit;
 }
 
 Config* GetWorkingConfig() {

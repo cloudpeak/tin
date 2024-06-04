@@ -15,8 +15,7 @@
 #include <fcntl.h>
 #include <time.h>
 
-#include "base/logging.h"
-#include "base/posix/eintr_wrapper.h"
+
 #include "tin/runtime/runtime.h"
 #include "tin/runtime/posix_util.h"
 #include "tin/runtime/net/NetPoll.h"
@@ -46,7 +45,7 @@ void NetPollShutdown() {
 void NetPollPreDeinit() {
 }
 
-int32 NetPollOpen(uintptr_t fd, PollDescriptor* pd) {
+int32_t NetPollOpen(uintptr_t fd, PollDescriptor* pd) {
   struct kevent ev[2];
   ev[0].ident = fd;
   ev[0].filter = EVFILT_READ;
@@ -60,7 +59,7 @@ int32 NetPollOpen(uintptr_t fd, PollDescriptor* pd) {
   return n == -1 ? errno : 0;
 }
 
-int32 NetPollClose(uintptr_t fd) {
+int32_t NetPollClose(uintptr_t fd) {
   (void)fd;
   // Don't need to unregister because calling close()
   // on fd will remove any kevents that reference the descriptor.

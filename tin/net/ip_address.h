@@ -10,8 +10,7 @@
 #include <string>
 #include <vector>
 
-#include "base/compiler_specific.h"
-#include "base/strings/string_piece.h"
+#include <absl/strings/string_view.h>
 
 namespace tin {
 namespace net {
@@ -25,42 +24,42 @@ class  IPAddress {
 
   // Copies the input address to |ip_address_|. The input is expected to be in
   // network byte order.
-  explicit IPAddress(const std::vector<uint8>& address);
+  explicit IPAddress(const std::vector<uint8_t>& address);
 
   IPAddress(const IPAddress& other);
 
   // Copies the input address to |ip_address_|. The input is expected to be in
   // network byte order.
   template <size_t N>
-  IPAddress(const uint8(&address)[N])  // NOLINT
+  IPAddress(const uint8_t(&address)[N])  // NOLINT
     : ip_address_(address, address + N) {}
 
   // Copies the input address to |ip_address_| taking an additional length
   // parameter. The input is expected to be in network byte order.
-  IPAddress(const uint8* address, size_t address_len);
+  IPAddress(const uint8_t* address, size_t address_len);
 
   // Initializes |ip_address_| from the 4 bX bytes to form an IPv4 address.
   // The bytes are expected to be in network byte order.
-  IPAddress(uint8 b0, uint8 b1, uint8 b2, uint8 b3);
+  IPAddress(uint8_t b0, uint8_t b1, uint8_t b2, uint8_t b3);
 
   // Initializes |ip_address_| from the 16 bX bytes to form an IPv6 address.
   // The bytes are expected to be in network byte order.
-  IPAddress(uint8 b0,
-            uint8 b1,
-            uint8 b2,
-            uint8 b3,
-            uint8 b4,
-            uint8 b5,
-            uint8 b6,
-            uint8 b7,
-            uint8 b8,
-            uint8 b9,
-            uint8 b10,
-            uint8 b11,
-            uint8 b12,
-            uint8 b13,
-            uint8 b14,
-            uint8 b15);
+  IPAddress(uint8_t b0,
+            uint8_t b1,
+            uint8_t b2,
+            uint8_t b3,
+            uint8_t b4,
+            uint8_t b5,
+            uint8_t b6,
+            uint8_t b7,
+            uint8_t b8,
+            uint8_t b9,
+            uint8_t b10,
+            uint8_t b11,
+            uint8_t b12,
+            uint8_t b13,
+            uint8_t b14,
+            uint8_t b15);
 
   ~IPAddress();
 
@@ -98,11 +97,11 @@ class  IPAddress {
 
   // Parses an IP address literal (either IPv4 or IPv6) to its numeric value.
   // Returns true on success and fills |ip_address_| with the numeric value.
-  bool AssignFromIPLiteral(const base::StringPiece& ip_literal)
-  WARN_UNUSED_RESULT;
+  bool AssignFromIPLiteral(const absl::string_view& ip_literal)
+  ABSL_MUST_USE_RESULT;
 
   // Returns the underlying byte vector.
-  const std::vector<uint8>& bytes() const { return ip_address_; }
+  const std::vector<uint8_t>& bytes() const { return ip_address_; }
 
   // Returns an IPAddress instance representing the 127.0.0.1 address.
   static IPAddress IPv4Localhost();
@@ -126,7 +125,7 @@ class  IPAddress {
  private:
   // IPv4 addresses will have length kIPv4AddressSize, whereas IPv6 address
   // will have length kIPv6AddressSize.
-  std::vector<uint8> ip_address_;
+  std::vector<uint8_t> ip_address_;
 
   // This class is copyable and assignable.
 };
@@ -136,7 +135,7 @@ typedef std::vector<IPAddress> IPAddressList;
 // Returns the canonical string representation of an IP address along with its
 // port. For example: "192.168.0.1:99" or "[::1]:80".
 std::string IPAddressToStringWithPort(const IPAddress& address,
-                                      uint16 port);
+                                      uint16_t port);
 
 // Returns the address as a sequence of bytes in network-byte-order.
 std::string IPAddressToPackedString(const IPAddress& address);
@@ -178,9 +177,9 @@ bool IPAddressMatchesPrefix(const IPAddress& ip_address,
 // Returns true on success, and fills |ip_address| with the numeric value.
 // In other words, |hostname| must be an IPv4 literal, or an IPv6 literal
 // surrounded by brackets as in [::1].
-bool ParseURLHostnameToAddress(const base::StringPiece& hostname,
+bool ParseURLHostnameToAddress(const absl::string_view& hostname,
                                IPAddress* ip_address)
-WARN_UNUSED_RESULT;
+ABSL_MUST_USE_RESULT;
 
 // Returns number of matching initial bits between the addresses |a1| and |a2|.
 unsigned CommonPrefixLength(const IPAddress& a1,
@@ -193,7 +192,7 @@ unsigned MaskPrefixLength(const IPAddress& mask);
 // functionality as IPAddressMatchesPrefix() but doesn't perform automatic IPv4
 // to IPv4MappedIPv6 conversions and only checks against full bytes.
 template <size_t N>
-bool IPAddressStartsWith(const IPAddress& address, const uint8 (&prefix)[N]) {
+bool IPAddressStartsWith(const IPAddress& address, const uint8_t (&prefix)[N]) {
   if (address.size() < N)
     return false;
   return std::equal(prefix, prefix + N, address.bytes().begin());
