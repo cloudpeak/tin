@@ -1,3 +1,4 @@
+#include "base/system/sys_info.h"
 #include "tin/all.h"
 
 int TinMain(int argc, char** argv) {
@@ -7,9 +8,6 @@ int TinMain(int argc, char** argv) {
 
 int main(int argc, char** argv) {
   tin::Initialize();
-
-  // set logging level.
-  logging::SetMinLogLevel(-1);
 
   // set max p count.
   tin::Config config = tin::DefaultConfig();

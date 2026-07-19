@@ -12,6 +12,7 @@ extern "C" {
 #include <cmath>
 #include <memory>
 
+#include "base/memory/page_size.h"
 #include "tin/config/config.h"
 #include "tin/runtime/util.h"
 
@@ -34,7 +35,7 @@ ProtectedFixedSizeStack::~ProtectedFixedSizeStack() {
 }
 
 void* ProtectedFixedSizeStack::Allocate(size_t size) {
-  size_t page_size = base::SysInfo::PageSize();
+  size_t page_size = base::GetPageSize();
   size_t num_pages = static_cast<size_t>(
                        std::floor(static_cast<float>(size) / page_size)) + 1;
   if (num_pages < 2)

@@ -54,7 +54,13 @@ P* Scheduler::ResizeProc(int nprocs) {
     P* pp = allp_[i];
     if (pp == NULL) {
       // placement new, cache-line alignment.
-      void* ptr = _aligned_malloc(sizeof(P), 64); // TODO
+#if defined(OS_WIN)
+      void* ptr = _aligned_malloc(sizeof(P), 64);
+#else
+      // aligned_alloc requires size to be a multiple of alignment.
+      size_t aligned_size = (sizeof(P) + 63) & ~size_t(63);
+      void* ptr = aligned_alloc(64, aligned_size);
+#endif
       pp = new(ptr) P(i);
       atomic::store(reinterpret_cast<uintptr_t*>(&allp_[i]),
                     reinterpret_cast<uintptr_t>(pp));

@@ -12,6 +12,7 @@
 #include <netdb.h>
 #endif
 
+#include <memory>
 #include <vector>
 
 #include <absl/log/log.h>

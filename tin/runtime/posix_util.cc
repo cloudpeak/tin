@@ -13,6 +13,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+#include "base/posix/eintr_wrapper.h"
 #include "tin/platform/platform_posix.h"
 #include "tin/runtime/posix_util.h"
 

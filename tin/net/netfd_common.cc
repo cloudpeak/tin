@@ -2,6 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+#include <limits>
+
 #include "tin/net/sys_socket.h"
 #include "tin/error/error.h"
 #include "tin/runtime/runtime.h"

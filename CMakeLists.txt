@@ -1,12 +1,25 @@
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
-set(CMAKE_CXX_STANDARD 17)
+# base (Chromium //base) requires C++20 (class-scope deduction guides in
+# weak_ptr.h, etc.). tin itself only needs C++17, but since base headers are
+# included from tin sources, we have to compile the whole tree as C++20.
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
 # build third party.
-if(NOT BASE03_DIR)
-	set(BASE03_DIR ${CMAKE_CURRENT_SOURCE_DIR}/third_party/base03)
-	message("BASE03_DIR not defined, default to ${BASE03_DIR}") 
-	add_subdirectory("${BASE03_DIR}")
+if(NOT BASE_DIR)
+	set(BASE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/third_party/base)
+	message("BASE_DIR not defined, default to ${BASE_DIR}")
+	# Pass the abseil-cpp source directory down to base's CMakeLists.txt so
+	# it can find absl regardless of where base is consumed from. Without
+	# this, base would look for absl at ${BASE_DIR}/../third_party/abseil-cpp
+	# (i.e. tin/third_party/third_party/abseil-cpp), which does not exist.
+	# Use CACHE FORCE so the value survives reconfigures and wins over
+	# base's own default in ${CHROMIUM_SRC}/third_party/abseil-cpp.
+	set(BASE_ABSL_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/third_party/abseil-cpp
+		CACHE PATH "Path to abseil-cpp source tree" FORCE)
+	add_subdirectory("${BASE_DIR}")
 	set_property(TARGET base PROPERTY FOLDER "tin_deps")
 endif()
 
@@ -40,6 +53,16 @@ message("Current build type is : ${CMAKE_BUILD_TYPE}")
 message("path is  : ${PROJECT_SOURCE_DIR}")
 message("sysmtem name is  : ${CMAKE_SYSTEM_NAME}")
 message("compiler is ${CMAKE_CXX_COMPILER_ID}")
+
+# On WSL/Linux with Homebrew clang, force libc++ (libstdc++ 11 headers
+# don't survive clang 22). base/CMakeLists.txt already does this in its own
+# scope, but tin's own sources need it too.
+if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -stdlib=libc++ -L/home/linuxbrew/.linuxbrew/lib")
+  set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -stdlib=libc++ -L/home/linuxbrew/.linuxbrew/lib")
+  link_directories(/home/linuxbrew/.linuxbrew/lib)
+endif()
 
 if(CMAKE_SYSTEM_NAME MATCHES ".*BSD.*" OR CMAKE_SYSTEM_NAME MATCHES "Darwin")
 message("Darwin or BSD variants found")
@@ -76,15 +99,10 @@ endif()
 
 # compiler flags.
 if (UNIX)
-    set(CMAKE_CXX_FLAGS
-        -ggdb
-        -Wall
-        -Wextra 
-        -Woverloaded-virtual
-        -Wno-unused-parameter
-        -Wno-missing-field-initializers 
-		#-Wno-reorder
-    )
+    # Append (do NOT overwrite) — CMAKE_CXX_FLAGS already contains
+    # `-stdlib=libc++` set above for Clang, and we must keep it so tin's own
+    # sources use the same standard library as base.
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ggdb -Wall -Wextra -Woverloaded-virtual -Wno-unused-parameter -Wno-missing-field-initializers")
 elseif(WIN32)
     set(CMAKE_CXX_FLAGS 
         /Zi 
@@ -116,12 +134,28 @@ endif()
 string(REPLACE ";" " " CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 
 include_directories(${PROJECT_SOURCE_DIR})
-include_directories(${BASE03_DIR})
+# Do NOT add ${BASE_DIR} to the global include path here. Doing so adds
+# `-I tin/third_party/base`, which shadows glibc's <features.h> with base's
+# features.h — and libstdc++ 11's <bits/os_defines.h> does `#include
+# <features.h>` to pull in glibc macros like __BEGIN_DECLS / __THROW / __N.
+# base_compile_config (transitively applied via `target_link_libraries(tin
+# PUBLIC base)`) already provides `-I ${CHROMIUM_SRC}` (so `#include
+# "base/..."` resolves) and `-iquote ${BASE_ROOT}` (so `#include
+# "features.h"` / `#include "build/build_config.h"` resolve, without
+# affecting `#include <features.h>`).
+# cliff shim: provides <cliff/...> headers that re-export base's utilities
+# (strlcpy, NetToHost16, RefCountedThreadSafe, atomicops, build_config).
+# cliff is no longer available; tin sources still reference cliff:: symbols,
+# so we provide thin shims that forward to base on non-Windows builds.
+if(UNIX)
+	include_directories(${CMAKE_CURRENT_SOURCE_DIR}/third_party/cliff_shim)
+endif()
 include_directories(${QUARK_DIR}/include)
 include_directories(${ZCONTEXT_DIR}/zcontext/include)
 
 if (UNIX)
-set(CMAKE_CXX_COMPILER "g++")
+# Note: do NOT hard-code CMAKE_CXX_COMPILER here — the caller picks the
+# compiler via -DCMAKE_CXX_COMPILER=... (clang++ on WSL, g++ elsewhere).
 SET(CMAKE_CXX_FLAGS_DEBUG "$ENV{CXXFLAGS} -O0")
 SET(CMAKE_CXX_FLAGS_RELEASE "$ENV{CXXFLAGS} -O3 ")
 endif()
@@ -305,6 +339,17 @@ source_group_by_dir(SOURCES)
 
 add_library(tin ${SOURCES})
 
+# tin's public headers include <absl/...> and <base/...>, so the dependency
+# on base (and the absl components not already PUBLIC-linked by base) must
+# be PUBLIC for downstream targets (e.g. examples) to compile.
+target_link_libraries(tin PUBLIC
+	base
+	absl::log
+	absl::check
+	absl::str_format
+	absl::bind_front
+)
+
 
 
 file(GLOB ABSL_LIBS "${CMAKE_INSTALL_PREFIX}/lib/*absl_*")
@@ -323,7 +368,7 @@ endif()
 elseif(APPLE)
 set(DEP_LIBS tin base quark zcontext pthread)
 else()
-set(DEP_LIBS tin base quark zcontext pthread rt)
+set(DEP_LIBS tin base quark zcontext pthread rt absl::log_globals)
 endif()
 
 if(NOT DEFINED TIN_BUILD_EXAMPLES)

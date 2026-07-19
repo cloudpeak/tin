@@ -3,9 +3,11 @@
 // found in the LICENSE file.
 
 #include <fcntl.h>
+#include <memory>
 
+#include <absl/log/log.h>
 
-
+#include "base/posix/eintr_wrapper.h"
 #include "tin/error/error.h"
 #include "tin/runtime/env.h"
 #include "tin/runtime/posix_util.h"
@@ -214,7 +216,7 @@ int NetFD::Accept(NetFD** newfd) {
     }
     break;
   }
-  scoped_ptr<NetFD> netfd(new NetFD(fd, family_, sotype_, net_));
+  std::unique_ptr<NetFD> netfd(new NetFD(fd, family_, sotype_, net_));
   err = netfd->Init();
   if (err != 0) {
     return err;
@@ -308,7 +310,7 @@ int NetFD::Connect(SockaddrStorage* laddr, SockaddrStorage* raddr,
       break;
     }
     socklen_t errlen = sizeof(err);
-    COMPILE_ASSERT(sizeof(err) == sizeof(int), sock_len_size_must_be_int_size);
+    static_assert(sizeof(err) == sizeof(int), "sock_len_size_must_be_int_size");
     if (getsockopt(IntFd(), SOL_SOCKET, SO_ERROR, &err, &errlen) == -1) {
       err = errno;
       break;

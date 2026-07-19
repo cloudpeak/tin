@@ -3,7 +3,7 @@
 // found in the LICENSE file.
 
 #include <time.h>
-#include "cstdint"
+#include <cstdint>
 
 namespace tin {
 
@@ -13,7 +13,7 @@ namespace tin {
 #endif
 
 int64_t Now() {
-  int64_t t = base::Time::Now().ToTimeT();
+  int64_t t = static_cast<int64_t>(time(NULL));
   // to nano seconds.
   return t * 1000000000LL;
 }
@@ -46,7 +46,7 @@ int64_t MonoNow() {
 
 int32_t NowSeconds() {
   int64_t millisecond = Now() / 1000000000LL;
-  return static_cast<uint32>(millisecond);
+  return static_cast<uint32_t>(millisecond);
 }
 
 }   // namespace tin

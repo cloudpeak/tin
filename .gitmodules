@@ -1,9 +1,14 @@
-[submodule "third_party/base03"]
-	path = third_party/base03
-	url = https://github.com/cloudpeak/base03.git
 [submodule "third_party/quark"]
 	path = third_party/quark
 	url = https://github.com/cloudpeak/quark.git
 [submodule "third_party/zcontext"]
 	path = third_party/zcontext
 	url = https://github.com/cloudpeak/zcontext.git
+[submodule "third_party/abseil-cpp"]
+	path = third_party/abseil-cpp
+	url = https://github.com/abseil/abseil-cpp
+	branch = lts_2026_05_26
+[submodule "third_party/base"]
+	path = third_party/base
+	url = https://github.com/cloudpeak/base
+	branch = main

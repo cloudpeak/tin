@@ -5,6 +5,7 @@
 #pragma once
 
 #include <list>
+#include <memory>
 #include <thread>
 #include <absl/log/log.h>
 #include <absl/log/check.h>

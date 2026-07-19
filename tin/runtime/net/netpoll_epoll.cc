@@ -4,6 +4,12 @@
 
 #include <sys/epoll.h>
 #include <fcntl.h>
+
+#include <absl/base/macros.h>
+#include <absl/log/log.h>
+#include <absl/log/check.h>
+
+#include "base/posix/eintr_wrapper.h"
 #include "tin/runtime/runtime.h"
 #include "tin/runtime/posix_util.h"
 #include "tin/runtime/net/netpoll.h"
@@ -64,7 +70,7 @@ G* NetPoll(bool block) {
   epoll_event events[128];  // 1536 bytes on stack.
   while (true) {
     int n =
-      HANDLE_EINTR(epoll_wait(epfd, &events[0], arraysize(events), waitms));
+      HANDLE_EINTR(epoll_wait(epfd, &events[0], ABSL_ARRAYSIZE(events), waitms));
     if (n < 0) {
       LOG(FATAL) << "epoll_wait, fatal error, error code: " << errno;
     }
