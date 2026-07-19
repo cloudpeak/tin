@@ -16,10 +16,10 @@ typedef bool(*UnlockFunc)(void* arg1, void* arg2);
 class UnLockInfo {
  public:
   UnLockInfo()
-    : f_(NULL)
-    , arg1_(NULL)
-    , arg2_(NULL)
-    , owner_(NULL) {
+    : f_(nullptr)
+    , arg1_(nullptr)
+    , arg2_(nullptr)
+    , owner_(nullptr) {
   }
 
   UnLockInfo(const UnLockInfo&) = delete;
@@ -42,7 +42,7 @@ class UnLockInfo {
   }
 
   bool Empty() const {
-    return f_ == NULL;
+    return f_ == nullptr;
   }
 
   // set
@@ -70,14 +70,14 @@ class UnLockInfo {
   }
 
   void Clear() {
-    f_ = NULL;
-    arg1_ =  NULL;
-    arg2_ = NULL;
-    owner_ = NULL;
+    f_ = nullptr;
+    arg1_ =  nullptr;
+    arg2_ = nullptr;
+    owner_ = nullptr;
   }
 
   void Run() {
-    if (f_ != NULL)
+    if (f_ != nullptr)
       RunInternal();
   }
 

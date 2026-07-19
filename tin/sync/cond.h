@@ -22,7 +22,7 @@ class Cond {
   Cond& operator=(const Cond&) = delete;
   void Wait();
   void Signal();
-  void Broascast();
+  void Broadcast();
 
  private:
   void SignalImpl(bool all);

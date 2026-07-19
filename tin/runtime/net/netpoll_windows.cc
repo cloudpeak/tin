@@ -47,7 +47,7 @@ void NetPollInit() {
 void NetPollShutdown() {
   if (!NetPollInited())
     return;
-  PostQueuedCompletionStatus(iocphandle, 0, NULL, NULL);
+  PostQueuedCompletionStatus(iocphandle, 0, nullptr, nullptr);
 }
 
 void NetPollPreDeinit() {
@@ -72,7 +72,7 @@ void NetPollArm(PollDescriptor* pd, int mode) {
 }
 
 void handlecompletion(G** gpp, NetOP* op, DWORD error_no, uint32_t qty) {
-  if (op == NULL) {
+  if (op == nullptr) {
     LOG(FATAL) << "NetPoll: GetQueuedCompletionStatus returned op == nil";
   }
   int32_t mode = op->mode;
@@ -91,7 +91,7 @@ G* NetPoll(bool block) {
   ULONG n;
   DWORD error_no;
   NetOP* op;
-  G* gp = NULL;
+  G* gp = nullptr;
   DWORD wait = 0;
   if (block) {
     wait = INFINITE;
@@ -99,7 +99,7 @@ G* NetPoll(bool block) {
 
   bool shutdown_flag = false;
 
-  if (pGetQueuedCompletionStatusEx != NULL) {
+  if (pGetQueuedCompletionStatusEx != nullptr) {
     n = 64;
 
     if (pGetQueuedCompletionStatusEx(iocphandle,
@@ -107,16 +107,16 @@ G* NetPoll(bool block) {
                                      n, &n, wait, 0) == 0) {
       error_no = GetLastError();
       if (!block && error_no == WAIT_TIMEOUT) {
-        return NULL;
+        return nullptr;
       }
       LOG(INFO) << "NetPoll: GetQueuedCompletionStatusEx failed";
-      return NULL;
+      return nullptr;
     }
     for (i = 0; i < n; i++) {
       op = entries[i].op;
       error_no = 0;
       qty = 0;
-      if (op != NULL) {
+      if (op != nullptr) {
         if (WSAGetOverlappedResult(op->pd->fd,
                                    (LPWSAOVERLAPPED)op,
                                    (LPDWORD)&qty,
@@ -130,7 +130,7 @@ G* NetPoll(bool block) {
       }
     }
   } else {
-    op = NULL;
+    op = nullptr;
     error_no = 0;
     qty = 0;
     if (GetQueuedCompletionStatus(iocphandle,
@@ -140,14 +140,14 @@ G* NetPoll(bool block) {
                                   wait) == 0) {
       error_no = GetLastError();
       if (!block && error_no == WAIT_TIMEOUT) {
-        return NULL;
+        return nullptr;
       }
-      if (op == NULL) {
+      if (op == nullptr) {
         LOG(INFO) << "NetPoll: GetQueuedCompletionStatus failed";
-        return NULL;
+        return nullptr;
       }
     }
-    if (op != NULL) {
+    if (op != nullptr) {
       handlecompletion(&gp, op, error_no, qty);
     } else {
       shutdown_flag = true;
@@ -155,7 +155,7 @@ G* NetPoll(bool block) {
   }
 
   if (shutdown_flag) {
-    PostQueuedCompletionStatus(iocphandle, 0, NULL, NULL);
+    PostQueuedCompletionStatus(iocphandle, 0, nullptr, nullptr);
   }
   return gp;
 }

@@ -10,7 +10,7 @@
 namespace tin {
 
 namespace {
-Config* conf = NULL;
+Config* conf = nullptr;
 }
 
 void Initialize() {
@@ -20,14 +20,14 @@ void Initialize() {
 }
 
 void PowerOn(EntryFn fn, int argc, char** argv, Config* new_conf) {
-  if (new_conf != NULL) {
+  if (new_conf != nullptr) {
     *conf = *new_conf;
   }
   runtime::InitializeEnv(fn, argc, argv, conf);
 }
 
 void PowerOn(EntryFn fn, Config* new_conf) {
-  return PowerOn(fn, 0, NULL, new_conf);
+  return PowerOn(fn, 0, nullptr, new_conf);
 }
 
 int WaitForPowerOff() {
@@ -48,7 +48,7 @@ Config DefaultConfig() {
   conf.SetStackSize(kDefaultStackSize);
   conf.SetOsThreadStackSize(kDefaultOSThreadStackSize);
   conf.SetIgnoreSigpipe(true);
-  conf.EnableStackPprotection(false);
+  conf.EnableStackProtection(false);
   return conf;
 }
 

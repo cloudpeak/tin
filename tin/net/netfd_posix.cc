@@ -144,7 +144,7 @@ int NetFD::CloseWrite() {
 int NetFD::Dial(IPEndPoint* local, IPEndPoint* remote, int64_t deadline) {
   int err = 0;
   SockaddrStorage lstorage;
-  if (local != NULL) {
+  if (local != nullptr) {
     if (local->GetFamily() != family_) {
       return EINVAL;
     }
@@ -158,14 +158,14 @@ int NetFD::Dial(IPEndPoint* local, IPEndPoint* remote, int64_t deadline) {
   }
 
   SockaddrStorage rstorage;
-  if (remote != NULL) {
+  if (remote != nullptr) {
     if (remote->GetFamily() != family_) {
       return EINVAL;
     }
     if (!remote->ToSockAddr(rstorage.addr, &rstorage.addr_len)) {
       return EINVAL;
     }
-    err = Connect(local == NULL ? NULL : &lstorage, &rstorage, deadline);
+    err = Connect(local == nullptr ? nullptr : &lstorage, &rstorage, deadline);
     if (err != 0) {
       return err;
     }
@@ -201,7 +201,7 @@ int NetFD::Accept(NetFD** newfd) {
   }
   int fd = -1;
   while (true) {
-    fd = tin::Accept(IntFd(), NULL, NULL);
+    fd = tin::Accept(IntFd(), nullptr, nullptr);
     err = fd == -1 ? errno : 0;
     if (err != 0) {
       if (err  == EAGAIN) {
@@ -363,9 +363,9 @@ NetFD* NewFD(AddressFamily family, int sotype, int* error_code) {
     if (sysfd) {
       close(sysfd);
     }
-    if (error_code != NULL)
+    if (error_code != nullptr)
       *error_code = err;
-    return NULL;
+    return nullptr;
   }
   return new NetFD(sysfd, family, sotype, "unused");
 }

@@ -34,14 +34,14 @@ void TCPListenerImpl::Close() {
 }
 
 TcpConn TCPListenerImpl::Accept() {
-  NetFD* newfd = NULL;
-  TcpConnImpl* conn = NULL;
+  NetFD* newfd = nullptr;
   int err = netfd_->Accept(&newfd);
-  if (err == 0) {
-    conn = new TcpConnImpl(newfd);
-  }
   SetErrorCode(TinTranslateSysError(err));
-  return MakeTcpConn(conn);
+  if (err != 0) {
+    delete newfd;
+    return TcpConn();
+  }
+  return MakeTcpConn(newfd);
 }
 
 }  // namespace net

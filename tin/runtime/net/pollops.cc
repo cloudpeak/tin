@@ -119,14 +119,14 @@ void SetDeadline(PollDescriptor* pd, int64_t d, int mode) {
   }
   pd->seq++;  // invalidate current timers
   // Reset current timers.
-  if (pd->rt.f != NULL) {
+  if (pd->rt.f != nullptr) {
     DelTimerRefCounted(pd, &pd->rt);
-    pd->rt.f = NULL;
+    pd->rt.f = nullptr;
   }
 
-  if (pd->wt.f != NULL) {
+  if (pd->wt.f != nullptr) {
     DelTimerRefCounted(pd, &pd->wt);
-    pd->wt.f = NULL;
+    pd->wt.f = nullptr;
   }
 
   if (d != 0 && d <= MonoNow()) {
@@ -166,8 +166,8 @@ void SetDeadline(PollDescriptor* pd, int64_t d, int mode) {
     }
   }
 
-  G* rg = NULL;
-  G* wg = NULL;
+  G* rg = nullptr;
+  G* wg = nullptr;
   // full memory barrier between stores to rd/wd
   // and load of rg/wg in NetPollUnblock
   std::atomic_thread_fence(std::memory_order_seq_cst);
@@ -179,10 +179,10 @@ void SetDeadline(PollDescriptor* pd, int64_t d, int mode) {
   }
   pd->lock.Unlock();
 
-  if (rg != NULL) {
+  if (rg != nullptr) {
     Ready(rg);
   }
-  if (wg != NULL) {
+  if (wg != nullptr) {
     Ready(wg);
   }
 }
@@ -195,29 +195,29 @@ void Unblock(PollDescriptor* pd) {
   pd->closing = true;
   pd->seq++;
 
-  G* rg = NULL;
-  G* wg = NULL;
+  G* rg = nullptr;
+  G* wg = nullptr;
   // full memory barrier between stores to rd/wd
   // and load of rg/wg in NetPollUnblock
   std::atomic_thread_fence(std::memory_order_seq_cst);
 
   rg = NetPollUnblock(pd, 'r', false);
   wg = NetPollUnblock(pd, 'w', false);
-  if (pd->rt.f != NULL) {
+  if (pd->rt.f != nullptr) {
     DelTimerRefCounted(pd, &pd->rt);
-    pd->rt.f = NULL;
+    pd->rt.f = nullptr;
   }
 
-  if (pd->wt.f != NULL) {
+  if (pd->wt.f != nullptr) {
     DelTimerRefCounted(pd, &pd->wt);
-    pd->wt.f = NULL;
+    pd->wt.f = nullptr;
   }
   pd->lock.Unlock();
 
-  if (rg != NULL) {
+  if (rg != nullptr) {
     Ready(rg);
   }
-  if (wg != NULL) {
+  if (wg != nullptr) {
     Ready(wg);
   }
 }

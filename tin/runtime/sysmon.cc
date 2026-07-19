@@ -26,7 +26,7 @@ void SysMon() {
     if (NetPollInited() && last_poll != 0 && (last_poll + 10 < now)) {
       atomic::cas32(sched->MutableLastPollTime(), last_poll, now);
       G* gp = NetPoll(false);
-      if (gp != NULL) {
+      if (gp != nullptr) {
         sched->InjectGList(gp);
       }
     }

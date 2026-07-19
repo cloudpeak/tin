@@ -84,7 +84,7 @@ void IOBuffer::GetReadablePtr(char** ptr, int* size) const {
 // returns the number of bytes read into 'bytes'
 int IOBuffer::Read(char* bytes, size_t sz) {
   int size = static_cast<int>(sz);
-  char* read_ptr = NULL;
+  char* read_ptr = nullptr;
   int read_size = 0;
   GetReadablePtr(&read_ptr, &read_size);
   if (read_size > size) {
@@ -109,7 +109,7 @@ void IOBuffer::Reset(int size = kInitialIOBufferSize) {
 bool IOBuffer::ReserveMore(int size) {
   bool changed = false;
   if (size > 0 && free() < size) {
-    char* read_ptr = NULL;
+    char* read_ptr = nullptr;
     int read_size = 0;
     GetReadablePtr(&read_ptr, &read_size);
 

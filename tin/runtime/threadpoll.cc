@@ -34,47 +34,47 @@ void GletWork::Finalize() {
 
 bool SubmitGletWorkUnlockF(void* arg1, void* arg2) {
   GletWork* work = static_cast<GletWork*>(arg1);
-  ThreadPoll::GetInstance()->AddWork(work);
+    ThreadPool::GetInstance()->AddWork(work);
   return true;
 }
 
 void SubmitGletWork(GletWork* work) {
-  Park(SubmitGletWorkUnlockF, work, NULL);
+  Park(SubmitGletWorkUnlockF, work, nullptr);
   SetErrorCode(TinTranslateSysError(work->LastError()));
 }
 
 void SubmitGetAddrInfoGletWork(GletWork* work) {
-  Park(SubmitGletWorkUnlockF, work, NULL);
+  Park(SubmitGletWorkUnlockF, work, nullptr);
   SetErrorCode(TinGetaddrinfoTranslateError(work->LastError()));
 }
 
-absl::once_flag thread_poll_once;
+absl::once_flag thread_pool_once;
 
-ThreadPoll* ThreadPoll::GetInstance() {
-  static ThreadPoll* instance = nullptr;
-  absl::call_once(thread_poll_once, []() {
-      instance = new ThreadPoll();
+ThreadPool* ThreadPool::GetInstance() {
+  static ThreadPool* instance = nullptr;
+  absl::call_once(thread_pool_once, []() {
+      instance = new ThreadPool();
   });
   return instance;
 }
 
-// ThreadPoll implementation.
-ThreadPoll::ThreadPoll()
+// ThreadPool implementation.
+ThreadPool::ThreadPool()
   : num_threads_(64)
   , dry_(false) {
 }
 
-void ThreadPoll::Start() {
+void ThreadPool::Start() {
   for (int i = 0; i < num_threads_; ++i) {
-//    M* m = M::New(base::Bind(&ThreadPoll::Run, base::Unretained(this)), NULL);
-    M* m = M::New(absl::bind_front(&ThreadPoll::Run, this), NULL);
+//    M* m = M::New(base::Bind(&ThreadPool::Run, base::Unretained(this)), nullptr);
+    M* m = M::New(absl::bind_front(&ThreadPool::Run, this), nullptr);
     threads_.push_back(m);
   }
 }
 
-void ThreadPoll::JoinAll() {
+void ThreadPool::JoinAll() {
   for (int i = 0; i < num_threads_; ++i) {
-    AddWork(NULL);
+    AddWork(nullptr);
   }
 
   // Join and destroy all the worker threads.
@@ -85,7 +85,7 @@ void ThreadPoll::JoinAll() {
   threads_.clear();
 }
 
-void ThreadPoll::AddWork(Work* work) {
+void ThreadPool::AddWork(Work* work) {
   absl::MutexLock guard(&lock_);
   tasks_.push_back(work);
   // If we were empty, signal that we have work now.
@@ -94,8 +94,8 @@ void ThreadPoll::AddWork(Work* work) {
 }
 
 // consider replace with conditional variable.
-void ThreadPoll::Run() {
-  Work* work = NULL;
+void ThreadPool::Run() {
+  Work* work = nullptr;
 
   while (true) {
     dry_.WaitForNotification();
@@ -113,7 +113,7 @@ void ThreadPoll::Run() {
         dry_.Notify(); // TODO
     }
 
-    // A NULL delegate pointer signals us to quit.
+    // A nullptr delegate pointer signals us to quit.
     if (!work)
       break;
 

@@ -12,7 +12,7 @@ namespace tin {
 namespace runtime {
 
 FixedSizeStack::FixedSizeStack()
-  : vaddr_(NULL) {
+  : vaddr_(nullptr) {
 }
 
 FixedSizeStack::~FixedSizeStack() {

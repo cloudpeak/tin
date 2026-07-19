@@ -13,7 +13,7 @@ namespace tin {
 #endif
 
 int64_t Now() {
-  int64_t t = static_cast<int64_t>(time(NULL));
+  int64_t t = static_cast<int64_t>(time(nullptr));
   // to nano seconds.
   return t * 1000000000LL;
 }

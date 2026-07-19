@@ -3,6 +3,7 @@
 // found in the LICENSE file.
 
 #include <csignal>
+#include <memory>
 #include <thread>
 
 #include "build/build_config.h"
@@ -24,7 +25,7 @@ namespace runtime {
 
 Env::Env()
   : argc_(0)
-  , argv_(NULL)
+  , argv_(nullptr)
   , main_signal_(false) {
 }
 
@@ -41,15 +42,22 @@ int Env::Initialize(EntryFn fn, int argc, char** argv, tin::Config* new_conf) {
   sched = new Scheduler;
   timer_q = new TimerQueue;
   glet_tls = new Greenlet;
-  ThreadPoll::GetInstance()->Start();
-  M::New(absl::bind_front(&SysInit), NULL);
+  ThreadPool::GetInstance()->Start();
+  M::New(absl::bind_front(&SysInit), nullptr);
 
   return 0;
 }
 
 void Env::Deinitialize() {
-  // don't delete rtm_config.
+  // Release order: timer_q first (already Joined in OnMainExit), then sched,
+  // then glet_tls. Previously only timer_q was freed — sched and glet_tls
+  // leaked on every shutdown.
   delete timer_q;
+  delete sched;
+  delete glet_tls;
+  timer_q = nullptr;
+  sched = nullptr;
+  glet_tls = nullptr;
 }
 
 int Env::WaitMainExit() {
@@ -60,14 +68,14 @@ int Env::WaitMainExit() {
 void Env::SysInit() {
   GetM()->SetM0Flag();
   sched->Init();
-  SpawnSimple(&MainGlet, NULL, "main");
-  M::New(absl::bind_front(&SysMon), NULL);
+  SpawnSimple(&MainGlet, nullptr, "main");
+  M::New(absl::bind_front(&SysMon), nullptr);
 }
 
 void* Env::MainGlet(intptr_t) {
   rtm_env->fn_(rtm_env->argc_, rtm_env->argv_);
   rtm_env->OnMainExit();
-  return NULL;
+  return nullptr;
 }
 
 void Env::OnMainExit() {
@@ -79,7 +87,7 @@ void Env::OnMainExit() {
   // hooks, and the Deinitialize() call in the user's main(), defeating the
   // purpose of the lifecycle API.
   exit_flag_ = true;
-  ThreadPoll::GetInstance()->JoinAll();
+  ThreadPool::GetInstance()->JoinAll();
   timer_q->Join();
   rtm_env->main_signal_.Notify();
 }
@@ -92,7 +100,7 @@ void Env::SignalInit() {
     memset(&sigpipe_action, 0, sizeof(sigpipe_action));
     sigpipe_action.sa_handler = SIG_IGN;
     sigemptyset(&sigpipe_action.sa_mask);
-    bool success = (sigaction(SIGPIPE, &sigpipe_action, NULL) == 0);
+    bool success = (sigaction(SIGPIPE, &sigpipe_action, nullptr) == 0);
     DCHECK(success);
   }
 #endif
@@ -106,14 +114,16 @@ int InitializeEnv(EntryFn fn, int argc, char** argv, tin::Config* new_conf) {
 
 void DeInitializeEnv() {
   rtm_env->Deinitialize();
+  delete rtm_env;
+  rtm_env = nullptr;
 }
 
-Env* rtm_env = NULL;
-Scheduler* sched = NULL;
-TimerQueue* timer_q = NULL;
-thread_local Greenlet* glet_tls = NULL;
+Env* rtm_env = nullptr;
+Scheduler* sched = nullptr;
+TimerQueue* timer_q = nullptr;
+thread_local Greenlet* glet_tls = nullptr;
 
-tin::Config* rtm_conf = NULL;
+tin::Config* rtm_conf = nullptr;
 
 }  // namespace runtime
 }  // namespace tin

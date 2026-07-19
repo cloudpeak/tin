@@ -32,7 +32,7 @@ enum {
   // The resolver should only invoke getaddrinfo, not DnsClient.
   HOST_RESOLVER_SYSTEM_ONLY = 1 << 3
 };
-typedef int HostResolverFlags;
+using HostResolverFlags = int;
 
 // Returns AddressFamily for |address|.
 AddressFamily GetAddressFamily(const IPAddress& address);

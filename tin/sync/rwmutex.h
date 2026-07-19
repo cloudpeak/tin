@@ -26,7 +26,7 @@ class RWMutex {
  private:
   Mutex  w_;             // held if there are pending writers
   uint32_t writer_sem_;    // semaphore for writers to wait for completing readers
-  uint32_t reader_sem;     // semaphore for readers to wait for completing writers
+  uint32_t reader_sem_;     // semaphore for readers to wait for completing writers
   int32_t  reader_count_;  // number of pending readers
   int32_t  reader_wait_;   // number of departing readers
 };

@@ -23,7 +23,7 @@ void Cond::Signal() {
   SignalImpl(false);
 }
 
-void Cond::Broascast() {
+void Cond::Broadcast() {
   SignalImpl(true);
 }
 

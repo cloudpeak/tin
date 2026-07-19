@@ -78,7 +78,7 @@ class IOBuffer {
     read_idx_ = rvalue.read_idx_;
     storage_size_ = rvalue.storage_size_;
 
-    rvalue.storage_ = NULL;
+    rvalue.storage_ = nullptr;
     rvalue.write_idx_ = 0;
     rvalue.read_idx_ = 0;
     rvalue.storage_size_ = 0;
@@ -91,7 +91,7 @@ class IOBuffer {
     read_idx_ = rvalue.read_idx_;
     storage_size_ = rvalue.storage_size_;
 
-    rvalue.storage_ = NULL;
+    rvalue.storage_ = nullptr;
     rvalue.write_idx_ = 0;
     rvalue.read_idx_ = 0;
     rvalue.storage_size_ = 0;

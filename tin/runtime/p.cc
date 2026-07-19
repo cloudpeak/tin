@@ -20,11 +20,11 @@ namespace runtime {
 P::P(int id)
   : runq_head_(0)
   , runq_tail_(0)
-  , link_(NULL)
+  , link_(nullptr)
   , id_(id)
   , status_(kPidle)
   , sched_tick_(0)
-  , m_(NULL) {
+  , m_(nullptr) {
   runq_head_ = runq_tail_ = 0;
 }
 
@@ -69,7 +69,7 @@ G* P::RunqGet(bool* inherit_time) {
       break;
     }
     if (atomic::cas(run_next_.Address(), next, 0)) {
-      if (inherit_time != NULL)
+      if (inherit_time != nullptr)
         *inherit_time = true;
       return GpCastBack(next);
     }
@@ -80,14 +80,14 @@ G* P::RunqGet(bool* inherit_time) {
     uint32_t h = atomic::acquire_load32(&runq_head_);
     uint32_t t = atomic::relaxed_load32(&runq_tail_);
     if (t == h) {
-      if (inherit_time != NULL)
+      if (inherit_time != nullptr)
         *inherit_time = false;
-      return NULL;
+      return nullptr;
     }
     G* gp = runq_[h % static_cast<uint32_t>(kRunqCapacity)].Pointer();
     // cas-release, commits consume
     if (atomic::release_cas32(&runq_head_, h, h + 1)) {
-      if (inherit_time != NULL)
+      if (inherit_time != nullptr)
         *inherit_time = false;
       return gp;
     }
@@ -176,7 +176,7 @@ G* P::RunqSteal(P* p2 , bool steal_nextg ) {
   uint32_t t = runq_tail_;
   uint32_t n = p2->RunqGrab(&runq_[0], kRunqCapacity, t, steal_nextg);
   if (n == 0) {
-    return NULL;
+    return nullptr;
   }
   n--;
   G* gp = runq_[(t + n) % static_cast<uint32_t>(kRunqCapacity)].Pointer();

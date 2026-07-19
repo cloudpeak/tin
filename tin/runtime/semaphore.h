@@ -23,14 +23,14 @@ struct Sudog {
 
   Sudog() {
     wakedup = 0;
-    gp = NULL;
-    selectdone = NULL;
-    next = NULL;
-    prev = NULL;
-    elem = NULL;
+    gp = nullptr;
+    selectdone = nullptr;
+    next = nullptr;
+    prev = nullptr;
+    elem = nullptr;
     nrelease = 0;
-    waitlink = NULL;
-    address = NULL;
+    waitlink = nullptr;
+    address = nullptr;
   }
 };
 
@@ -41,8 +41,8 @@ void SemRelease(uint32_t* addr);
 class SyncSema {
  public:
   SyncSema()
-    : head_(NULL)
-    , tail_(NULL) {
+    : head_(nullptr)
+    , tail_(nullptr) {
   }
   SyncSema(const SyncSema&) = delete;
   SyncSema& operator=(const SyncSema&) = delete;

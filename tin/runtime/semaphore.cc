@@ -35,10 +35,10 @@ void SemaRoot::queue(uint32_t* addr, Sudog* s) {
   s->address = addr;
   s->gp = GetG();
   s->elem = addr;
-  s->next = NULL;
+  s->next = nullptr;
   s->prev = tail;
 
-  if (tail != NULL) {
+  if (tail != nullptr) {
     tail->next = s;
   } else {
     head = s;
@@ -47,20 +47,20 @@ void SemaRoot::queue(uint32_t* addr, Sudog* s) {
 }
 
 void SemaRoot::dequeue(Sudog* s) {
-  if (s->next != NULL) {
+  if (s->next != nullptr) {
     s->next->prev = s->prev;
   } else {
     tail = s->prev;
   }
 
-  if (s->prev != NULL) {
+  if (s->prev != nullptr) {
     s->prev->next = s->next;
   } else {
     head = s->next;
   }
-  s->elem = NULL;
-  s->next = NULL;
-  s->prev = NULL;
+  s->elem = nullptr;
+  s->next = nullptr;
+  s->prev = nullptr;
 }
 
 const int kSemTabSize = 251;
@@ -91,7 +91,7 @@ const uint32_t kWakedupByTimer = 2;
 void OnSemDeadlineReached(void* arg, uintptr_t seq) {
   Sudog* s = static_cast<Sudog*>(arg);
   SemaRoot* root = semroot(s->address);
-  G* gp = NULL;
+  G* gp = nullptr;
   {
     RawMutexGuard guard(&root->lock);
     if (s->wakedup == 0) {
@@ -102,7 +102,7 @@ void OnSemDeadlineReached(void* arg, uintptr_t seq) {
     }
     s->wakedup = kWakedupByTimer;
   }
-  if (gp != NULL)
+  if (gp != nullptr)
     Ready(gp);
 }
 
@@ -175,45 +175,45 @@ void SemRelease(uint32_t* addr) {
   }
 
   Sudog* s = root->head;
-  for ( ; s != NULL; s = s->next) {
+  for ( ; s != nullptr; s = s->next) {
     if (s->elem == addr) {
       atomic::Inc32(&root->nwait, -1);
       root->dequeue(s);
       break;
     }
   }
-  if (s != NULL)
+  if (s != nullptr)
     s->wakedup = kWakedUpByReleaser;
   root->lock.Unlock();
-  if (s != NULL) {
+  if (s != nullptr) {
     Ready(s->gp);
   }
 }
 
 void SyncSema::Acquire() {
   lock_.Lock();
-  if (head_ != NULL && head_->nrelease > 0) {
-    Sudog* wake = NULL;
+  if (head_ != nullptr && head_->nrelease > 0) {
+    Sudog* wake = nullptr;
     head_->nrelease--;
     if (head_->nrelease == 0) {
       wake = head_;
       head_ = wake->next;
-      if (head_ == NULL) {
-        tail_ = NULL;
+      if (head_ == nullptr) {
+        tail_ = nullptr;
       }
     }
     lock_.Unlock();
-    if (wake != NULL) {
-      wake->next = NULL;
+    if (wake != nullptr) {
+      wake->next = nullptr;
       Ready(wake->gp);
     }
   } else {
     Sudog* w = new Sudog;
     w->gp = GetG();
     w->nrelease = -1;
-    w->next = NULL;
+    w->next = nullptr;
 
-    if (tail_ == NULL) {
+    if (tail_ == nullptr) {
       head_ = w;
     } else {
       tail_->next = w;
@@ -226,14 +226,14 @@ void SyncSema::Acquire() {
 
 void SyncSema::Release(uint32_t n) {
   lock_.Lock();
-  while (n > 0 && head_ != NULL && head_->nrelease < 0) {
+  while (n > 0 && head_ != nullptr && head_->nrelease < 0) {
     // Have pending acquire, satisfy it.
     Sudog* wake = head_;
     head_ = wake->next;
-    if (head_ == NULL) {
-      tail_ = NULL;
+    if (head_ == nullptr) {
+      tail_ = nullptr;
     }
-    wake->next = NULL;
+    wake->next = nullptr;
     Ready(wake->gp);
     n--;
   }
@@ -241,8 +241,8 @@ void SyncSema::Release(uint32_t n) {
     Sudog* w = new Sudog;
     w->gp = GetG();
     w->nrelease = static_cast<int32_t>(n);
-    w->next = NULL;
-    if (tail_ == NULL) {
+    w->next = nullptr;
+    if (tail_ == nullptr) {
       head_ = w;
     } else {
       tail_->next = w;

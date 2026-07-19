@@ -130,7 +130,7 @@ class  IPAddress {
   // This class is copyable and assignable.
 };
 
-typedef std::vector<IPAddress> IPAddressList;
+using IPAddressList = std::vector<IPAddress>;
 
 // Returns the canonical string representation of an IP address along with its
 // port. For example: "192.168.0.1:99" or "[::1]:80".

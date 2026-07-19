@@ -131,9 +131,9 @@ class Greenlet {
   Timer* timer_;
 };
 
-void SpawnSimple(GreenletFunc entry, void* args = NULL,
-                 const char* name = NULL);
-void SpawnSimple(std::function<void()> closure,  const char* name = NULL);
+void SpawnSimple(GreenletFunc entry, void* args = nullptr,
+                 const char* name = nullptr);
+void SpawnSimple(std::function<void()> closure,  const char* name = nullptr);
 
 }  // namespace runtime
 

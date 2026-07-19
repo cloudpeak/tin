@@ -41,11 +41,11 @@ void NetPollReady(G** gpp, PollDescriptor* pd, int32_t mode) {
     wg = NetPollUnblock(pd, 'w', true);
   }
 
-  if (rg != NULL) {
+  if (rg != nullptr) {
     rg->SetSchedLink(*gpp);
     *gpp = rg;
   }
-  if (wg != NULL) {
+  if (wg != nullptr) {
     wg->SetSchedLink(*gpp);
     *gpp = wg;
   }
@@ -108,12 +108,12 @@ G* NetPollUnblock(PollDescriptor* pd, int32_t mode, bool ioready) {
   while (true) {
     uintptr_t old = *gpp;
     if (old == kPdReady) {
-      return NULL;
+      return nullptr;
     }
     if (old == 0 && !ioready) {
       // Only set READY for ioready. runtime_pollWait
       // will check for timeout/cancel before waiting.
-      return NULL;
+      return nullptr;
     }
     uintptr_t new_value = 0;
     if (ioready) {
@@ -137,9 +137,9 @@ void NetPollDeadlineImpl(PollDescriptor* pd, uintptr_t seq, bool read,
     pd->Release();
     return;
   }
-  G* rg = NULL;
+  G* rg = nullptr;
   if (read) {
-    if (pd->rd <= 0 || pd->rt.f == NULL) {
+    if (pd->rd <= 0 || pd->rt.f == nullptr) {
       LOG(FATAL) << "NetPollDeadlineImpl: inconsistent read deadline";
     }
     pd->rd = -1;
@@ -148,9 +148,9 @@ void NetPollDeadlineImpl(PollDescriptor* pd, uintptr_t seq, bool read,
     rg = NetPollUnblock(pd, 'r', false);
   }
 
-  G* wg = NULL;
+  G* wg = nullptr;
   if (write) {
-    if ((pd->wd <= 0 || pd->wt.f == NULL) && !read) {
+    if ((pd->wd <= 0 || pd->wt.f == nullptr) && !read) {
       LOG(FATAL) << "NetPollDeadlineImpl: inconsistent write deadline";
     }
     pd->wd = -1;
@@ -159,10 +159,10 @@ void NetPollDeadlineImpl(PollDescriptor* pd, uintptr_t seq, bool read,
     wg = NetPollUnblock(pd, 'w', false);
   }
   pd->lock.Unlock();
-  if (rg != NULL) {
+  if (rg != nullptr) {
     Ready(rg);
   }
-  if (wg != NULL) {
+  if (wg != nullptr) {
     Ready(wg);
   }
   pd->Release();

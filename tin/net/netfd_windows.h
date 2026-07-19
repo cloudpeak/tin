@@ -25,14 +25,14 @@ struct SockaddrStorage;
 
 struct Operation {
   Operation()
-    : sa(NULL)
+    : sa(nullptr)
     , rsan(0)
     , accept_buf()
-    , handle(NULL)
+    , handle(nullptr)
     , error_no(0)
     , qty(0)
     , flags(0)
-    , fd(NULL)
+    , fd(nullptr)
     , mode(0)
     , err_chan(tin::MakeChan<int>(1)) {
   }
@@ -115,7 +115,7 @@ class NetFD : public NetFDCommon {
   Operation wop_;
 };
 
-NetFD* NewFD(AddressFamily family, int sotype, int* error_code = NULL);
+NetFD* NewFD(AddressFamily family, int sotype, int* error_code = nullptr);
 
 }  // namespace net
 }  // namespace tin

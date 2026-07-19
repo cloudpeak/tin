@@ -55,7 +55,7 @@ class Config {
     return enable_stack_protection_;
   }
 
-  void EnableStackPprotection(bool enable) {
+  void EnableStackProtection(bool enable) {
     enable_stack_protection_ = enable;
   }
 

@@ -27,8 +27,8 @@ namespace net {
 class WinIoServer;
 
 namespace {
-WinIoServer* rsrv = NULL;
-WinIoServer* wsrv = NULL;
+WinIoServer* rsrv = nullptr;
+WinIoServer* wsrv = nullptr;
 
 absl::once_flag start_server_once_flag;
 
@@ -75,12 +75,12 @@ int WinSubmitIO(Operation* op) {
   switch (op->io_type) {
   case kWSARecv: {
     err = WSARecv(op->fd->SysFd(), &op->buf, 1, &op->qty, &op->flags,
-                  &op->overlapped, NULL);
+                  &op->overlapped, nullptr);
     break;
   }
   case kWSASend: {
     err = WSASend(op->fd->SysFd(), &op->buf, 1, &op->qty, 0, &op->overlapped,
-                  NULL);
+                  nullptr);
     break;
   }
   case kWSARecvFrom: {
@@ -102,7 +102,7 @@ int WinSubmitIO(Operation* op) {
     break;
   }
   case kConnectEx: {
-    err = pConnectEx(op->fd->SysFd(), op->sa->addr, op->sa->addr_len, NULL, 0,
+    err = pConnectEx(op->fd->SysFd(), op->sa->addr, op->sa->addr_len, nullptr, 0,
                      0, &op->overlapped);
     if (err == FALSE) {
       err = SOCKET_ERROR;
@@ -144,7 +144,7 @@ class WinIoServer {
   void ProcessRemoteIO() {
     tin::LockOSThread();
 
-    IoSrvReq r(NULL);
+    IoSrvReq r(nullptr);
     while (chan_->Pop(&r)) {
       int err = 0;
       if (!r.cancel_io) {
@@ -285,9 +285,9 @@ NetFD* NewFD(AddressFamily family, int sotype, int* error_code) {
   // a protocol and the service provider will choose the protocol to use.
   uintptr_t sysfd = socket(ConvertAddressFamily(family), sotype, 0);
   if (sysfd == INVALID_SOCKET) {
-    if (error_code != NULL)
+    if (error_code != nullptr)
       *error_code = WSAGetLastError();
-    return NULL;
+    return nullptr;
   }
   return new NetFD(sysfd, family, sotype, "unused");
 }
@@ -329,8 +329,8 @@ int NetFD::Init() {
     DWORD ret = 0;
     DWORD flag = 0;
     DWORD size = sizeof(flag);
-    int result = WSAIoctl(sysfd_, SIO_UDP_CONNRESET, &flag, size, NULL, 0, &ret,
-                          NULL, 0);
+    int result = WSAIoctl(sysfd_, SIO_UDP_CONNRESET, &flag, size, nullptr, 0, &ret,
+                          nullptr, 0);
     if (result == SOCKET_ERROR) {
       return WSAGetLastError();
     }
@@ -391,8 +391,8 @@ int NetFD::SetTCPKeepAlive(bool enable, int sec) {
   };
   DWORD bytes_returned = 0xABAB;
   int rv = WSAIoctl(SysFd(), SIO_KEEPALIVE_VALS, &keepalive_vals,
-                    sizeof(keepalive_vals), NULL, 0,
-                    &bytes_returned, NULL, NULL);
+                    sizeof(keepalive_vals), nullptr, 0,
+                    &bytes_returned, nullptr, nullptr);
   DCHECK(!rv) << "Could not enable TCP Keep-Alive for socket: " << SysFd()
               << " [error: " << WSAGetLastError() << "].";
   return rv == -1 ? WSAGetLastError() : 0;
@@ -433,7 +433,7 @@ int NetFD::Connect(SockaddrStorage* laddr, SockaddrStorage* raddr,
   if (deadline != 0)
     SetWriteDeadline(deadline);
   do {
-    if (laddr == NULL) {
+    if (laddr == nullptr) {
       SockaddrStorage* any_addr = GetAddrAny(family_);
       if (::bind(sysfd_, any_addr->addr, any_addr->addr_len) != 0) {
         err = WSAGetLastError();
@@ -457,7 +457,7 @@ int NetFD::Connect(SockaddrStorage* laddr, SockaddrStorage* raddr,
 int NetFD::Dial(IPEndPoint* local, IPEndPoint* remote, int64_t deadline) {
   int err = 0;
   SockaddrStorage lstorage;
-  if (local != NULL) {
+  if (local != nullptr) {
     if (local->GetFamily() != family_) {
       return ERROR_INVALID_PARAMETER;
     }
@@ -471,14 +471,14 @@ int NetFD::Dial(IPEndPoint* local, IPEndPoint* remote, int64_t deadline) {
   }
 
   SockaddrStorage rstorage;
-  if (remote != NULL) {
+  if (remote != nullptr) {
     if (remote->GetFamily() != family_) {
       return ERROR_INVALID_PARAMETER;
     }
     if (!remote->ToSockAddr(rstorage.addr, &rstorage.addr_len)) {
       return ERROR_INVALID_PARAMETER;
     }
-    err = Connect(local == NULL ? NULL : &lstorage, &rstorage, deadline);
+    err = Connect(local == nullptr ? nullptr : &lstorage, &rstorage, deadline);
     if (err != 0) {
       return err;
     }
@@ -552,7 +552,7 @@ int NetFD::Accept(NetFD** new_fd) {
     op->accept_buf.reset(new sockaddr_storage[2]);
   }
   while (true) {
-    NetFD* net_fd = NULL;
+    NetFD* net_fd = nullptr;
     err = AcceptOne(op, &net_fd);
     if (err == 0) {
       *new_fd = net_fd;

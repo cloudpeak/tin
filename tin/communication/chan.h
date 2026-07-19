@@ -4,7 +4,6 @@
 
 #pragma once
 #include <utility>
-#include <iostream>
 #include <deque>
 
 #include "tin/sync/atomic.h"
@@ -24,7 +23,6 @@ class Channel
     , free_space_sem_(max_size)
     , used_space_sem_(0)
     , closed_(0) {
-    // std::cout << "Channel constructor " << rand() << std::endl;
   }
 
   bool Push(const T& t) {

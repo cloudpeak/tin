@@ -19,9 +19,9 @@ namespace tin {
 namespace runtime {
 
 Greenlet::Greenlet()
-  : lockedm_(NULL)
+  : lockedm_(nullptr)
   , error_code_(0)
-  , timer_(NULL) {
+  , timer_(nullptr) {
 }
 
 Greenlet::~Greenlet() {
@@ -30,14 +30,14 @@ Greenlet::~Greenlet() {
 
 void Greenlet::SetName(const char* name) {
   // TODO
-  if (name != NULL)
+  if (name != nullptr)
     base::strlcpy(name_, name, ABSL_ARRAYSIZE(name_));
   else
     base::strlcpy(name_, "greenlet", ABSL_ARRAYSIZE(name_));
 }
 
 Timer* Greenlet::GetTimer() {
-  if (timer_ == NULL) {
+  if (timer_ == nullptr) {
     timer_ = new Timer;
   }
   return timer_;
@@ -64,7 +64,7 @@ Greenlet* Greenlet::Create(GreenletFunc entry,
   glet->state_ = GLET_RUNNABLE;
   glet->args_ = args;
   glet->entry_ = entry;
-  if (closure != NULL) {
+  if (closure != nullptr) {
     std::swap(glet->closure_, *closure);
   }
   glet->SetName(name);
@@ -107,7 +107,7 @@ void Greenlet::Proc() {
 
 void SpawnSimple(GreenletFunc entry, void* args,  const char* name) {
   Greenlet::Create(entry,
-                   NULL,
+                   nullptr,
                    false,
                    reinterpret_cast<intptr_t>(args),
                    false,
@@ -116,7 +116,7 @@ void SpawnSimple(GreenletFunc entry, void* args,  const char* name) {
 }
 
 void SpawnSimple(std::function<void()> closure,  const char* name) {
-  Greenlet::Create(NULL,
+  Greenlet::Create(nullptr,
                    &closure,
                    false,
                    0,
@@ -129,7 +129,7 @@ void SpawnSimple(std::function<void()> closure,  const char* name) {
 }  // namespace runtime
 
 void RuntimeSpawn(std::function<void()>* closure) {
-  runtime::Greenlet::Create(NULL,
+  runtime::Greenlet::Create(nullptr,
                             closure,
                             false,
                             0,

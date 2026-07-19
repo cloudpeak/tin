@@ -20,7 +20,7 @@ namespace tin::runtime {
 
 class P;
 
-typedef class M AliasM;
+using AliasM = M;
 
 class M  {
  public:

@@ -2,7 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include <iostream>
+#include <absl/log/log.h>
+#include <absl/log/check.h>
 
 
 #include "tin/error/error.h"
@@ -30,8 +31,8 @@ void InternalUnlockOSThread() {
   if (curg->M()->MutableLocked() != 0) {
     return;
   }
-  curg->M()->SetLockedG(NULL);
-  curg->SetLockedM(NULL);
+  curg->M()->SetLockedG(nullptr);
+  curg->SetLockedM(nullptr);
 }
 
 bool YieldUnlockFn(void* arg1, void* arg2) {
@@ -46,14 +47,15 @@ bool YieldUnlockFn(void* arg1, void* arg2) {
 
 void InternalYield() {
   G* me = GetG();
-  Park(YieldUnlockFn, me, NULL);
+  Park(YieldUnlockFn, me, nullptr);
 }
 
 }  // namespace runtime
 
 void Throw(const char* str) {
-  std::cout << str << std::endl;
-  // base::debug::BreakDebugger(); // TODO
+  LOG(FATAL) << str;
+  // LOG(FATAL) is [[noreturn]] in abseil, but keep throw as a safety net
+  // for builds where LOG(FATAL) is configured to return.
   throw(str);
 }
 

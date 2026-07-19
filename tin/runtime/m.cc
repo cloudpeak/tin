@@ -28,12 +28,12 @@ M::M()
   , p_(0)
   , spinning_(false)
   , schedlink_(0)
-  , nextp_(NULL)
-  , curg_(NULL)
+  , nextp_(nullptr)
+  , curg_(nullptr)
   , g0_(0)
-  , locked_g_(NULL)
+  , locked_g_(nullptr)
   , mstart_fn_()
-  , sys_context_(NULL)
+  , sys_context_(nullptr)
   , unlock_info_(new UnLockInfo)
   , is_m0_(0)
   , dead_queue_()
@@ -62,13 +62,13 @@ void* M::G0StaticProc(intptr_t args) {
 void* M::G0Proc() {
   if (mstart_fn_)
     mstart_fn_();
-  if (nextp_ != NULL && !IsM0()) {
+  if (nextp_ != nullptr && !IsM0()) {
     AcquireP(nextp_);
-    nextp_ = NULL;
+    nextp_ = nullptr;
     sched->G0Loop();
   }
   jump_zcontext(g0_->MutableContext(), sys_context_, 0);
-  return NULL;
+  return nullptr;
 }
 
 M* M::Allocate(tin::runtime::P* p) {
@@ -83,14 +83,14 @@ void M::OnSysThreadStart() {
 }
 
 void M::OnSysThreadStop() {
-  srand(static_cast<unsigned>(time(NULL)));
+  srand(static_cast<unsigned>(time(nullptr)));
 }
 
 void M::ThreadMain() {
   OnSysThreadStart();
 
   g0_ = Greenlet::Create(G0StaticProc,
-                         NULL,
+                         nullptr,
                          true,
                          reinterpret_cast<intptr_t>(this),
                          false,
@@ -127,16 +127,16 @@ void M::Join() {
 }
 
 void M::Start(tin::runtime::P* p, bool spinning) {
-  M* m = NULL;
+  M* m = nullptr;
   {
     SchedulerLocker guard;
     sched->MGetForP(p, spinning, &p, &m);
   }
 
-  if (p == NULL)
+  if (p == nullptr)
     return;
 
-  if (m == NULL) {
+  if (m == nullptr) {
     std::function<void()> closure;
     if (spinning) {
       // closure = base::Bind(&mspinning);
@@ -148,7 +148,7 @@ void M::Start(tin::runtime::P* p, bool spinning) {
   if (m->GetSpinning()) {
     LOG(FATAL) << "StartM: m is spinning";
   }
-  if (m->nextp_ != NULL) {
+  if (m->nextp_ != nullptr) {
     LOG(FATAL) << "startm: m has p";
   }
   if (spinning && !p->RunqEmpty()) {
@@ -180,7 +180,7 @@ void M::Stop() {
   G* gp = GetG();
   M* m = gp->M();
 
-  if (m->P() != NULL) {
+  if (m->P() != nullptr) {
     LOG(FATAL) << "Stop m holding p";
   }
   if (m->GetSpinning()) {
@@ -196,24 +196,24 @@ void M::Stop() {
   m->park_.Sleep();
   m->park_.Clear();
   AcquireP(m->nextp_);
-  m->nextp_ = NULL;
+  m->nextp_ = nullptr;
 }
 
 void M::StopLocked() {
   G* curg = GetG();
   M* curm = curg->M();
-  if (curm->LockedG() == NULL || curm->LockedG()->M() != curm) {
+  if (curm->LockedG() == nullptr || curm->LockedG()->M() != curm) {
     LOG(FATAL) << "M::StopLocked: inconsistent locking";
   }
 
-  if (curm->P() != NULL) {
+  if (curm->P() != nullptr) {
     sched->HandoffP(ReleaseP());
   }
 
   curm->park_.Sleep();
   curm->park_.Clear();
   AcquireP(curm->nextp_);
-  curm->nextp_ = NULL;
+  curm->nextp_ = nullptr;
 }
 
 void M::ClearDeadQueue() {

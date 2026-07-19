@@ -30,7 +30,7 @@ void SemaWakeup(M* m);
 
 RawMutex::RawMutex()
   : key(0)
-  , owner_(NULL) {
+  , owner_(nullptr) {
 }
 
 RawMutex::~RawMutex() {
@@ -99,8 +99,8 @@ void RawMutex::Lock() {
 }
 
 void RawMutex::Unlock() {
-  owner_ = NULL;
-  M* mp = NULL;
+  owner_ = nullptr;
+  M* mp = nullptr;
   while (true) {
     uintptr_t v = atomic::acquire_load(&key);
     if (v == kLocked) {

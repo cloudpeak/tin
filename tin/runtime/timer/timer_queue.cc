@@ -45,7 +45,7 @@ int64_t NanoFromNow(int64_t deadline) {
 }
 
 TimerQueue::TimerQueue()
-  : gp_(NULL)
+  : gp_(nullptr)
   , created_(false)
   , rescheduling_(false)
   , sleeping_(false)
@@ -56,7 +56,7 @@ TimerQueue::~TimerQueue() {
 }
 
 void TimerQueue::AddTimer(Timer* t) {
-  LOG_IF(FATAL, t->f == NULL) << "timer fn must not be NULL";
+  LOG_IF(FATAL, t->f == nullptr) << "timer fn must not be nullptr";
   RawMutexGuard guard(&mutex_);
   AddTimerLocked(t);
 }

@@ -24,7 +24,7 @@ struct Timer {
     i = 0;
     when = period = 0;
     seq = 0;
-    f = NULL;
+    f = nullptr;
     arg = 0;
   }
 

@@ -23,11 +23,11 @@ namespace runtime {
 
 ProtectedFixedSizeStack::ProtectedFixedSizeStack()
   : size_(0)
-  , sp_(NULL) {
+  , sp_(nullptr) {
 }
 
 ProtectedFixedSizeStack::~ProtectedFixedSizeStack() {
-  if (sp_ != NULL) {
+  if (sp_ != nullptr) {
     void* vp = static_cast<char*>(sp_) - size_;
     // conform to POSIX.4 (POSIX.1b-1993, _POSIX_C_SOURCE=199309L)
     ::munmap(vp, size_);

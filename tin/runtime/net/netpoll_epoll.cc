@@ -65,7 +65,7 @@ void NetPollArm(PollDescriptor* pd, int mode) {
 
 G* NetPoll(bool block) {
   if (epfd == -1)
-    return NULL;
+    return nullptr;
   int waitms = -1;
   epoll_event events[128];  // 1536 bytes on stack.
   while (true) {
@@ -74,7 +74,7 @@ G* NetPoll(bool block) {
     if (n < 0) {
       LOG(FATAL) << "epoll_wait, fatal error, error code: " << errno;
     }
-    G* gp = NULL;
+    G* gp = nullptr;
     for (int i = 0; i < n; ++i) {
       epoll_event& ev = events[i];
       if (ev.events == 0) {
@@ -92,7 +92,7 @@ G* NetPoll(bool block) {
         NetPollReady(&gp, pd, mode);
       }
     }
-    if (!block || gp != NULL) {
+    if (!block || gp != nullptr) {
       return gp;
     }
   }

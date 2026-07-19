@@ -76,13 +76,12 @@ class TcpConnImpl
 
 class TcpConn {
 public:
-    TcpConn(TcpConnImpl* conn)
-      : impl_(conn) {
+    TcpConn() = default;
+    explicit TcpConn(std::shared_ptr<TcpConnImpl> impl)
+      : impl_(std::move(impl)) {
     }
 
-    TcpConn(const TcpConn& other)
-      : impl_(other.impl_) {
-    }
+    TcpConn(const TcpConn& other) = default;
 
     TcpConnImpl*  operator->() {
       return impl_.get();
@@ -92,8 +91,11 @@ private:
     std::shared_ptr<TcpConnImpl> impl_;
 };
 
-inline TcpConn MakeTcpConn(TcpConnImpl* conn) {
-  return {conn};
+// Factory: single allocation via std::make_shared (object + control block
+// coalesced), replacing the previous `new TcpConnImpl + shared_ptr(T*)`
+// pattern which performed two heap allocations.
+inline TcpConn MakeTcpConn(NetFD* netfd) {
+  return TcpConn(std::make_shared<TcpConnImpl>(netfd));
 }
 
 }  // namespace net

@@ -33,7 +33,7 @@ class QueueImpl
   QueueImpl(const QueueImpl&) = delete;
   QueueImpl& operator=(const QueueImpl&) = delete;
 
-  bool Enqueue(const T& t, size_t* size = NULL) {
+  bool Enqueue(const T& t, size_t* size = nullptr) {
     MutexGuard guard(&lock_);
     if (closed_)
       return false;
@@ -53,12 +53,12 @@ class QueueImpl
       // some consumers is waiting for an item.
       empty_cond_.Signal();
     }
-    if (size != NULL)
+    if (size != nullptr)
       *size = queue_.size();
     return true;
   }
 
-  bool Dequeue(T* t, size_t* size = NULL) {
+  bool Dequeue(T* t, size_t* size = nullptr) {
     MutexGuard guard(&lock_);
     if (closed_)
       return false;
@@ -78,7 +78,7 @@ class QueueImpl
       // some producers is waiting for a slot to put item.
       full_cond_.Signal();
     }
-    if (size != NULL)
+    if (size != nullptr)
       *size = queue_.size();
     return true;
   }
@@ -89,8 +89,8 @@ class QueueImpl
       return;  // already closed.
     closed_ = true;
     STLClearElements(&queue_);
-    full_cond_.Broascast();
-    empty_cond_.Broascast();
+    full_cond_.Broadcast();
+    empty_cond_.Broadcast();
   }
 
   size_t Size() const {

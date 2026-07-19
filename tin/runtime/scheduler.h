@@ -113,7 +113,7 @@ void StartM(P* p, bool spinning);
 
 void ParkUnlock(RawMutex* lock);
 
-void Park(UnlockFunc unlockf = NULL, void* arg1 = NULL, void* arg2 = NULL);
+void Park(UnlockFunc unlockf = nullptr, void* arg1 = nullptr, void* arg2 = nullptr);
 
 void Ready(G* gp);
 

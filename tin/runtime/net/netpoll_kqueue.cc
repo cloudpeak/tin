@@ -55,7 +55,7 @@ int32_t NetPollOpen(uintptr_t fd, PollDescriptor* pd) {
   ev[0].udata = pd;
   ev[1] = ev[0];
   ev[1].filter = EVFILT_WRITE;
-  int n = kevent(kq, &ev[0], 2, NULL, 0, NULL);
+  int n = kevent(kq, &ev[0], 2, nullptr, 0, nullptr);
   return n == -1 ? errno : 0;
 }
 
@@ -72,9 +72,9 @@ void NetPollArm(PollDescriptor* pd, int mode) {
 
 G* NetPoll(bool block) {
   if (kq == -1) {
-    return NULL;
+    return nullptr;
   }
-  struct timespec* tp = NULL;
+  struct timespec* tp = nullptr;
   struct timespec ts;
   memset(&ts, 0, sizeof(ts));
   if (!block) {
@@ -83,12 +83,12 @@ G* NetPoll(bool block) {
   struct kevent events[64];
   while (true) {
     int n =
-      HANDLE_EINTR(kevent(kq, NULL, 0, &events[0], arraysize(events), tp));
+      HANDLE_EINTR(kevent(kq, nullptr, 0, &events[0], arraysize(events), tp));
     if (n == -1) {
       LOG(FATAL) << "kevent failed";
     }
 
-    G* gp = NULL;
+    G* gp = nullptr;
     for (int i = 0; i < n; ++i) {
       struct kevent& ev = events[i];
       int mode = 0;
@@ -103,11 +103,11 @@ G* NetPoll(bool block) {
         NetPollReady(&gp, pd, mode);
       }
     }
-    if (!block || gp != NULL) {
+    if (!block || gp != nullptr) {
       return gp;
     }
   }
-  return NULL;
+  return nullptr;
 }
 
 }  // namespace runtime

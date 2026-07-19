@@ -29,9 +29,9 @@ bool BufferedReader::ReadFull(int n) {
       buffer_.ReserveMore(lack);
     }
 
-    DCHECK(reader_ != NULL);
+    DCHECK(reader_ != nullptr);
     while (buffer_.buffered() < n) {
-      char* write_ptr = NULL;
+      char* write_ptr = nullptr;
       int write_size = 0;
       buffer_.GetWritablePtr(&write_ptr, &write_size);
       DCHECK_GT(write_size, 0);

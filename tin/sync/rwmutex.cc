@@ -19,7 +19,7 @@ const int32_t kRWMutexMaxReaders = 1 << 30;
 
 RWMutex::RWMutex()
   : writer_sem_(0)
-  , reader_sem(0)
+  , reader_sem_(0)
   , reader_count_(0)
   , reader_wait_(0) {
 }
@@ -29,7 +29,7 @@ RWMutex::~RWMutex() {
 
 void RWMutex::RLock() {
   if (atomic::Inc32(&reader_count_, 1) < 0) {
-    runtime::SemAcquire(&reader_sem);
+    runtime::SemAcquire(&reader_sem_);
   }
 }
 
@@ -61,7 +61,7 @@ void RWMutex::Unlock() {
   }
 
   for (int32_t i = 0; i < r; i++) {
-    runtime::SemRelease(&reader_sem);
+    runtime::SemRelease(&reader_sem_);
   }
   w_.Unlock();
 }

@@ -15,12 +15,12 @@ namespace tin {
 namespace runtime {
 
 ProtectedFixedSizeStack::ProtectedFixedSizeStack()
-  : sp_(NULL)
+  : sp_(nullptr)
   , size_(0) {
 }
 
 ProtectedFixedSizeStack::~ProtectedFixedSizeStack() {
-  if (sp_ != NULL) {
+  if (sp_ != nullptr) {
     void* vp = static_cast<char*>(sp_) - size_;
     ::VirtualFree(vp, 0, MEM_RELEASE);
   }

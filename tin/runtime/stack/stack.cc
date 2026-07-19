@@ -16,7 +16,7 @@ namespace tin {
 namespace runtime {
 
 Stack* NewStack(int type, int size) {
-  Stack* stack = NULL;
+  Stack* stack = nullptr;
   switch (type) {
   case kFixedStack:
     stack = new FixedSizeStack();

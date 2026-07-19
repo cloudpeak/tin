@@ -38,7 +38,7 @@ Scheduler::Scheduler()
     last_poll_ = 1;
   allp_ = new P*[kTinProcsLimit];
   for (int i = 0; i < kTinProcsLimit; i++) {
-    allp_[i] = NULL;
+    allp_[i] = nullptr;
   }
 }
 
@@ -52,7 +52,7 @@ P* Scheduler::ResizeProc(int nprocs) {
 
   for (int i = 0; i < nprocs; ++i) {
     P* pp = allp_[i];
-    if (pp == NULL) {
+    if (pp == nullptr) {
       // placement new, cache-line alignment.
 #if defined(OS_WIN)
       void* ptr = _aligned_malloc(sizeof(P), 64);
@@ -71,7 +71,7 @@ P* Scheduler::ResizeProc(int nprocs) {
     P* p = Allp()[i];
     while (1) {
       G* gp = p->RunqGet();
-      if (gp == NULL)
+      if (gp == nullptr)
         break;
       GlobalRunqPutHead(gp);
     }
@@ -79,19 +79,19 @@ P* Scheduler::ResizeProc(int nprocs) {
     p->SetStatus(kPdead);
   }
 
-  if (GetP() != NULL && GetP()->Id() < nprocs) {
+  if (GetP() != nullptr && GetP()->Id() < nprocs) {
     GetP()->SetStatus(kPrunning);
   } else {
-    if (GetP() != NULL) {
-      GetP()->SetM(NULL);
+    if (GetP() != nullptr) {
+      GetP()->SetM(nullptr);
     }
     P* p = Allp()[0];
-    p->SetM(NULL);
+    p->SetM(nullptr);
     p->SetStatus(kPidle);
     AcquireP(p);
   }
 
-  P* runnable_ps = NULL;
+  P* runnable_ps = nullptr;
   for (int i = nprocs - 1; i >= 0; i--) {
     P* p = Allp()[i];
     if (GetP() == p) {
@@ -115,7 +115,7 @@ P* Scheduler::ResizeProc(int nprocs) {
 // Put gp on the global runnable queue.
 // Sched must be locked.
 void Scheduler::GlobalRunqPut(G* gp) {
-  gp->SetSchedLink(NULL);
+  gp->SetSchedLink(nullptr);
   if (!runq_tail_.IsNull()) {
     runq_tail_.Pointer()->SetSchedLink(gp);
   } else {
@@ -141,7 +141,7 @@ void Scheduler::GlobalRunqPutHead(G* gp) {
 // Sched must be locked.
 
 void Scheduler::GlobalRunqBatch(G* ghead, G* gtail, int32_t n) {
-  gtail->SetSchedLink(NULL);
+  gtail->SetSchedLink(nullptr);
   if (!runq_tail_.IsNull()) {
     runq_tail_.Pointer()->SetSchedLink(ghead);
   } else {
@@ -155,7 +155,7 @@ void Scheduler::GlobalRunqBatch(G* ghead, G* gtail, int32_t n) {
 // Sched must be locked.
 G* Scheduler::GlobalRunqGet(P* p, int32_t maximium) {
   if (runq_size_ == 0) {
-    return NULL;
+    return nullptr;
   }
 
   int32_t n = runq_size_ / rtm_conf->MaxProcs() + 1;
@@ -187,13 +187,13 @@ G* Scheduler::GlobalRunqGet(P* p, int32_t maximium) {
 }
 
 void Scheduler::InjectGList(G* glist) {
-  if (glist == NULL) {
+  if (glist == nullptr) {
     return;
   }
   int n = 0;
   {
     RawMutexGuard guard(&lock_);
-    for (n = 0; glist != NULL; n++) {
+    for (n = 0; glist != nullptr; n++) {
       G* gp = glist;
       glist = GpCastBack(gp->SchedLink());
       gp->SetState(GLET_RUNNABLE);
@@ -202,7 +202,7 @@ void Scheduler::InjectGList(G* glist) {
   }
 
   for ( ; n != 0; n--) {
-    StartM(NULL, false);
+    StartM(nullptr, false);
   }
 }
 
@@ -219,7 +219,7 @@ void Scheduler::PIdlePut(P* p) {
 
 P* Scheduler::PIdleGet() {
   P* p = idlep_;
-  if (p != NULL) {
+  if (p != nullptr) {
     idlep_ = p->Link();
     atomic::relaxed_Inc32(&nr_idlep_, -1);
     if (!p->RunqEmpty()) {
@@ -236,7 +236,7 @@ G* Scheduler::FindRunnable(bool* inherit_time) {
 top:
   P* curp = curm->P();
   G* gp = curp->RunqGet(inherit_time);
-  if (gp != NULL) {
+  if (gp != nullptr) {
     return gp;
   }
 
@@ -245,14 +245,14 @@ top:
       RawMutexGuard guard(&lock_);
       gp = GlobalRunqGet(curp, 0);
     }
-    if (gp != NULL) {
+    if (gp != nullptr) {
       *inherit_time = false;
       return gp;
     }
   }
 
   if (rtm_env->ExitFlag()) {
-    return NULL;
+    return nullptr;
   }
 
   if (NetPollInited() && last_poll_ != 0) {
@@ -290,7 +290,7 @@ top:
       bool steal_run_next = i > 2 * static_cast<int>(rtm_conf->MaxProcs());
       gp = curp->RunqSteal(p, steal_run_next);
     }
-    if (gp != NULL) {
+    if (gp != nullptr) {
       *inherit_time = false;
       return gp;
     }
@@ -318,12 +318,12 @@ stop: {
 
   for (int i = 0; i < rtm_conf->MaxProcs(); i++) {
     P* p = Allp()[i];
-    if (p != NULL && !p->RunqEmpty()) {
+    if (p != nullptr && !p->RunqEmpty()) {
       {
         RawMutexGuard guard(&lock_);
         p = PIdleGet();
       }
-      if (p != NULL) {
+      if (p != nullptr) {
         AcquireP(p);
         if (was_spinning) {
           curm->SetSpinning(true);
@@ -340,13 +340,13 @@ stop: {
     if (now == 0)
       now = 1;
     atomic::relaxed_store32(&last_poll_, now);
-    if (gp != NULL) {
-      P* p = NULL;
+    if (gp != nullptr) {
+      P* p = nullptr;
       {
         RawMutexGuard guard(&lock_);
         p = PIdleGet();
       }
-      if (p != NULL) {
+      if (p != nullptr) {
         AcquireP(p);
         InjectGList(GpCastBack(gp->SchedLink()));
         gp->SetState(GLET_RUNNABLE);
@@ -359,7 +359,7 @@ stop: {
 
   M::Stop();
   if (rtm_env->ExitFlag()) {
-    return NULL;
+    return nullptr;
   }
   goto top;
 }
@@ -372,7 +372,7 @@ void Scheduler::MPut(M* m) {
 
 M* Scheduler::MGet() {
   M* mp = idlem_;
-  if (idlem_ != NULL) {
+  if (idlem_ != nullptr) {
     idlem_ = mp->GetSchedLink();
     nr_idlem_--;
   }
@@ -380,9 +380,9 @@ M* Scheduler::MGet() {
 }
 
 void Scheduler::MGetForP(P* curp, bool spinning, P** newp, M** newm) {
-  if (curp == NULL) {
+  if (curp == nullptr) {
     curp = PIdleGet();
-    if (curp == NULL) {
+    if (curp == nullptr) {
       if (spinning) {
         if (atomic::Inc32(&nr_spinning_, -1) < 0) {
           LOG(FATAL) << "negative nmspinning";
@@ -399,7 +399,7 @@ void Scheduler::Reschedule() {
   G* curg = GetG();
   M* m = curg->M();
 
-  if (m->LockedG() != NULL) {
+  if (m->LockedG() != nullptr) {
     SwitchG(curg, m->G0(), GpCast(m->G0()));
     return;
   }
@@ -415,7 +415,7 @@ bool Scheduler::OneRoundSched(G* curg) {
     M* m = curg->M();
     P* p = m->P();
     bool inherit_time = false;
-    G* nextg = NULL;
+    G* nextg = nullptr;
 
     // from global queue.
     if (p->SchedTick() % 61 == 0 && sched->runq_size_ > 0) {
@@ -426,19 +426,19 @@ bool Scheduler::OneRoundSched(G* curg) {
       nextg = sched->GlobalRunqGet(p, 1);
     }
     // from local queue.
-    if (nextg == NULL) {
+    if (nextg == nullptr) {
       nextg = p->RunqGet(&inherit_time);
-      if (nextg != NULL && curg->M()->GetSpinning()) {
+      if (nextg != nullptr && curg->M()->GetSpinning()) {
         LOG(FATAL) << "schedule: spinning with local work";
       }
     }
     // FindRunnable.
-    if (nextg == NULL) {
+    if (nextg == nullptr) {
       nextg = sched->FindRunnable(&inherit_time);
     }
 
     // still null?
-    if (nextg == NULL) {
+    if (nextg == nullptr) {
       // tin os power off
       return false;
     }
@@ -447,7 +447,7 @@ bool Scheduler::OneRoundSched(G* curg) {
       sched->ResetSpinning();
     }
 
-    if (nextg->LockedM() != NULL) {
+    if (nextg->LockedM() != nullptr) {
       M::StartLocked(nextg);
       continue;
     }
@@ -462,7 +462,7 @@ bool Scheduler::OneRoundSched(G* curg) {
     while (true) {
       OnSwitch(curg);
       G* lockedg = m->LockedG();
-      if (lockedg == NULL)
+      if (lockedg == nullptr)
         break;
       M::StopLocked();
       SwitchG(curg, lockedg, GpCast(lockedg));
@@ -517,7 +517,7 @@ void Scheduler::WakeupP() {
   if (!atomic::cas32(&nr_spinning_, 0, 1)) {
     return;
   }
-  StartM(NULL, true);
+  StartM(nullptr, true);
 }
 
 void Scheduler::HandoffP(P* p) {
@@ -556,23 +556,23 @@ void Scheduler::HandoffP(P* p) {
 void Scheduler::ExitSyscall0(G* gp) {
   M* curm = gp->M();
   gp->SetState(GLET_RUNNABLE);
-  P* p = NULL;
+  P* p = nullptr;
   {
     RawMutexGuard guard(&lock_);
     p = PIdleGet();
   }
 
-  if (p != NULL) {
+  if (p != nullptr) {
     AcquireP(p);
     return;
   }
 
   // no P available, jump to g0;
   G* g0 = curm->G0();
-  if (curm->LockedG() != NULL) {
+  if (curm->LockedG() != nullptr) {
     M::StopLocked();
   } else {
-    curm->SetUnlockInfo(ExitSyscallUnlockFunc, gp, NULL, NULL);
+    curm->SetUnlockInfo(ExitSyscallUnlockFunc, gp, nullptr, nullptr);
     SwitchG(gp, g0, GpCast(g0));
   }
 }
@@ -590,8 +590,8 @@ bool Scheduler::ExitSyscallFast() {
   }
 
   // Try to get any other idle P.
-  curm->SetP(NULL);
-  if (idlep_ != NULL) {
+  curm->SetP(nullptr);
+  if (idlep_ != nullptr) {
     if (ExitSyscallPIdle()) {
       return true;
     }
@@ -600,12 +600,12 @@ bool Scheduler::ExitSyscallFast() {
 }
 
 bool Scheduler::ExitSyscallPIdle() {
-  P* p = NULL;
+  P* p = nullptr;
   {
     RawMutexGuard guard(&lock_);
     p = PIdleGet();
   }
-  if (p != NULL) {
+  if (p != nullptr) {
     AcquireP(p);
     return true;
   }
@@ -652,18 +652,18 @@ M* GetM() {
 P* ReleaseP() {
   G* curg = GetG();
   P* p = curg->M()->P();
-  curg->M()->SetP(NULL);
+  curg->M()->SetP(nullptr);
   p->SetStatus(kPidle);
-  p->SetM(NULL);
+  p->SetM(nullptr);
   return p;
 }
 
 void AcquireP(P* p) {
   G* curg = GetG();
-  if (curg->M()->P() != NULL) {
+  if (curg->M()->P() != nullptr) {
     LOG(FATAL) << "AcquireP: already in go";
   }
-  if (p->M() != NULL || p->GetStatus() != kPidle) {
+  if (p->M() != nullptr || p->GetStatus() != kPidle) {
     LOG(FATAL) << "AcquireP: invalid p state";
   }
 
@@ -679,14 +679,14 @@ void StartM(P* p, bool spinning) {
 void DropG() {
   G* gp = GetG();
   M* m = gp->M();
-  if (m->LockedG() == NULL) {
-    m->CurG()->SetM(NULL);
-    m->SetCurG(NULL);
+  if (m->LockedG() == nullptr) {
+    m->CurG()->SetM(nullptr);
+    m->SetCurG(nullptr);
   }
 }
 
 void ParkUnlock(RawMutex* lock) {
-  Park(ParkUnlockF, lock, NULL);
+  Park(ParkUnlockF, lock, nullptr);
 }
 
 void Park(UnlockFunc unlockf, void* arg1, void* arg2) {

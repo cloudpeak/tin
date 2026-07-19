@@ -220,6 +220,7 @@ tin/sync/rwmutex.cc
 tin/sync/wait_group.cc
 tin/time/time.cc
 tin/config/config.cc
+tin/status.cc
 tin/tin.cc
 tin/util/unique_id.cc
 )
@@ -412,6 +413,14 @@ if(NOT DEFINED TIN_BUILD_EXAMPLES)
 endif()
 if(${TIN_BUILD_EXAMPLES})
 add_subdirectory(examples)
+endif()
+
+# Unit tests (optional). Pass -DTIN_BUILD_TESTS=OFF to skip.
+if(NOT DEFINED TIN_BUILD_TESTS)
+	set(TIN_BUILD_TESTS 1)
+endif()
+if(${TIN_BUILD_TESTS})
+	add_subdirectory(tests)
 endif()
 
 # ---------------------------------------------------------------------------

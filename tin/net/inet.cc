@@ -176,7 +176,7 @@ static int INetPToN4(const char* src, unsigned char* dst) {
   while ((ch = *src++) != '\0') {
     const char* pch;
 
-    if ((pch = strchr(digits, ch)) != NULL) {
+    if ((pch = strchr(digits, ch)) != nullptr) {
       unsigned int nw = static_cast<unsigned int>(*tp * 10 + (pch - digits));
 
       if (saw_digit && *tp == 0)
@@ -214,7 +214,7 @@ static int INetPToN6(const char* src, unsigned char* dst) {
 
   memset((tp = tmp), '\0', sizeof tmp);
   endp = tp + sizeof tmp;
-  colonp = NULL;
+  colonp = nullptr;
   /* Leading :: requires some special handling. */
   if (*src == ':')
     if (*++src != ':')
@@ -225,9 +225,9 @@ static int INetPToN6(const char* src, unsigned char* dst) {
   while ((ch = *src++) != '\0') {
     const char* pch;
 
-    if ((pch = strchr((xdigits = xdigits_l), ch)) == NULL)
+    if ((pch = strchr((xdigits = xdigits_l), ch)) == nullptr)
       pch = strchr((xdigits = xdigits_u), ch);
-    if (pch != NULL) {
+    if (pch != nullptr) {
       val <<= 4;
       val |= (pch - xdigits);
       if (++seen_xdigits > 4)
@@ -268,7 +268,7 @@ static int INetPToN6(const char* src, unsigned char* dst) {
     *tp++ = (unsigned char) (val >> 8) & 0xff;
     *tp++ = (unsigned char) val & 0xff;
   }
-  if (colonp != NULL) {
+  if (colonp != nullptr) {
     /*
      * Since some memmove()'s erroneously fail to handle
      * overlapping regions, we'll do the shift by hand.
@@ -292,7 +292,7 @@ static int INetPToN6(const char* src, unsigned char* dst) {
 
 
 int INetPToN(int af, const char* src, void* dst) {
-  if (src == NULL || dst == NULL)
+  if (src == nullptr || dst == nullptr)
     return TIN_EINVAL;
 
   switch (af) {
@@ -304,7 +304,7 @@ int INetPToN(int af, const char* src, void* dst) {
     const char* p;
     s = (char*) src;  // NOLINT
     p = strchr(src, '%');
-    if (p != NULL) {
+    if (p != nullptr) {
       s = tmp;
       len = static_cast<int>(p - src);
       if (len > kInetAddrStrLen6 - 1)

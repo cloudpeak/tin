@@ -39,7 +39,7 @@ int Reader::Read(void* buf, int buf_size) {
     tin::SetErrorCode(ReadErr());
     return 0;
   }
-  DCHECK(buf != NULL);
+  DCHECK(buf != nullptr);
   DCHECK_GT(buf_size, 0);
 
   if (empty()) {
@@ -225,7 +225,7 @@ int Reader::Peek(int n, absl::string_view* piece) {
       tin::SetErrorCode(err);
     }
   }
-  if (piece != NULL)
+  if (piece != nullptr)
     *piece = ToStringPiece(begin(), n);
   return err;
 }

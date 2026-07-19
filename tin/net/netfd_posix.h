@@ -60,7 +60,7 @@ class NetFD : public NetFDCommon {
   int AcceptImpl(NetFD** newfd);
 };
 
-NetFD* NewFD(AddressFamily family, int sotype, int* error_code = NULL);
+NetFD* NewFD(AddressFamily family, int sotype, int* error_code = nullptr);
 
 }  // namespace net
 }  // namespace tin

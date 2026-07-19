@@ -14,7 +14,7 @@ namespace runtime {
 class Greenlet;
 class P;
 class M;
-typedef Greenlet G;
+using G = Greenlet;
 
 inline G* GetG() {
   return glet_tls;

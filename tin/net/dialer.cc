@@ -18,18 +18,21 @@ TcpConn DialTcpInternal(const IPAddress& address, uint16_t port, int64_t deadlin
   AddressFamily family =
     address.IsIPv4() ? ADDRESS_FAMILY_IPV4 : ADDRESS_FAMILY_IPV6;
   NetFD* netfd = NewFD(family, SOCK_STREAM, &err);
-  if (netfd != NULL) {
+  if (netfd != nullptr) {
     IPEndPoint endpoint(address, port);
     if (deadline == -1)
       deadline = UINT64_MAX;
-    err = netfd->Dial(NULL, &endpoint, UINT64_MAX);
+    err = netfd->Dial(nullptr, &endpoint, UINT64_MAX);
     if (err != 0) {
       delete netfd;
-      netfd = NULL;
+      netfd = nullptr;
     }
   }
   SetErrorCode(TinTranslateSysError(err));
-  return MakeTcpConn(new TcpConnImpl(netfd));
+  if (netfd == nullptr) {
+    return TcpConn();
+  }
+  return MakeTcpConn(netfd);
 }
 
 TcpConn DialTcpInternal(const absl::string_view& address, uint16_t port,
@@ -37,7 +40,7 @@ TcpConn DialTcpInternal(const absl::string_view& address, uint16_t port,
   IPAddress ip_address;
   if (!ip_address.AssignFromIPLiteral(address)) {
     SetErrorCode(TIN_EINVAL);
-    return TcpConn(NULL);
+    return TcpConn();
   }
   return DialTcpInternal(ip_address, port, deadline);
 }
@@ -64,7 +67,7 @@ TCPListener ListenTcp(const IPAddress& address, uint16_t port, int backlog) {
   AddressFamily family =
     address.IsIPv4() ? ADDRESS_FAMILY_IPV4 : ADDRESS_FAMILY_IPV6;
   NetFD* netfd = NewFD(family, SOCK_STREAM, &err);
-  if (netfd != NULL) {
+  if (netfd != nullptr) {
     err = netfd->Init();
     if (err == 0) {
 #if defined(OS_POSIX)
@@ -83,16 +86,15 @@ TCPListener ListenTcp(const IPAddress& address, uint16_t port, int backlog) {
   if (err == 0) {
     err = netfd->Listen(backlog);
   }
-  if (err != 0 && netfd != NULL) {
+  if (err != 0 && netfd != nullptr) {
     delete netfd;
-    netfd = NULL;
+    netfd = nullptr;
   }
-  TCPListenerImpl* listener = NULL;
-  if (netfd != NULL) {
-    listener = new TCPListenerImpl(netfd, backlog);
+  if (netfd == nullptr) {
+    SetErrorCode(TinTranslateSysError(err));
+    return TCPListener(nullptr);
   }
-  SetErrorCode(TinTranslateSysError(err));
-  return TCPListener(listener);
+  return TCPListener(new TCPListenerImpl(netfd, backlog));
 }
 
 TCPListener ListenTcp(const absl::string_view& address, uint16_t port,
@@ -100,7 +102,7 @@ TCPListener ListenTcp(const absl::string_view& address, uint16_t port,
   IPAddress ip_address;
   if (!ip_address.AssignFromIPLiteral(address)) {
     SetErrorCode(TIN_EINVAL);
-    return TCPListener(NULL);
+    return TCPListener(nullptr);
   }
   return ListenTcp(ip_address, port, backlog);
 }

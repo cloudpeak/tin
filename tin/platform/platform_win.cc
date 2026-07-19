@@ -23,7 +23,7 @@ bool CanUseConnectEx(const std::string& net) {
       net == "ip6") {
     return false;
   }
-  return pConnectEx != NULL;
+  return pConnectEx != nullptr;
 }
 
 static BOOL TinGetExtensionFunction(SOCKET socket, GUID guid,
@@ -38,11 +38,11 @@ static BOOL TinGetExtensionFunction(SOCKET socket, GUID guid,
                     static_cast<void*>(target),
                     sizeof(*target),
                     &bytes,
-                    NULL,
-                    NULL);
+                    nullptr,
+                    nullptr);
 
   if (result == SOCKET_ERROR) {
-    *target = NULL;
+    *target = nullptr;
     return FALSE;
   } else {
     return TRUE;
@@ -54,12 +54,12 @@ bool PlatformInit() {
   HMODULE kernel32_module;
 
   ntdll_module = GetModuleHandleA("ntdll.dll");
-  if (ntdll_module == NULL) {
+  if (ntdll_module == nullptr) {
     return false;
   }
 
   kernel32_module = GetModuleHandleA("kernel32.dll");
-  if (kernel32_module == NULL) {
+  if (kernel32_module == nullptr) {
     return false;
   }
 
@@ -73,7 +73,7 @@ bool PlatformInit() {
   pCancelIoEx = (sCancelIoEx)
                 GetProcAddress(kernel32_module, "CancelIoEx");
 
-  flag_cancelioex_avaiable = (pCancelIoEx != NULL);
+  flag_cancelioex_avaiable = (pCancelIoEx != nullptr);
   {
     SOCKET s = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     GUID guid = WSAID_CONNECTEX;
@@ -113,9 +113,9 @@ bool PlatformInit() {
 void PlatformDeinit() {
 }
 
-sGetQueuedCompletionStatusEx pGetQueuedCompletionStatusEx = NULL;
-sSetFileCompletionNotificationModes pSetFileCompletionNotificationModes = NULL;
-sCancelIoEx pCancelIoEx = NULL;
-LPFN_CONNECTEX pConnectEx = NULL;
+sGetQueuedCompletionStatusEx pGetQueuedCompletionStatusEx = nullptr;
+sSetFileCompletionNotificationModes pSetFileCompletionNotificationModes = nullptr;
+sCancelIoEx pCancelIoEx = nullptr;
+LPFN_CONNECTEX pConnectEx = nullptr;
 
 }  // namespace tin

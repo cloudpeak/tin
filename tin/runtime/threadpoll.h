@@ -49,12 +49,12 @@ void SubmitGletWork(GletWork* work);
 void SubmitGetAddrInfoGletWork(GletWork* work);
 
 
-class ThreadPoll {
+class ThreadPool {
  public:
-    ThreadPoll(const ThreadPoll&) = delete;
-    ThreadPoll& operator=(const ThreadPoll&) = delete;
+    ThreadPool(const ThreadPool&) = delete;
+    ThreadPool& operator=(const ThreadPool&) = delete;
 
-    static ThreadPoll* GetInstance();
+    static ThreadPool* GetInstance();
 
   void Start();
   void JoinAll();
@@ -62,7 +62,7 @@ class ThreadPoll {
   void Run();
 
 private:
-    ThreadPoll();
+    ThreadPool();
  private:
   int num_threads_;
   std::vector<M*> threads_;

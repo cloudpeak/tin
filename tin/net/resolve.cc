@@ -35,7 +35,7 @@ int SyncResolveHostname(const absl::string_view& hostname, AddressFamily af,
                         std::vector<IPAddress>* addresses) {
   int family = ConvertAddressFamily(af);
   addresses->clear();
-  struct addrinfo* result = NULL;
+  struct addrinfo* result = nullptr;
   struct addrinfo hints = { 0 };
   hints.ai_family = family;
 
@@ -50,7 +50,7 @@ int SyncResolveHostname(const absl::string_view& hostname, AddressFamily af,
   // https://android.googlesource.com/platform/bionic/+/
   // 7e0bfb511e85834d7c6cb9631206b62f82701d60/libc/netbsd/net/getaddrinfo.c#1657
   hints.ai_flags = AI_ADDRCONFIG;
-  int ret = getaddrinfo(hostname.data(), NULL, &hints, &result);
+  int ret = getaddrinfo(hostname.data(), nullptr, &hints, &result);
   if (ret != 0) {
     return ret;
   }
@@ -100,7 +100,7 @@ class ResolveHostnameWork : public GletWork {
 int ResolveHostname(const absl::string_view& hostname,
                     AddressFamily family,
                     std::vector<IPAddress>* addresses) {
-  if (addresses == NULL) {
+  if (addresses == nullptr) {
     tin::SetErrorCode(TIN_EINVAL);
     return -1;
   }

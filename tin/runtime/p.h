@@ -19,7 +19,7 @@ enum {
   kPdead
 };
 
-typedef class P AliasP;
+using AliasP = P;
 
 class P {
  public:
@@ -38,7 +38,7 @@ class P {
 
   void RunqPut(G* gp, bool next);
 
-  G* RunqGet(bool* inherit_time = NULL);
+  G* RunqGet(bool* inherit_time = nullptr);
 
   G* RunqSteal(P* p2, bool steal_nextg);
 
