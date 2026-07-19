@@ -94,12 +94,12 @@
   XX(ETOOLARGE, "read too big")
 
 
-typedef enum {
+enum tin_errno_t {
 #define XX(code, _) TIN_ ## code = TIN__ ## code,
   TIN_ERRNO_MAP(XX)
 #undef XX
   TIN_ERRNO_MAX = TIN__EOF - 1
-} tin_errno_t;
+};
 
 int TinTranslateSysError(int sys_errno);
 

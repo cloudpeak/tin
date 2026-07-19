@@ -67,7 +67,7 @@ class Channel
   }
 
   void Close() {
-    if (atomic::exchange32(&closed_, 1) != 0) {
+    if (atomic::exchange32(&closed_, 1) != 0) {  // seq_cst
       // already closed.
       return;
     }
@@ -76,28 +76,22 @@ class Channel
       runtime::RawMutexGuard guard(&lock_);
       std::swap(queue, queue_);
     }
-    ClearQueue(queue, std::is_pointer<T>());
+    // P3-3: Previously, ClearQueue had a pointer specialization that called
+    // `delete` on each element. This welded ownership semantics to the type,
+    // making Channel<T*> inherently owning. The specialization is removed;
+    // users who need automatic cleanup should use Channel<std::unique_ptr<T>>
+    // or Channel<std::shared_ptr<T>> instead.
+    queue.clear();
     runtime::SemRelease(&free_space_sem_);
     runtime::SemRelease(&used_space_sem_);
   }
 
   bool IsClosed() {
-    return atomic::acquire_load32(&closed_) != 0;
+    return atomic::acquire_load32(&closed_) != 0;  // acquire
   }
 
  private:
-  void ClearQueue(std::deque<T>& queue, std::false_type) {  // NOLINT
-    queue.clear();
-  }
-
-  void ClearQueue(std::deque<T>& queue, std::true_type) {  // NOLINT
-    for (typename std::deque<T>::iterator iter = queue.begin();
-         iter != queue.end();
-         ++iter) {
-      delete *iter;
-    }
-    queue.clear();
-  }
+  // P3-3: ClearQueue pointer specialization removed. See Close() comment.
 
   Channel(const Channel&) = delete;
   Channel& operator=(const Channel&) = delete;

@@ -53,8 +53,8 @@ class Reader : public tin::io::Reader {
     return ((write_idx_ == storage_size_) && (read_idx_ != write_idx_));
   }
 
-  typedef uint8_t* iterator;
-  typedef const uint8_t* const_iterator;
+  using iterator = uint8_t*;
+  using const_iterator = const uint8_t*;
 
   iterator begin() { return storage_ + read_idx_; }
   const_iterator begin() const { return storage_ + read_idx_; }

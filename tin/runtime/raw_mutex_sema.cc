@@ -34,14 +34,32 @@ RawMutex::RawMutex()
 }
 
 RawMutex::~RawMutex() {
+  // P1-5: In debug mode, assert the lock is not held at destruction.
+  DCHECK(owner_ == nullptr) << "RawMutex destroyed while still locked";
+}
+
+bool RawMutex::TryLock() {
+  // P1-5: Non-blocking attempt. acquire CAS on key: 0 → kLocked.
+  // Returns false if already held or has waiters.
+  if (atomic::acquire_cas(&key, 0, kLocked)) {  // acquire
+    owner_ = GetM();
+    return true;
+  }
+  return false;
 }
 
 void RawMutex::Lock() {
   G* gp = GetG();
   M* m = gp->M();
 
-  // Speculative grab for lock.
-  if (atomic::acquire_cas(&key, 0, kLocked)) {
+  // P1-5: Debug-mode deadlock detection — if this M already holds the
+  // lock, acquiring again would deadlock. This check is only in debug
+  // builds (DCHECK is a no-op in release).
+  DCHECK(owner_ != m) << "RawMutex: recursive locking detected (deadlock)";
+
+  // Speculative grab for lock. acquire_cas ensures we see all writes
+  // from the previous critical section.
+  if (atomic::acquire_cas(&key, 0, kLocked)) {  // acquire
     owner_ = GetM();
     return;
   }
@@ -55,10 +73,10 @@ void RawMutex::Lock() {
 
   while (true) {
     for (int i = 0; ; i++) {
-      uintptr_t v = atomic::acquire_load(&key);
+      uintptr_t v = atomic::acquire_load(&key);  // acquire
       if ((v & kLocked) == 0) {
         // Unlocked. Try to lock.
-        if (atomic::acquire_cas(&key, v, v | kLocked)) {
+        if (atomic::acquire_cas(&key, v, v | kLocked)) {  // acquire
           owner_ = GetM();
           return;
         }
@@ -77,10 +95,10 @@ void RawMutex::Lock() {
         while (true) {
           // ensure all Machine's address must be at least a power of 2;
           m->SetNextWaitM(v & ~kLocked);
-          if (atomic::acquire_cas(&key, v, uintptr_t(m) | kLocked)) {
+          if (atomic::acquire_cas(&key, v, uintptr_t(m) | kLocked)) {  // acquire
             break;
           }
-          v = atomic::acquire_load(&key);
+          v = atomic::acquire_load(&key);  // acquire
           if ((v & kLocked) == 0) {
             try_again = true;
             break;
@@ -90,6 +108,9 @@ void RawMutex::Lock() {
           continue;
         if ((v & kLocked) != 0) {
           // Queued.  Wait.
+          // SemaSleep parks the M (OS thread) on the M's semaphore.
+          // This is NOT a greenlet park — RawMutex is runtime-internal
+          // and operates at the M (thread) level.
           SemaSleep(-1);
           i = 0;
         }
@@ -99,19 +120,23 @@ void RawMutex::Lock() {
 }
 
 void RawMutex::Unlock() {
+  // P1-5: Clear owner_ first (release ordering via the CAS below ensures
+  // this write is visible to the next acquirer).
   owner_ = nullptr;
   M* mp = nullptr;
   while (true) {
-    uintptr_t v = atomic::acquire_load(&key);
+    uintptr_t v = atomic::acquire_load(&key);  // acquire
     if (v == kLocked) {
-      if (atomic::cas(&key, kLocked, 0)) {
+      // No waiters. Use full barrier CAS (cas = barrier + acquire_cas)
+      // to ensure all critical-section writes are published before unlock.
+      if (atomic::cas(&key, kLocked, 0)) {  // seq_cst (release+)
         break;
       }
     } else {
       // Other M's are waiting for the lock.
       // Dequeue an M.
       mp = reinterpret_cast<M*>(v & ~kLocked);
-      if (atomic::acquire_cas(&key, v, mp->NextWaitM())) {
+      if (atomic::acquire_cas(&key, v, mp->NextWaitM())) {  // acquire
         // Dequeued an M.  Wake it.
         SemaWakeup(mp);
         break;

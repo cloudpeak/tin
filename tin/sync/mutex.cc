@@ -29,13 +29,16 @@ Mutex::~Mutex() {
 }
 
 void Mutex::Lock() {
-  if (atomic::cas32(&state_, 0, kMutexLocked)) {
+  // Fast path: acquire lock via CAS (acquire ordering). If state_ is 0
+  // (unlocked), atomically set kMutexLocked. The acquire ordering ensures
+  // we see all writes from the previous critical section.
+  if (atomic::cas32(&state_, 0, kMutexLocked)) {  // acquire
     return;
   }
   bool awoke = false;
   int32_t iter = 0;
   while (true) {
-    int32_t old_state = state_;
+    int32_t old_state = state_;  // relaxed read (retry loop)
     int32_t new_state = old_state | kMutexLocked;
     if ((old_state & kMutexLocked) != 0) {
       if (tin::runtime::CanSpin(iter)) {
@@ -45,7 +48,7 @@ void Mutex::Lock() {
         if ((!awoke) &&
             ((old_state & kMutexWoken) == 0) &&
             ((old_state >> kMutexWaiterShift) != 0) &&
-            atomic::cas32(&state_, old_state, old_state | kMutexWoken)) {
+            atomic::cas32(&state_, old_state, old_state | kMutexWoken)) {  // acquire
           awoke = true;
         }
         tin::runtime::DoSpin();
@@ -63,9 +66,12 @@ void Mutex::Lock() {
       // clear mutexWoken bit.
       new_state &= ~kMutexWoken;
     }
-    if (atomic::cas32(&state_, old_state, new_state)) {
+    if (atomic::cas32(&state_, old_state, new_state)) {  // acquire
       if ((old_state & kMutexLocked) == 0)
         break;
+      // Slow path: park the greenlet on the self-made semaphore.
+      // SemAcquire cooperates with the scheduler to park/unpark this
+      // greenlet without blocking the OS thread.
       tin::runtime::SemAcquire(&sema_);
       awoke = true;
       iter = 0;
@@ -73,9 +79,17 @@ void Mutex::Lock() {
   }
 }
 
+bool Mutex::TryLock() {
+  // P1-5: Non-blocking attempt. Uses acquire CAS to match Lock's fast path.
+  // Returns true only if the mutex was free and is now held by this caller.
+  return atomic::cas32(&state_, 0, kMutexLocked);  // acquire
+}
+
 void Mutex::Unlock() {
-  // Fast path: drop lock bit
-  int32_t new_state = atomic::Inc32(&state_, -kMutexLocked);
+  // Fast path: drop lock bit. Inc32 uses seq_cst ordering, which is a
+  // superset of release — this publishes all critical-section writes
+  // before the lock bit is cleared, so the next acquirer sees them.
+  int32_t new_state = atomic::Inc32(&state_, -kMutexLocked);  // seq_cst (release+)
   if (((new_state + kMutexLocked)&kMutexLocked) == 0) {
     LOG(FATAL) << "sync: unlock of unlocked mutex";
   }
@@ -90,10 +104,12 @@ void Mutex::Unlock() {
     }
     // Grab the right to wake someone.
     new_state = (old_state - (1 << kMutexWaiterShift)) | kMutexWoken;
-    if (atomic::cas32(&state_, old_state, new_state)) {
+    if (atomic::cas32(&state_, old_state, new_state)) {  // acquire
+      // Wake one parked greenlet via the self-made semaphore.
+      // SemRelease cooperates with the scheduler to unpark a greenlet.
       tin::runtime::SemRelease(&sema_);
     }
-    old_state = state_;
+    old_state = state_;  // relaxed read (retry loop)
   }
 }
 

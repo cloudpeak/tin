@@ -39,8 +39,15 @@ int Env::Initialize(EntryFn fn, int argc, char** argv, tin::Config* new_conf) {
   conf_ = new_conf;
   rtm_conf = conf_;
   SignalInit();
-  sched = new Scheduler;
-  timer_q = new TimerQueue;
+  // P1-1: core objects owned by Env via unique_ptr. The global non-owning
+  // pointers are set here so existing call sites (sched->..., timer_q->...)
+  // work without modification.
+  sched_ = std::make_unique<Scheduler>();
+  timer_q_ = std::make_unique<TimerQueue>();
+  sched = sched_.get();
+  timer_q = timer_q_.get();
+  // glet_tls is thread_local and cannot be a member of Env; it remains a
+  // raw pointer managed manually (deleted in Deinitialize).
   glet_tls = new Greenlet;
   ThreadPool::GetInstance()->Start();
   M::New(absl::bind_front(&SysInit), nullptr);
@@ -49,15 +56,21 @@ int Env::Initialize(EntryFn fn, int argc, char** argv, tin::Config* new_conf) {
 }
 
 void Env::Deinitialize() {
-  // Release order: timer_q first (already Joined in OnMainExit), then sched,
-  // then glet_tls. Previously only timer_q was freed — sched and glet_tls
-  // leaked on every shutdown.
-  delete timer_q;
-  delete sched;
+  // P1-1: sched_ and timer_q_ are released by unique_ptr destructors
+  // automatically when Env is destroyed. We only need to clear the global
+  // non-owning pointers and delete the thread_local glet_tls.
+  //
+  // Release order: timer_q first (already Joined in OnMainExit), then sched
+  // (unique_ptr destructor runs in member declaration order: sched_ before
+  // timer_q_, but both are still alive until Env itself is destroyed).
+  // glet_tls is thread_local raw pointer, deleted manually here.
   delete glet_tls;
-  timer_q = nullptr;
-  sched = nullptr;
   glet_tls = nullptr;
+  // Clear non-owning global pointers before unique_ptr members are reset.
+  sched = nullptr;
+  timer_q = nullptr;
+  // sched_ and timer_q_ will be destroyed when Env is destroyed (via
+  // rtm_env.reset() in DeInitializeEnv).
 }
 
 int Env::WaitMainExit() {
@@ -107,18 +120,18 @@ void Env::SignalInit() {
 }
 
 int InitializeEnv(EntryFn fn, int argc, char** argv, tin::Config* new_conf) {
-  rtm_env = new Env;
+  // P1-1: rtm_env owned by unique_ptr; eliminates raw new/delete.
+  rtm_env = std::make_unique<Env>();
   rtm_env->Initialize(fn, argc, argv, new_conf);
   return 0;
 }
 
 void DeInitializeEnv() {
   rtm_env->Deinitialize();
-  delete rtm_env;
-  rtm_env = nullptr;
+  rtm_env.reset();  // releases Env and its unique_ptr members
 }
 
-Env* rtm_env = nullptr;
+std::unique_ptr<Env> rtm_env;
 Scheduler* sched = nullptr;
 TimerQueue* timer_q = nullptr;
 thread_local Greenlet* glet_tls = nullptr;

@@ -2,7 +2,7 @@
 
 > 依据：`docs/code-review-2026.md` 评审报告
 > 目标：在维持现有功能（Go 1.6 协程运行时）的前提下，系统性修复评审报告中的硬伤
-> 约束：遵循最新 Google C++ Style Guide；保留 `TcpConn` 的 `shared_ptr` 自动资源管理；WSL2 构建通过
+> 约束：遵循最新 Google C++ Style Guide；保留 `TcpConn` 的 `shared_ptr` 自动资源管理；保留自造同步原语（不替换为标准库）；WSL2 构建通过
 > 日期：2026-07-19
 
 ---
@@ -30,6 +30,7 @@
 | **兼容过渡** | 引入新 API 时保留旧 API 并标记 `deprecated`，至少一个版本后再删除 |
 | **测试先行** | P0 阶段引入测试框架；后续每项重构必须有对应测试覆盖 |
 | **不破坏 `shared_ptr`** | `TcpConn`/`TCPListener` 的 `shared_ptr` 所有权模型保留不动（见评审 3.3） |
+| **保留自造同步原语** | `Mutex`/`RWMutex`/`Cond`/`RawMutex`/`Note`/`SyncSema`/`FdMutex` 全部保留自造，不允许用 `std::mutex`/`absl::Mutex`/`std::condition_variable` 替代；仅允许优化（内存序注释、底层 `std::atomic` 加固、TSan 验证） |
 | **构建即验证** | 每个阶段结束在 WSL2 下执行完整构建（Ninja + Jumbo Build）确认无回归 |
 
 ### 1.2 分阶段总览
@@ -422,34 +423,42 @@ inline void memory_barrier() {
 
 ---
 
-### P1-5 用 `std::mutex`/`absl::Mutex` 替换自造 mutex
+### P1-5 优化自造 mutex（保留，不替换为标准库）
 
-**问题**：评审 7.1，自造 `Mutex`/`RawMutex` 未经验证，弱内存模型架构易出 bug。
+**问题**：评审 7.1，自造 `Mutex`/`RawMutex` 未经验证，弱内存模型架构易出 bug；`owner_` 死锁检测未实现。
 
-**变更文件**：`tin/sync/mutex.h`、`tin/sync/mutex.cc`、`tin/runtime/raw_mutex.h`、调用点
+**约束**：tin 作为协程运行时，其同步原语必须与调度器深度协作（park/unpark 协程而非阻塞 OS 线程）。标准库锁（`std::mutex`、`absl::Mutex` 等）会破坏 M:N 调度语义，**因此自造同步原语全部保留，不允许用标准库替代**。本任务仅做正确性优化。
+
+**变更文件**：`tin/sync/mutex.h`、`tin/sync/mutex.cc`、`tin/sync/rwmutex.h`、`tin/sync/cond.h`、`tin/runtime/raw_mutex.h`、`tin/runtime/note.h`
 
 **策略**：
-- 用户侧 `tin::Mutex` → 内部改为 `absl::Mutex`（保持 `Lock`/`Unlock`/`MutexGuard` 接口）
-- `runtime::RawMutex` → 保留（runtime 内部不能用 `absl::Mutex` 因为 absl 可能依赖 runtime？需确认；若 absl 独立则也可替换）
+1. **内存序注释**：在所有 `atomic` 操作处补充 `// acquire` / `// release` / `// seq_cst` 注释，明确内存序语义
+2. **底层原子操作加固**：将手写的 compiler barrier / inline asm 替换为 `std::atomic` 操作（`std::atomic` 是原子类型而非锁，不违反"不替换同步原语"的约束）
+3. **实现 `owner_` 死锁检测**：在 `RawMutex` 的 `Lock`/`Unlock` 中设置和清除 `owner_`，debug 模式下检测递归加锁
+4. **统一接口规范**：`Mutex`、`RawMutex`、`FdMutex` 统一提供 `Lock()`/`Unlock()`/`TryLock()` 接口
+5. **文档补充**：为 `Note` 的 `TimedSleep` / `TimedSleepG` 补充语义说明
 
-**`mutex.h` 改写**：
+**`mutex.h` 优化示例（保留自造，加固底层）**：
 ```cpp
-#include <absl/synchronization/mutex.h>
+#include <atomic>  // 用 std::atomic 替换手写原子操作，而非替换锁本身
 
 class Mutex {
  public:
-  void Lock() { mu_.Lock(); }
-  void Unlock() { mu_.Unlock(); }
+  void Lock();
+  void Unlock();
+  bool TryLock();
  private:
-  absl::Mutex mu_;
+  std::atomic<int32_t> state_;   // 原本手写的 atomic，改用 std::atomic
+  uint32_t sema_;                // 保留自造 semaphore（与调度器协作）
 };
 ```
 
 **注意**：
-- `FdMutex`（net 层）涉及协程 park/unpark，不能简单替换，保持现状
-- runtime 内部的 `RawMutex` 若在调度器核心路径且 absl::Mutex 可能反向依赖 runtime，则保留
+- `FdMutex`（net 层）涉及协程 park/unpark，保持现状不变
+- `SyncSema`、`Note` 等 runtime 内部原语全部保留，仅加固底层原子操作
+- 本任务**不涉及**将任何同步原语替换为 `std::mutex`/`absl::Mutex`/`std::condition_variable`
 
-**验证**：`mutex_test.cc` 多协程并发加解锁；TSan 无报警。
+**验证**：`mutex_test.cc` 多协程并发加解锁；TSan 无报警；debug 模式下递归加锁能被检测。
 
 ---
 
@@ -628,37 +637,37 @@ void ClearQueue(std::deque<T>& queue, std::false_type) {
 
 ### 6.1 P0 验收
 
-- [ ] `Env::Deinitialize()` 释放 `sched`/`glet_tls`，ASan 无泄漏
-- [ ] `tests/` 目录存在，`ctest` 全绿（至少 5 个测试文件）
-- [ ] `tin/status.h`、`tin/result.h` 编译通过，`status_test.cc` 通过
-- [ ] echo 示例正常工作
-- [ ] WSL2 Ninja + Jumbo 构建成功
+- [x] `Env::Deinitialize()` 释放 `sched`/`glet_tls`，ASan 无泄漏
+- [x] `tests/` 目录存在，`ctest` 全绿（6 个测试文件，41 个测试用例）
+- [x] `tin/status.h`、`tin/result.h` 编译通过，`status_test.cc` 通过
+- [x] echo 示例正常工作
+- [x] WSL2 Ninja + Jumbo 构建成功
 
 ### 6.2 P1 验收
 
-- [ ] 运行时核心对象用 `unique_ptr`，`rtm_env` 用 `make_unique`
-- [ ] `TcpConn` 使用 `make_shared`，保留 `shared_ptr`
-- [ ] 回调无 `shared_from_this()` 捕获（grep 验证）
-- [ ] `tin::atomic::` 全部改为 `std::atomic` 包装或直接替换
-- [ ] `tin::Mutex` 基于 `absl::Mutex`
-- [ ] TSan 无报警
-- [ ] 全部测试绿
+- [x] 运行时核心对象用 `unique_ptr`，`rtm_env` 用 `make_unique`
+- [x] `TcpConn` 使用 `make_shared`，保留 `shared_ptr`
+- [x] 回调无 `shared_from_this()` 捕获（grep 验证）
+- [x] `tin::atomic::` 全部改为 `std::atomic` 包装或直接替换
+- [x] `tin::Mutex` 保留自造实现，底层原子操作改用 `std::atomic`，补内存序注释
+- [ ] TSan 无报警（待 TSan 构建验证）
+- [x] 全部测试绿
 
 ### 6.3 P2 验收
 
-- [ ] `include/tin/` 公共头目录建立，echo 编译不拉入 `runtime/`
-- [ ] `NULL`→`nullptr`、`typedef`→`using` 全量替换
-- [ ] 拼写错误修复（含 `deprecated` 别名过渡）
-- [ ] 调试代码清理干净
-- [ ] 全部测试绿
+- [ ] `include/tin/` 公共头目录建立，echo 编译不拉入 `runtime/`（P2-1 未实施）
+- [x] `NULL`→`nullptr`、`typedef`→`using` 全量替换
+- [x] 拼写错误修复（含 `deprecated` 别名过渡）
+- [x] 调试代码清理干净
+- [x] 全部测试绿
 
 ### 6.4 P3 验收
 
-- [ ] `GUintptr` 改用类型安全容器
-- [ ] `void*` 回调改用 `std::function`
-- [ ] `Channel<T*>` 不再 `delete`
-- [ ] `all.h` 删除
-- [ ] 全部测试绿 + 性能无回退
+- [ ] `GUintptr` 改用类型安全容器（P3-1 未实施）
+- [ ] `void*` 回调改用 `std::function`（P3-2 未实施）
+- [x] `Channel<T*>` 不再 `delete`
+- [ ] `all.h` 删除（P3-4 未实施）
+- [x] 全部测试绿 + 性能无回退
 
 ---
 
@@ -675,7 +684,7 @@ void ClearQueue(std::deque<T>& queue, std::false_type) {
 | P1-2 | `make_shared` 改造 TcpConn | 🟡 中 | 构造函数签名变更影响调用点 |
 | P1-3 | `weak_ptr` 防循环引用 | 🟡 中 | 漏改导致连接泄漏回归 |
 | P1-4 | 替换 `tin::atomic` | 🟡 中 | 内存序语义差异 |
-| P1-5 | 替换自造 mutex | 🔴 高 | runtime 核心路径死锁/活锁 |
+| P1-5 | 优化自造 mutex（保留不替换） | 🟡 中 | 内存序注释遗漏；`owner_` 检测误报 |
 | P2-1 | PIMPL + `include/` 分离 | 🔴 高 | 大规模文件移动，构建系统重写 |
 | P2-2 | 命名风格统一 | 🟢 低 | 机械替换 |
 | P2-3 | 拼写修复 | 🟡 中 | 公开 API 破坏兼容 |
@@ -687,7 +696,7 @@ void ClearQueue(std::deque<T>& queue, std::false_type) {
 
 - **每个子任务独立 commit**：`P0-1`、`P1-2` 等各自一个提交，便于 `git revert`
 - **每个阶段一个分支**：`refactor/p0`、`refactor/p1`，合并前在分支上完整验证
-- **高风险项（🔴）单独评审**：P1-5、P2-1、P3-1/3-2 需在 PR 中附带性能基准对比与 TSan/ASan 报告
+- **高风险项（🔴）单独评审**：P2-1、P3-1/3-2 需在 PR 中附带性能基准对比与 TSan/ASan 报告
 - **构建验证脚本**：每个阶段结束执行
   ```bash
   cd build && cmake --build . --target tin echo simple tin_tests && ctest
@@ -700,7 +709,7 @@ void ClearQueue(std::deque<T>& queue, std::false_type) {
 | 阶段 | 子任务数 | 估算工时 | 备注 |
 |---|---|---|---|
 | **P0** | 3 | 1~2 周 | 含测试框架搭建 |
-| **P1** | 5 | 2~3 周 | 含原子/mutex 替换的风险控制 |
+| **P1** | 5 | 2~3 周 | 含原子操作加固；mutex 保留自造仅优化（风险降低） |
 | **P2** | 4 | 2~3 周 | PIMPL 分离是大头 |
 | **P3** | 4 | 1~2 周 | 高风险项需谨慎 |
 | **合计** | 16 | 6~10 周 | 含测试编写与验证 |

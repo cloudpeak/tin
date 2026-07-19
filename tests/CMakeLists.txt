@@ -10,8 +10,10 @@ add_executable(tin_tests
   status_test.cc
   config_test.cc
   ip_address_test.cc
+  mutex_test.cc
+  atomic_test.cc
 )
-target_link_libraries(tin_tests PRIVATE tin)
+target_link_libraries(tin_tests PRIVATE tin zcontext pthread rt)
 
 # Register with CTest so `ctest` discovers the tests.
 enable_testing()

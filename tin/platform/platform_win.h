@@ -20,7 +20,7 @@
 
 namespace tin {
 
-typedef BOOL(WINAPI* sGetQueuedCompletionStatusEx)
+using sGetQueuedCompletionStatusEx = BOOL(WINAPI*)
 (HANDLE CompletionPort,
  LPOVERLAPPED_ENTRY lpCompletionPortEntries,
  ULONG ulCount,
@@ -28,17 +28,17 @@ typedef BOOL(WINAPI* sGetQueuedCompletionStatusEx)
  DWORD dwMilliseconds,
  BOOL fAlertable);
 
-typedef BOOL(WINAPI* sCancelIoEx)
+using sCancelIoEx = BOOL(WINAPI*)
 (HANDLE hFile,
  LPOVERLAPPED lpOverlapped);
 
-typedef BOOL(WINAPI* sSetFileCompletionNotificationModes)
+using sSetFileCompletionNotificationModes = BOOL(WINAPI*)
 (HANDLE FileHandle,
  UCHAR Flags);
 
-typedef
+using LPFN_CONNECTEX =
 BOOL
-(PASCAL FAR* LPFN_CONNECTEX) (
+(PASCAL FAR*) (
   _In_ SOCKET s,
   _In_reads_bytes_(namelen) const struct sockaddr FAR* name,
   _In_ int namelen,
@@ -60,7 +60,7 @@ extern bool hasLoadSetFileCompletionNotificationModes;
 
 bool CanUseConnectEx(const std::string& net);
 
-typedef uintptr_t syshandle;
+using syshandle = uintptr_t;
 
 }  // namespace tin
 

@@ -20,8 +20,8 @@ class IOBuffer {
 
   std::string str() const;
 
-  typedef char* iterator;
-  typedef const char* const_iterator;
+  using iterator = char*;
+  using const_iterator = const char*;
 
   iterator begin() { return storage_ + read_idx_; }
   const_iterator begin() const { return storage_ + read_idx_; }

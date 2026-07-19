@@ -3,7 +3,6 @@
 // found in the LICENSE file.
 
 #pragma once
-#include <iostream>
 #include <deque>
 #include <memory>
 #include "tin/sync/atomic.h"
@@ -134,7 +133,6 @@ class QueueImpl
 
   ~QueueImpl() {
     STLClearElements(&queue_);
-    // std::cout << "Channel destructor_______\n";
   }
 
 

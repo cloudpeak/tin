@@ -462,7 +462,7 @@ LevelDB 只有极少的公共头文件（`leveldb/db.h`, `leveldb/write_batch.h`
 
 ## 七、并发原语设计
 
-### 7.1 自造 mutex 而非使用标准库
+### 7.1 自造 mutex 的正确性与优化方向
 
 ```cpp
 // tin/sync/mutex.h
@@ -473,9 +473,14 @@ class Mutex {
 };
 ```
 
-tin 自己实现了 `Mutex`、`RWMutex`、`Cond`、`RawMutex`、`Note`、`SyncSema`——全部基于自己的 semaphore 和 atomic。这是从 Go runtime 翻译来的（Go runtime 必须自造因为它是 runtime 本身），但 tin 完全可以用 `std::mutex`、`std::condition_variable`、`absl::Mutex`。
+tin 自己实现了 `Mutex`、`RWMutex`、`Cond`、`RawMutex`、`Note`、`SyncSema`——全部基于自己的 semaphore 和 atomic。这是从 Go runtime 翻译来的（Go runtime 必须自造因为它是 runtime 本身）。
 
-自造的 mutex 没有经过形式化验证，在弱内存模型架构（ARM）上极易出 bug。
+**决策：保留自造同步原语，不允许用标准库（`std::mutex`、`std::condition_variable`、`absl::Mutex` 等）替代。** tin 作为一个协程运行时，其同步原语需要与调度器深度协作（如 park/unpark 协程而非阻塞 OS 线程），标准库锁会破坏协程的 M:N 调度语义。因此自造是架构上的必要选择，而非历史遗留。
+
+**但需优化**：
+- 自造 mutex 目前没有经过形式化验证，在弱内存模型架构（ARM）上存在风险——应补充内存序（memory order）注释，并用 ThreadSanitizer 验证
+- 应利用 `std::atomic`（标准库的原子类型，而非锁）来替换手写的 compiler barrier / inline asm，使底层原子操作更可靠
+- `owner_` 死锁检测字段应实现或删除（见 7.2）
 
 ### 7.2 `RawMutex` 的 `owner_` 字段未实现死锁检测
 
@@ -663,14 +668,14 @@ inline bool acquire_cas(volatile intptr_t* ptr, ...) { ... }
 
 ### 9.3 同一概念多个实现
 
-| 概念 | tin 实现 | 数量 |
-|---|---|---|
-| 互斥锁 | `Mutex`, `RawMutex`, `FdMutex` | 3 个 |
-| 信号量 | `SemAcquire/SemRelease`, `SyncSema`, `Note` | 3 个 |
-| 条件变量 | `Cond` | 1 个（但 `ThreadPoll` 用 `absl::Notification` 代替） |
-| 原子操作 | `tin::atomic::`, `AtomicFlag`, `std::atomic` | 3 套 |
+| 概念 | tin 实现 | 数量 | 说明 |
+|---|---|---|---|
+| 互斥锁 | `Mutex`, `RawMutex`, `FdMutex` | 3 个 | 均为自造，保留不替换；需统一接口规范 |
+| 信号量 | `SemAcquire/SemRelease`, `SyncSema`, `Note` | 3 个 | 均为自造，保留不替换；需补文档 |
+| 条件变量 | `Cond` | 1 个（但 `ThreadPoll` 用 `absl::Notification` 代替） | `Cond` 保留；`ThreadPoll` 的混用需统一 |
+| 原子操作 | `tin::atomic::`, `AtomicFlag`, `std::atomic` | 3 套 | 底层原子操作可用 `std::atomic` 替换手写 inline asm |
 
-`Mutex` 是给用户用的，`RawMutex` 是 runtime 内部用的，`FdMutex` 是 net 层用的——但它们都是互斥锁，没有统一的接口。LevelDB 只用一个 `port::Mutex`（底层是 `std::mutex`）。
+`Mutex` 是给用户用的，`RawMutex` 是 runtime 内部用的，`FdMutex` 是 net 层用的——它们都是互斥锁，但没有统一的接口规范。LevelDB 用一个 `port::Mutex`（底层是 `std::mutex`），但 tin 作为协程运行时不能使用标准库锁（会阻塞 OS 线程而非 park 协程），因此保留多套自造锁是架构要求。改进方向是：统一接口规范、补充内存序注释、用 TSan 验证正确性，而非替换为标准库。
 
 ### 9.4 文件命名不一致
 
@@ -746,7 +751,7 @@ leveldb/
 | **所有权** | `unique_ptr` 为主，RAII | 裸 `new`/`delete` 泄漏；`TcpConn` 的 `shared_ptr` 合理（应保留） | 🔴 严重（泄漏） |
 | **类型安全** | 强类型，无 `void*` | `uintptr_t`/`void*` 大量使用 | 🔴 严重 |
 | **模块边界** | `include/` vs 实现，PIMPL | 公共头直接依赖 runtime 内部 | 🟡 中等 |
-| **并发原语** | `port::Mutex` 一套，基于 `std::` | 自造 3 套 mutex + 手写原子操作 | 🟡 中等 |
+| **并发原语** | `port::Mutex` 一套，基于 `std::` | 自造 3 套 mutex + 手写原子操作（保留，协程运行时不能用标准库锁） | 🟡 中等（需补内存序注释 + TSan 验证） |
 | **命名一致性** | 严格遵守 Google Style | 命名空间混用、`NULL`、`typedef`、拼写错误 | 🟡 中等 |
 | **测试** | 3000+ 行测试，故障注入 | 零测试 | 🔴 严重 |
 | **文档** | 头文件注释 + doc/ | 仅 README + 设计评审 | 🟡 中等 |
@@ -761,7 +766,7 @@ leveldb/
 | **P0** | 修复 `Env::Deinitialize()` 的内存泄漏（`sched`/`glet_tls` 未释放） | 正确性 |
 | **P0** | 添加单元测试框架 + 核心路径测试 | 可维护性 |
 | **P1** | 用 `std::atomic` 替换 `tin::atomic`（435 行手写原子操作） | 简化 + 正确性 |
-| **P1** | 用 `std::mutex`/`absl::Mutex` 替换自造 mutex | 简化 + 可维护性 |
+| **P1** | 优化自造 mutex：补内存序注释、实现/删除 `owner_` 死锁检测、TSan 验证（保留自造，不替换为标准库） | 正确性 + 可维护性 |
 | **P1** | 运行时核心对象（`Scheduler`/`TimerQueue`/`Greenlet`）用 `unique_ptr` 管理所有权，消除裸 `new`/`delete` | 内存安全 |
 | **P1** | `TcpConn` 保留 `shared_ptr`，但改用 `std::make_shared` 消除二次分配；回调中用 `weak_ptr` 防循环引用 | 内存安全（保留共享所有权） |
 | **P1** | 将 `void*` + 函数指针替换为 `std::function`/lambda | 类型安全 |

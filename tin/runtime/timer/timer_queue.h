@@ -15,7 +15,7 @@ namespace runtime {
 
 void InternalNanoSleep(int64_t ns);
 
-typedef void (*TimerCallback)(void* arg, uintptr_t seq);
+using TimerCallback = void (*)(void* arg, uintptr_t seq);
 
 int64_t NanoFromNow(int64_t deadline);
 

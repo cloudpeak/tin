@@ -11,7 +11,7 @@ namespace tin {
 namespace runtime {
 
 // return false if resumed.
-typedef bool(*UnlockFunc)(void* arg1, void* arg2);
+using UnlockFunc = bool(*)(void* arg1, void* arg2);
 
 class UnLockInfo {
  public:

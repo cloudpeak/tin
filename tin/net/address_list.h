@@ -55,8 +55,8 @@ class AddressList {
   // representation of the address list.  The callback must be destroyed before
   // |this| is.
 
-  typedef std::vector<IPEndPoint>::iterator iterator;
-  typedef std::vector<IPEndPoint>::const_iterator const_iterator;
+  using iterator = std::vector<IPEndPoint>::iterator;
+  using const_iterator = std::vector<IPEndPoint>::const_iterator;
 
   size_t size() const {
     return endpoints_.size();

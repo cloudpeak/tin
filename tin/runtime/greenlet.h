@@ -32,7 +32,7 @@ enum GreenletFlag {
   kGletFlagG0 = 1,
 };
 
-typedef void* (*GreenletFunc)(intptr_t);
+using GreenletFunc = void* (*)(intptr_t);
 
 class Greenlet {
  public:
