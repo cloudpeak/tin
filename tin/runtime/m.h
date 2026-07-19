@@ -6,10 +6,10 @@
 
 #include <list>
 #include <memory>
+#include <semaphore>
 #include <thread>
 #include <absl/log/log.h>
 #include <absl/log/check.h>
-#include <absl/synchronization/notification.h>
 
 #include "context/zcontext.h"
 
@@ -46,7 +46,7 @@ class M  {
     return next_waitm_;
   }
 
-  absl::Notification* WaitSemaphore() {
+  std::counting_semaphore<1>* WaitSemaphore() {
     return wait_sema_.get();
   }
 
@@ -152,7 +152,7 @@ class M  {
  private:
   uintptr_t next_waitm_;
   std::unique_ptr<char[]> cache_;
-  std::unique_ptr<absl::Notification> wait_sema_;
+  std::unique_ptr<std::counting_semaphore<1>> wait_sema_;
   Note park_;
   tin::runtime::P* p_;
   bool spinning_;

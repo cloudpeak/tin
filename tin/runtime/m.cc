@@ -46,7 +46,11 @@ M::~M() {
 
 void M::EnsureSemaphoreExists() {
   if (!wait_sema_) {
-    wait_sema_.reset(new absl::Notification(false));
+    // Initial count is 0: the first acquire() will block until a release().
+    // counting_semaphore is reusable (unlike absl::Notification which is
+    // one-shot), so the same semaphore can be acquired/released across
+    // many sleep/wakeup cycles.
+    wait_sema_.reset(new std::counting_semaphore<1>(0));
   }
 }
 

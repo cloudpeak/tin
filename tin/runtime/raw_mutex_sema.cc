@@ -4,6 +4,7 @@
 
 
 
+#include <chrono>
 #include <thread>
 
 #include "tin/sync/atomic.h"
@@ -247,17 +248,16 @@ int32_t SemaSleep(int64_t ns) {
     }
   }
   if (us == -1) {
-    m->WaitSemaphore()->WaitForNotification();
+    m->WaitSemaphore()->acquire();
   } else {
     // us is in microseconds.
-    absl::Duration duration = absl::Microseconds(us);
-    m->WaitSemaphore()->WaitForNotificationWithTimeout(duration);
+    m->WaitSemaphore()->try_acquire_for(std::chrono::microseconds(us));
   }
   return 0;
 }
 
 void SemaWakeup(M* m) {
-  m->WaitSemaphore()->Notify();
+  m->WaitSemaphore()->release();
 }
 
 }  // namespace runtime

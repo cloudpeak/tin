@@ -123,7 +123,7 @@ bool ParseIPLiteralToBytes(const absl::string_view& ip_literal,
   // a colon however, it must be an IPv6 address.
   bool ipv4 = ip_literal.find(':') == absl::string_view::npos;
   bytes->resize(ipv4 ? 4 : 16);  // 128 bits.
-  return tin::net::INetPToN(ipv4, ip_literal.data(), &bytes[0]);
+  return tin::net::INetPToN(ipv4, ip_literal.data(), bytes->data());
 }
 
 }  // namespace
