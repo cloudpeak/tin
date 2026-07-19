@@ -1,5 +1,17 @@
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
+# Ensure all targets in the build tree use the same MSVC runtime library.
+# Abseil sets CMAKE_MSVC_RUNTIME_LIBRARY in its own subdirectory scope, which
+# does not propagate to the parent scope. Without this, abseil objects get
+# _ITERATOR_DEBUG_LEVEL=2 (Debug DLL runtime) while tin/examples get
+# _ITERATOR_DEBUG_LEVEL=0, causing lld-link /failifmismatch errors.
+# This must be set BEFORE any add_subdirectory calls.
+# Use CACHE FORCE so the value survives across reconfigures and wins over
+# any default that project() or toolchain files might set.
+if(WIN32)
+  set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL" CACHE STRING "" FORCE)
+endif()
+
 # base (Chromium //base) requires C++20 (class-scope deduction guides in
 # weak_ptr.h, etc.). tin itself only needs C++17, but since base headers are
 # included from tin sources, we have to compile the whole tree as C++20.
@@ -43,6 +55,16 @@ endif()
 cmake_minimum_required(VERSION 2.6)
 project(tin CXX)
 
+# Re-assert the MSVC runtime library after project(tin) — project() can
+# reset CMAKE_MSVC_RUNTIME_LIBRARY to its default. All targets (tin,
+# examples) must use the same runtime as abseil/base (MultiThreadedDebugDLL
+# in Debug, which sets _ITERATOR_DEBUG_LEVEL=2).
+# Use CACHE FORCE so the value survives across reconfigures and wins over
+# any default that project() or toolchain files might set.
+if(WIN32)
+  set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL" CACHE STRING "" FORCE)
+endif()
+
 # Install/packaging helpers. Included early so that
 # ${CMAKE_INSTALL_INCLUDEDIR} etc. are available to
 # target_include_directories below.
@@ -63,7 +85,9 @@ message("compiler is ${CMAKE_CXX_COMPILER_ID}")
 # On WSL/Linux with Homebrew clang, force libc++ (libstdc++ 11 headers
 # don't survive clang 22). base/CMakeLists.txt already does this in its own
 # scope, but tin's own sources need it too.
-if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+# Guard with UNIX so this does NOT run on Windows clang-cl (which uses the
+# MSVC standard library and has no /home/linuxbrew path).
+if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND UNIX)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -stdlib=libc++ -L/home/linuxbrew/.linuxbrew/lib")
   set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -stdlib=libc++ -L/home/linuxbrew/.linuxbrew/lib")
@@ -99,6 +123,7 @@ add_definitions(-D__STDC_FORMAT_MACROS)
 add_definitions(-DCERT_CHAIN_PARA_HAS_EXTRA_FIELDS)
 add_definitions(-DNOMINMAX)
 add_definitions(-D_UNICODE)
+add_definitions(-DUNICODE)
 add_definitions(-D_CRT_RAND_S)
 add_definitions(-D"USE_ASH=1")
 endif()
@@ -110,30 +135,19 @@ if (UNIX)
     # sources use the same standard library as base.
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ggdb -Wall -Wextra -Woverloaded-virtual -Wno-unused-parameter -Wno-missing-field-initializers")
 elseif(WIN32)
-    set(CMAKE_CXX_FLAGS 
-        /Zi 
-        /nologo  
-        /EHsc 
-        /GS 
-        /Gd 
-        /GR 
-        /GF 
-        /fp:precise 
-        /Zc:wchar_t 
-        /Zc:forScope 
-        /errorReport:queue
-        /FC
-        /W3 
-        /WX- 
-    )
-	if(${MSVC_VERSION} GREATER 1700)
-	LIST(APPEND CMAKE_CXX_FLAGS
-		/d2Zi+ 
-		)
-	endif()
+    # Do NOT set CMAKE_CXX_FLAGS with MSVC switches (/Zi, /EHsc, etc.).
+    # Setting them via CMAKE_CXX_FLAGS causes CMake to emit them as
+    # <AdditionalOptions> in the .vcxproj, which overrides the
+    # <RuntimeLibrary> property (leaving it empty) and causes
+    # _ITERATOR_DEBUG_LEVEL mismatches with abseil/base.
+    # Instead, let CMake's defaults handle runtime library selection
+    # (MultiThreadedDebugDLL via CMAKE_MSVC_RUNTIME_LIBRARY) and use
+    # target_compile_options on the tin target below for extra flags.
 endif()
 
-if(${CMAKE_CXX_COMPILER_ID} MATCHES "Clang")
+# -Wno-unnamed-type-template-args is a GCC/Clang flag. Guard with UNIX so
+# it does not interfere with the MSVC generator on Windows clang-cl.
+if(${CMAKE_CXX_COMPILER_ID} MATCHES "Clang" AND UNIX)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unnamed-type-template-args")
 endif()
 
@@ -152,10 +166,10 @@ include_directories(${PROJECT_SOURCE_DIR})
 # cliff shim: provides <cliff/...> headers that re-export base's utilities
 # (strlcpy, NetToHost16, RefCountedThreadSafe, atomicops, build_config).
 # cliff is no longer available; tin sources still reference cliff:: symbols,
-# so we provide thin shims that forward to base on non-Windows builds.
-if(UNIX)
-	include_directories(${CMAKE_CURRENT_SOURCE_DIR}/third_party/cliff_shim)
-endif()
+# so we provide thin shims that forward to base. The shims are pure C++
+# header-only wrappers over base and work on all platforms (Linux, macOS,
+# Windows). Previously this was guarded by if(UNIX) which broke Windows.
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/third_party/cliff_shim)
 include_directories(${QUARK_DIR}/include)
 include_directories(${ZCONTEXT_DIR}/zcontext/include)
 
@@ -345,6 +359,20 @@ source_group_by_dir(SOURCES)
 
 add_library(tin ${SOURCES})
 
+# Explicitly set the MSVC runtime library for the tin target and all
+# downstream examples. CMAKE_MSVC_RUNTIME_LIBRARY should handle this, but
+# with the ClangCL toolset the generated <RuntimeLibrary> property can end
+# up empty. Setting /MDd (Debug) /MD (Release) via target_compile_options
+# ensures the correct runtime is used, matching abseil/base.
+if(WIN32)
+  target_compile_options(tin PRIVATE
+    "$<$<CONFIG:Debug>:/MDd>"
+    "$<$<CONFIG:Release>:/MD>"
+    "$<$<CONFIG:RelWithDebInfo>:/MD>"
+    "$<$<CONFIG:MinSizeRel>:/MD>"
+  )
+endif()
+
 # Export the source directory as a PUBLIC include path so that downstream
 # targets (examples, `find_package(tin)` consumers) resolve `#include "tin/..."`
 # regardless of whether they are in the build tree or installed.
@@ -368,9 +396,10 @@ target_link_libraries(tin PUBLIC
 
 file(GLOB ABSL_LIBS "${CMAKE_INSTALL_PREFIX}/lib/*absl_*")
 if (WIN32)
+# cliff.lib was a legacy library; tin now uses the header-only cliff_shim
+# instead, so it is no longer linked.
 set(DEP_LIBS tin base quark zcontext DbgHelp.lib Psapi.lib Mswsock.lib ws2_32.lib version.lib
 	${ABSL_LIBS}
-	cliff.lib
 )
 
 if(${MSVC_VERSION} GREATER 1500)
