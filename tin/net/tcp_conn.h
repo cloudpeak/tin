@@ -6,6 +6,7 @@
 
 #include <memory>
 
+#include "tin/net/sys_socket.h"
 #include "tin/time/time.h"
 #include "tin/io/io.h"
 

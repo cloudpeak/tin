@@ -7,8 +7,6 @@
 
 #include "tin/tin.h"
 
-#include <absl/strings/str_format.h>
-#include <iostream>
 namespace tin {
 
 namespace {
@@ -16,9 +14,6 @@ Config* conf = NULL;
 }
 
 void Initialize() {
-  std::string name = "John"; int age = 25;
-
-  std::string formatted_string = absl::StrFormat("My name is %s and I am %d years old.", name, age); std::cout << formatted_string << std::endl;
   conf = new tin::Config;
   *conf = DefaultConfig();
   PlatformInit();
@@ -55,6 +50,43 @@ Config DefaultConfig() {
   conf.SetIgnoreSigpipe(true);
   conf.EnableStackPprotection(false);
   return conf;
+}
+
+// ---------------------------------------------------------------------------
+// Runtime class implementation.
+// ---------------------------------------------------------------------------
+
+Runtime::Runtime()
+  : conf_(DefaultConfig()) {
+  Initialize();
+}
+
+Runtime::Runtime(const Config& conf)
+  : conf_(conf) {
+  Initialize();
+}
+
+Runtime::~Runtime() {
+  Deinitialize();
+}
+
+int Runtime::Run(EntryFn entry, int argc, char** argv) {
+  PowerOn(std::move(entry), argc, argv, &conf_);
+  return WaitForPowerOff();
+}
+
+// ---------------------------------------------------------------------------
+// Convenience functions.
+// ---------------------------------------------------------------------------
+
+int Run(EntryFn entry, int argc, char** argv) {
+  Runtime rt;
+  return rt.Run(std::move(entry), argc, argv);
+}
+
+int Run(EntryFn entry, int argc, char** argv, const Config& conf) {
+  Runtime rt(conf);
+  return rt.Run(std::move(entry), argc, argv);
 }
 
 }  // namespace tin

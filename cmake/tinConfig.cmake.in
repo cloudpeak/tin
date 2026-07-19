@@ -1,0 +1,19 @@
+# tin CMake package config file (template).
+#
+# Consumed by configure_package_config_file() to generate the actual
+# tinConfig.cmake that downstream projects use via find_package(tin).
+#
+# Usage (downstream):
+#   find_package(tin REQUIRED)
+#   target_link_libraries(my_app PRIVATE tin::tin)
+
+@PACKAGE_INIT@
+
+include("${CMAKE_CURRENT_LIST_DIR}/tinTargets.cmake")
+
+# tin depends on base (Chromium //base) and a subset of abseil-cpp. These
+# are expected to be found/linked by the downstream project's own CMake;
+# tin::tin already propagates them as PUBLIC link dependencies, so just
+# linking tin::tin is sufficient.
+
+check_required_components(tin)

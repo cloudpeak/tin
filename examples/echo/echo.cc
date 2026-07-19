@@ -1,6 +1,16 @@
-#include "tin/all.h"
+#include "tin/tin.h"
+#include "tin/config.h"
+#include "tin/error.h"
+#include "tin/time.h"
+#include "tin/runtime.h"
+#include "tin/net/tcp.h"
 
+#include <absl/log/log.h>
+#include <absl/log/check.h>
 #include <absl/log/globals.h>
+#include <thread>
+#include <memory>
+#include <cstdint>
 
 // case 0
 void HandleClient0(tin::net::TcpConn conn) {

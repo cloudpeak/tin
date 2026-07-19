@@ -1,5 +1,7 @@
 #include "base/system/sys_info.h"
-#include "tin/all.h"
+#include "tin/tin.h"
+#include "tin/config.h"
+#include <absl/log/log.h>
 
 int TinMain(int argc, char** argv) {
   LOG(INFO) << "TinMain";

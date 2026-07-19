@@ -43,6 +43,12 @@ endif()
 cmake_minimum_required(VERSION 2.6)
 project(tin CXX)
 
+# Install/packaging helpers. Included early so that
+# ${CMAKE_INSTALL_INCLUDEDIR} etc. are available to
+# target_include_directories below.
+include(GNUInstallDirs)
+include(CMakePackageConfigHelpers)
+
 
 # default to debug build.
 if(NOT CMAKE_BUILD_TYPE)
@@ -339,6 +345,14 @@ source_group_by_dir(SOURCES)
 
 add_library(tin ${SOURCES})
 
+# Export the source directory as a PUBLIC include path so that downstream
+# targets (examples, `find_package(tin)` consumers) resolve `#include "tin/..."`
+# regardless of whether they are in the build tree or installed.
+target_include_directories(tin PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+  $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+)
+
 # tin's public headers include <absl/...> and <base/...>, so the dependency
 # on base (and the absl components not already PUBLIC-linked by base) must
 # be PUBLIC for downstream targets (e.g. examples) to compile.
@@ -377,4 +391,34 @@ endif()
 if(${TIN_BUILD_EXAMPLES})
 add_subdirectory(examples)
 endif()
+
+# ---------------------------------------------------------------------------
+# Install rules.
+# ---------------------------------------------------------------------------
+# Install the static library and all public headers so that downstream
+# projects can link against tin via target_link_libraries(my_app PRIVATE tin)
+# and target_include_directories(my_app PRIVATE /path/to/tin/install/include).
+#
+# NOTE: full find_package(tin) support (via install(EXPORT) + tinConfig.cmake)
+# is not yet enabled because tin's PUBLIC link dependencies (base, absl::* ,
+# quark, zcontext) are built via add_subdirectory and are not part of any
+# CMake export set. Enabling install(EXPORT) requires those dependencies to
+# be exported first (or found via find_dependency in the config file). That
+# is tracked as a follow-up task — see docs/api-design-review.md §2.5.
+# ---------------------------------------------------------------------------
+
+install(TARGETS tin
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+)
+
+# Install all public headers under tin/ (preserving the directory layout).
+# Only *.h files are installed; internal headers that happen to live under
+# tin/ are also installed, which is harmless and keeps the include paths
+# stable for code that still references e.g. tin/runtime/runtime.h.
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/tin/
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/tin
+  FILES_MATCHING PATTERN "*.h"
+)
 

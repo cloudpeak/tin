@@ -3,7 +3,6 @@
 // found in the LICENSE file.
 
 #include <csignal>
-#include <cstdlib>
 #include <thread>
 
 #include "build/build_config.h"
@@ -72,9 +71,13 @@ void* Env::MainGlet(intptr_t) {
 }
 
 void Env::OnMainExit() {
-  // current workaround, exit directly.
-  _exit(0);
-  // TODO(author) wait for all exit, thread pool, net poller etc.
+  // Graceful shutdown: stop the scheduler, join the worker thread pool and
+  // the timer queue, then notify WaitForPowerOff() so that the main thread
+  // can return and run Deinitialize()/RAII destructors.
+  //
+  // Do NOT call _exit() here -- that would skip RAII destructors, atexit
+  // hooks, and the Deinitialize() call in the user's main(), defeating the
+  // purpose of the lifecycle API.
   exit_flag_ = true;
   ThreadPoll::GetInstance()->JoinAll();
   timer_q->Join();
