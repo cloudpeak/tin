@@ -32,50 +32,58 @@ Reader::~Reader() {
   delete [] storage_;
 }
 
-int Reader::Read(void* buf, int buf_size) {
+Result<size_t> Reader::Read(void* buf, int buf_size) {
   uint8_t* p = static_cast<uint8_t*>(buf);
-  int n = buf_size;
-  if (n == 0) {
-    tin::SetErrorCode(ReadErr());
-    return 0;
+  if (buf_size == 0) {
+    int err = ReadErr();
+    if (err != 0) {
+      return Result<size_t>::Err(err);
+    }
+    return Result<size_t>::Ok(0);
   }
   DCHECK(buf != nullptr);
   DCHECK_GT(buf_size, 0);
 
   if (empty()) {
     if (err_ != 0) {
-      tin::SetErrorCode(ReadErr());
-      return 0;
+      return Result<size_t>::Err(ReadErr());
     }
     if (buf_size >= storage_size_) {
       // Large read, empty buffer.
       // Read directly into p to avoid copy.
-      n = rd_->Read(buf, buf_size);
-      err_ = tin::GetErrorCode();
-      if (n < 0) {
-        LOG(FATAL) << "bufio: tried to fill full buffer";
-      }
+      auto result = rd_->Read(buf, buf_size);
+      size_t n = result.value_or(0);
       if (n > 0) {
         last_byte_ = p[n - 1];
       }
-      tin::SetErrorCode(ReadErr());
-      return n;
+      if (!result.ok()) {
+        err_ = result.code();
+        if (n > 0) {
+          return Result<size_t>::Ok(n);
+        }
+        return Result<size_t>::Err(ReadErr());
+      }
+      // ReadErr() to clear any stale state.
+      ReadErr();
+      return Result<size_t>::Ok(n);
     }
     Fill();
     // buffer is empty
     if (empty()) {
-      tin::SetErrorCode(ReadErr());
-      return 0;
+      int err = ReadErr();
+      if (err != 0) {
+        return Result<size_t>::Err(err);
+      }
+      return Result<size_t>::Ok(0);
     }
   }
 
   // copy as much as we can
-  n = std::min<int>(buffered(), buf_size);
+  int n = std::min<int>(buffered(), buf_size);
   std::memcpy(p, begin(), n);
   read_idx_ += n;
   last_byte_ = storage_[read_idx_ - 1];
-  tin::SetErrorCode(0);
-  return n;
+  return Result<size_t>::Ok(static_cast<size_t>(n));
 }
 
 void Reader::Reset(tin::io::Reader* rd) {
@@ -97,14 +105,11 @@ void Reader::Fill() {
 
   // Read new data: try a limited number of times.
   for (int i = kMaxConsecutiveEmptyReads; i > 0; i++) {
-    int n = rd_->Read(end(), free());
-    if (n < 0) {
-      LOG(FATAL) << "bufio: tried to fill full buffer";
-    }
-    write_idx_ += n;
-    int err = tin::GetErrorCode();
-    if (err != 0) {
-      err_ = err;
+    auto result = rd_->Read(end(), free());
+    size_t n = result.value_or(0);
+    write_idx_ += static_cast<int>(n);
+    if (!result.ok()) {
+      err_ = result.code();
       return;
     }
     if (n > 0) {
@@ -122,7 +127,7 @@ int Reader::ReadErr() {
 
 
 
-int Reader::ReadSlice(uint8_t delim, absl::string_view* line) {
+Status Reader::ReadSlice(uint8_t delim, absl::string_view* line) {
   int err = 0;
   while (true) {
     const_iterator it =  std::find(begin(), end(), delim);
@@ -156,12 +161,12 @@ int Reader::ReadSlice(uint8_t delim, absl::string_view* line) {
   if (i >= 0) {
     last_byte_ = (*line)[i];
   }
-  tin::SetErrorCode(err);
-  return err;
+  return Status::FromErrno(err);
 }
 
-int Reader::ReadLine(absl::string_view* line, bool* is_prefix) {
-  int err = ReadSlice('\n', line);
+Status Reader::ReadLine(absl::string_view* line, bool* is_prefix) {
+  Status s = ReadSlice('\n', line);
+  int err = s.code();
   if (err == TIN_EBUFFERFULL) {
     // Handle the case where "\r\n" straddles the buffer.
     if (line->length() > 0 && line->back() == '\r') {
@@ -174,8 +179,7 @@ int Reader::ReadLine(absl::string_view* line, bool* is_prefix) {
       read_idx_--;
       line->remove_suffix(1);
       *is_prefix = true;
-      tin::SetErrorCode(0);
-      return 0;
+      return Status::OK();
     }
   }
 
@@ -185,7 +189,7 @@ int Reader::ReadLine(absl::string_view* line, bool* is_prefix) {
       *line = absl::string_view();
     }
     *is_prefix = false;
-    return err;
+    return s;
   }
   err = 0;
 
@@ -197,11 +201,10 @@ int Reader::ReadLine(absl::string_view* line, bool* is_prefix) {
     line->remove_prefix(drop);
   }
   *is_prefix = false;
-  tin::SetErrorCode(0);
-  return err;
+  return Status::OK();
 }
 
-int Reader::Peek(int n, absl::string_view* piece) {
+Status Reader::Peek(int n, absl::string_view* piece) {
   DCHECK_GE(n, 0);
   if (n < 0) {
     LOG(FATAL) << "ErrNegativeCount";
@@ -209,8 +212,7 @@ int Reader::Peek(int n, absl::string_view* piece) {
   int err = 0;
   if (n > storage_size_) {
     err = TIN_EBUFFERFULL;
-    tin::SetErrorCode(err);
-    return err;
+    return Status::FromErrno(err);
   }
 
   while (buffered() < n && err_ == 0) {
@@ -222,17 +224,16 @@ int Reader::Peek(int n, absl::string_view* piece) {
     err = ReadErr();
     if (err == 0) {
       err = TIN_EBUFFERFULL;
-      tin::SetErrorCode(err);
     }
   }
   if (piece != nullptr)
     *piece = ToStringPiece(begin(), n);
-  return err;
+  return Status::FromErrno(err);
 }
 
-int Reader::UnreadByte() {
+Status Reader::UnreadByte() {
   if (last_byte_ < 0 || (read_idx_ == 0 && write_idx_ > 0)) {
-    return TIN_EINVAL;
+    return Status::FromErrno(TIN_EINVAL);
   }
   // b.r > 0 || b.w == 0
   if (read_idx_ > 0) {
@@ -243,22 +244,20 @@ int Reader::UnreadByte() {
   }
   *begin() = static_cast<uint8_t>(last_byte_);
   last_byte_ = -1;
-  return 0;
+  return Status::OK();
 }
 
-int Reader::ReadByte(uint8_t* c) {
+Result<uint8_t> Reader::ReadByte() {
   while (empty()) {
     if (err_ != 0) {
-      *c = 0;
-      return ReadErr();
+      return Result<uint8_t>::Err(ReadErr());
     }
     Fill();  // buffer is empty
   }
-  *c = *begin();
+  uint8_t c = *begin();
   read_idx_++;
-  last_byte_ = *c;
-  return 0;
+  last_byte_ = c;
+  return Result<uint8_t>::Ok(c);
 }
 
 } // namespace tin::bufio
-

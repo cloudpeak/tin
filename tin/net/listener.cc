@@ -28,41 +28,41 @@ TCPListenerImpl::~TCPListenerImpl() {
   delete netfd_;
 }
 
-void TCPListenerImpl::SetDeadline(int64_t t) {
+Status TCPListenerImpl::SetDeadline(int64_t t) {
   int err = netfd_->SetDeadline(t);
-  SetErrorCode(TinTranslateSysError(err));
+  return Status::FromErrno(TinTranslateSysError(err));
 }
 
-void TCPListenerImpl::Close() {
+Status TCPListenerImpl::Close() {
   int err = netfd_->Close();
-  SetErrorCode(TinTranslateSysError(err));
+  return Status::FromErrno(TinTranslateSysError(err));
 }
 
-TcpConn TCPListenerImpl::Accept() {
+Result<TcpConn> TCPListenerImpl::Accept() {
   NetFD* newfd = nullptr;
   int err = netfd_->Accept(&newfd);
-  SetErrorCode(TinTranslateSysError(err));
   if (err != 0) {
     delete newfd;
-    return TcpConn();
+    return Result<TcpConn>::Err(TinTranslateSysError(err));
   }
-  return MakeTcpConn(newfd);
+  return Result<TcpConn>::Ok(MakeTcpConn(newfd));
 }
 
 // ---------------------------------------------------------------------------
 // TCPListener — PIMPL forwarding methods (public API).
 // ---------------------------------------------------------------------------
 
-void TCPListener::SetDeadline(int64_t t) {
-  if (impl_) impl_->SetDeadline(t);
+Status TCPListener::SetDeadline(int64_t t) {
+  return impl_ ? impl_->SetDeadline(t) : Status::FromErrno(TIN_EBADF);
 }
 
-TcpConn TCPListener::Accept() {
-  return impl_ ? impl_->Accept() : TcpConn();
+Result<TcpConn> TCPListener::Accept() {
+  return impl_ ? impl_->Accept()
+               : Result<TcpConn>::Err(TIN_EBADF);
 }
 
-void TCPListener::Close() {
-  if (impl_) impl_->Close();
+Status TCPListener::Close() {
+  return impl_ ? impl_->Close() : Status::FromErrno(TIN_EBADF);
 }
 
 }  // namespace net

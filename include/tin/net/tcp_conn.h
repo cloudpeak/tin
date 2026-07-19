@@ -16,6 +16,8 @@
 #include <cstdint>
 #include <memory>
 
+#include "tin/result.h"
+
 namespace tin {
 namespace net {
 
@@ -29,18 +31,18 @@ class TcpConn {
   TcpConn(const TcpConn& other) = default;
   TcpConn& operator=(const TcpConn& other) = default;
 
-  // Explicit forwarding methods (replaces operator->()).
-  // note: Read full or partial on success, or read partial on failure.
-  // return value: indicate n bytes read. n >= 0.
-  // detail error, see tin::GetErrorCode()
-  int Read(void* buf, int nbytes);
-  int Write(const void* buf, int nbytes);
+  // Reads up to nbytes into buf. Returns the number of bytes read (>= 0).
+  // On error, the Result's status() carries the error code.
+  // If some data was read before an error (e.g. EOF), Ok(n) is returned
+  // and the error surfaces on the next call to Read().
+  Result<size_t> Read(void* buf, int nbytes);
+  Result<size_t> Write(const void* buf, int nbytes);
 
   void SetDeadline(int64_t t);
   void SetReadDeadline(int64_t t);
   void SetWriteDeadline(int64_t t);
 
-  bool SetKeepAlive(bool enable, int sec);
+  Status SetKeepAlive(bool enable, int sec);
   void SetLinger(int sec);
   void SetNoDelay(bool no_delay);
   void SetReadBuffer(int bytes);
@@ -48,11 +50,11 @@ class TcpConn {
 
   // SockOpt: optval/optlen use int instead of socklen_t to avoid leaking
   // platform headers. The implementation casts internally.
-  bool GetSockOpt(int level, int name, void* optval, int* optlen);
-  bool SetSockOpt(int level, int name, const void* optval, int optlen);
+  Status GetSockOpt(int level, int name, void* optval, int* optlen);
+  Status SetSockOpt(int level, int name, const void* optval, int optlen);
 
-  void CloseRead();
-  void CloseWrite();
+  Status CloseRead();
+  Status CloseWrite();
   void Close();
 
   int64_t TotalReadBytes() const;

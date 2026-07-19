@@ -17,7 +17,8 @@
 namespace tin {
 namespace net {
 
-TcpConn DialTcpInternal(const IPAddress& address, uint16_t port, int64_t deadline) {
+Result<TcpConn> DialTcpInternal(const IPAddress& address, uint16_t port,
+                                int64_t deadline) {
   int err = 0;
   AddressFamily family =
     address.IsIPv4() ? ADDRESS_FAMILY_IPV4 : ADDRESS_FAMILY_IPV6;
@@ -32,41 +33,41 @@ TcpConn DialTcpInternal(const IPAddress& address, uint16_t port, int64_t deadlin
       netfd = nullptr;
     }
   }
-  SetErrorCode(TinTranslateSysError(err));
   if (netfd == nullptr) {
-    return TcpConn();
+    return Result<TcpConn>::Err(TinTranslateSysError(err));
   }
-  return MakeTcpConn(netfd);
+  return Result<TcpConn>::Ok(MakeTcpConn(netfd));
 }
 
-TcpConn DialTcpInternal(const absl::string_view& address, uint16_t port,
-                        int64_t deadline) {
+Result<TcpConn> DialTcpInternal(const absl::string_view& address, uint16_t port,
+                                int64_t deadline) {
   IPAddress ip_address;
   if (!ip_address.AssignFromIPLiteral(address)) {
-    SetErrorCode(TIN_EINVAL);
-    return TcpConn();
+    return Result<TcpConn>::Err(TIN_EINVAL);
   }
   return DialTcpInternal(ip_address, port, deadline);
 }
 
-TcpConn DialTcp(const IPAddress& address, uint16_t port) {
+Result<TcpConn> DialTcp(const IPAddress& address, uint16_t port) {
   return DialTcpInternal(address, port, -1);
 }
 
-TcpConn DialTcp(const absl::string_view& address, uint16_t port) {
+Result<TcpConn> DialTcp(const absl::string_view& address, uint16_t port) {
   return DialTcpInternal(address, port, -1);
 }
 
-TcpConn DialTcpTimeout(const IPAddress& address, uint16_t port, int64_t deadline) {
+Result<TcpConn> DialTcpTimeout(const IPAddress& address, uint16_t port,
+                               int64_t deadline) {
   return DialTcpInternal(address, port, deadline);
 }
 
-TcpConn DialTcpTimeout(const absl::string_view& address, uint16_t port,
-                       int64_t deadline) {
+Result<TcpConn> DialTcpTimeout(const absl::string_view& address, uint16_t port,
+                               int64_t deadline) {
   return DialTcpInternal(address, port, deadline);
 }
 
-TCPListener ListenTcp(const IPAddress& address, uint16_t port, int backlog) {
+Result<TCPListener> ListenTcp(const IPAddress& address, uint16_t port,
+                              int backlog) {
   int err = 0;
   AddressFamily family =
     address.IsIPv4() ? ADDRESS_FAMILY_IPV4 : ADDRESS_FAMILY_IPV6;
@@ -82,8 +83,8 @@ TCPListener ListenTcp(const IPAddress& address, uint16_t port, int backlog) {
     if (err == 0) {
       IPEndPoint endpoint(address, port);
       err = netfd->Bind(endpoint);
-      if(err != 0) {
-        LOG(INFO) << "Bind failed: " << tin::GetErrorStr();
+      if (err != 0) {
+        LOG(INFO) << "Bind failed: " << TinErrorName(TinTranslateSysError(err));
       }
     }
   }
@@ -95,19 +96,18 @@ TCPListener ListenTcp(const IPAddress& address, uint16_t port, int backlog) {
     netfd = nullptr;
   }
   if (netfd == nullptr) {
-    SetErrorCode(TinTranslateSysError(err));
-    return TCPListener();
+    return Result<TCPListener>::Err(TinTranslateSysError(err));
   }
   // P2-1 PIMPL: use make_shared for single allocation.
-  return TCPListener(std::make_shared<TCPListenerImpl>(netfd, backlog));
+  return Result<TCPListener>::Ok(
+      TCPListener(std::make_shared<TCPListenerImpl>(netfd, backlog)));
 }
 
-TCPListener ListenTcp(const absl::string_view& address, uint16_t port,
-                      int backlog) {
+Result<TCPListener> ListenTcp(const absl::string_view& address, uint16_t port,
+                              int backlog) {
   IPAddress ip_address;
   if (!ip_address.AssignFromIPLiteral(address)) {
-    SetErrorCode(TIN_EINVAL);
-    return TCPListener();
+    return Result<TCPListener>::Err(TIN_EINVAL);
   }
   return ListenTcp(ip_address, port, backlog);
 }

@@ -9,6 +9,7 @@
 #include <absl/strings/string_view.h>
 
 #include "tin/io/io.h"
+#include "tin/result.h"
 
 
 namespace tin::bufio {
@@ -32,17 +33,26 @@ class Reader : public tin::io::Reader {
   // reset a new underlying reader.
   void Reset(tin::io::Reader* rd);
 
-  virtual int Read(void* buf, int nbytes);
+  // Reads up to nbytes into buf. Returns the number of bytes read (>= 0).
+  // On error, the Result's status() carries the error code.
+  Result<size_t> Read(void* buf, int nbytes) override;
 
-  // return error code.
-  int ReadSlice(uint8_t delim, absl::string_view* line);
+  // Reads until delim is found. Returns Status and sets *line to the slice
+  // (including the delimiter). On error, *line contains the data read so far.
+  Status ReadSlice(uint8_t delim, absl::string_view* line);
 
-  // return error code.
-  int ReadLine(absl::string_view* line, bool* is_prefix);
+  // Reads a line. Returns Status and sets *line (without trailing \r\n or \n)
+  // and *is_prefix (true if the line was longer than the buffer).
+  Status ReadLine(absl::string_view* line, bool* is_prefix);
 
-  int ReadByte(uint8_t* c);
-  int UnreadByte();
-  int Peek(int n, absl::string_view* piece);
+  // Reads a single byte. Returns Result<uint8_t>.
+  Result<uint8_t> ReadByte();
+
+  // Unreads the last byte read. Returns Status.
+  Status UnreadByte();
+
+  // Peeks n bytes without consuming. Returns Status and sets *piece.
+  Status Peek(int n, absl::string_view* piece);
 
   // inline functions
   int buffered() const { return write_idx_ - read_idx_; }
@@ -83,14 +93,9 @@ class Reader : public tin::io::Reader {
 class Writer : public tin::io::Writer {
  public:
   virtual ~Writer() {}
-  virtual int Write(const void* buf, int nbytes) = 0;
+  virtual Result<size_t> Write(const void* buf, int nbytes) = 0;
 };
 
 
 
 } // namespace tin::bufio
-
-
-
-
-

@@ -11,6 +11,7 @@
 #include <memory>
 
 #include "tin/time/time.h"
+#include "tin/result.h"
 
 namespace tin::net {
 
@@ -26,9 +27,9 @@ class TCPListenerImpl
   TCPListenerImpl(const TCPListenerImpl&) = delete;
   TCPListenerImpl& operator=(const TCPListenerImpl&) = delete;
 
-  void SetDeadline(int64_t t);
-  TcpConn Accept();
-  void Close();
+  Status SetDeadline(int64_t t);
+  Result<TcpConn> Accept();
+  Status Close();
 
  private:
   NetFD* netfd_;

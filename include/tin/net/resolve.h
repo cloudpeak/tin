@@ -9,23 +9,24 @@
 #include <absl/strings/string_view.h>
 #include "tin/net/address_family.h"
 #include "tin/net/ip_address.h"
+#include "tin/result.h"
 
 namespace tin {
 namespace net {
 
-int ResolveHostname(const absl::string_view& hostname, AddressFamily af,
-                    std::vector<IPAddress>* addresses);
+// Resolves hostname into a list of IP addresses. Returns Status.
+Status ResolveHostname(const absl::string_view& hostname, AddressFamily af,
+                       std::vector<IPAddress>* addresses);
 
-IPAddress ResolveHostname4(const absl::string_view& hostname);
+// Convenience functions that return the first resolved address.
+Result<IPAddress> ResolveHostname4(const absl::string_view& hostname);
 
-IPAddress ResolveHostname6(const absl::string_view& hostname);
+Result<IPAddress> ResolveHostname6(const absl::string_view& hostname);
 
-IPAddress ResolveHostname(const absl::string_view& hostname);
+Result<IPAddress> ResolveHostname(const absl::string_view& hostname);
 
-IPAddress ResolveHostname(const absl::string_view& hostname);
-
-IPAddress ResolveHostname(const absl::string_view& hostname, AddressFamily af);
+Result<IPAddress> ResolveHostname(const absl::string_view& hostname,
+                                  AddressFamily af);
 
 }  // namespace net
 }  // namespace tin
-

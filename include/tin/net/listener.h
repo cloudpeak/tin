@@ -12,6 +12,7 @@
 #include <memory>
 
 #include "tin/net/tcp_conn.h"
+#include "tin/result.h"
 
 namespace tin::net {
 
@@ -24,15 +25,15 @@ class TCPListener {
   TCPListener(const TCPListener& other) = default;
   TCPListener& operator=(const TCPListener& other) = default;
 
-  void SetDeadline(int64_t t);
-  TcpConn Accept();
-  void Close();
+  Status SetDeadline(int64_t t);
+  Result<TcpConn> Accept();
+  Status Close();
 
   bool IsValid() const { return impl_ != nullptr; }
 
  private:
-  friend TCPListener ListenTcp(const class IPAddress&, uint16_t, int);
-  friend TCPListener MakeTcpListener(TCPListenerImpl* impl);
+  friend Result<TCPListener> ListenTcp(const class IPAddress&,
+                                       uint16_t, int);
   explicit TCPListener(std::shared_ptr<TCPListenerImpl> impl)
     : impl_(std::move(impl)) {}
 

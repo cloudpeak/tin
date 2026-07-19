@@ -31,23 +31,33 @@ TcpConnImpl::~TcpConnImpl() {
   delete netfd_;
 }
 
-int TcpConnImpl::Read(void* buf, int nbytes) {
+Result<size_t> TcpConnImpl::Read(void* buf, int nbytes) {
   LOG_IF(FATAL, nbytes == 0) << "Read on zero buffer.";
   int nread = 0;
   int err = netfd_->Read(buf, nbytes, &nread);
-  tin::SetErrorCode(TinTranslateSysError(err));
+  // If some data was read, return it as success — the error (if any)
+  // will surface on the next call to Read().
   if (nread > 0) {
-    total_read_bytes_ += total_read_bytes_;
+    total_read_bytes_ += nread;
+    return Result<size_t>::Ok(static_cast<size_t>(nread));
   }
-  return nread;
+  if (err != 0) {
+    return Result<size_t>::Err(TinTranslateSysError(err));
+  }
+  return Result<size_t>::Ok(0);
 }
 
-int TcpConnImpl::Write(const void* buf, int nbytes) {
+Result<size_t> TcpConnImpl::Write(const void* buf, int nbytes) {
   LOG_IF(FATAL, nbytes == 0) << "Write on zero buffer.";
   int nwritten = 0;
   int err = netfd_->Write(buf, nbytes, &nwritten);
-  tin::SetErrorCode(TinTranslateSysError(err));
-  return nwritten;
+  if (nwritten > 0) {
+    return Result<size_t>::Ok(static_cast<size_t>(nwritten));
+  }
+  if (err != 0) {
+    return Result<size_t>::Err(TinTranslateSysError(err));
+  }
+  return Result<size_t>::Ok(0);
 }
 
 void TcpConnImpl::SetDeadline(int64_t t) {
@@ -62,11 +72,9 @@ void TcpConnImpl::SetWriteDeadline(int64_t t) {
   netfd_->SetWriteDeadline(t);
 }
 
-bool TcpConnImpl::SetKeepAlive(bool enable, int sec) {
+Status TcpConnImpl::SetKeepAlive(bool enable, int sec) {
   int err = netfd_->SetTCPKeepAlive(enable, sec);
-  err = TinTranslateSysError(err);
-  tin::SetErrorCode(err);
-  return err == 0;
+  return Status::FromErrno(TinTranslateSysError(err));
 }
 
 void TcpConnImpl::SetLinger(int sec) {
@@ -95,34 +103,30 @@ void TcpConnImpl::SetWriteBuffer(int bytes) {
   (void)SetSockOpt(SOL_SOCKET, SO_SNDBUF, &bytes, sizeof(bytes));
 }
 
-bool TcpConnImpl::GetSockOpt(int level,
-                             int name,
-                             void* optval,
-                             socklen_t* optlen) {
+Status TcpConnImpl::GetSockOpt(int level,
+                               int name,
+                               void* optval,
+                               socklen_t* optlen) {
   int err = netfd_->GetSockOpt(level, name, optval, optlen);
-  err = TinTranslateSysError(err);
-  tin::SetErrorCode(err);
-  return err == 0;
+  return Status::FromErrno(TinTranslateSysError(err));
 }
 
-bool TcpConnImpl::SetSockOpt(int level,
-                             int name,
-                             const void* optval,
-                             socklen_t optlen) {
+Status TcpConnImpl::SetSockOpt(int level,
+                               int name,
+                               const void* optval,
+                               socklen_t optlen) {
   int err = netfd_->SetSockOpt(level, name, optval, optlen);
-  err = TinTranslateSysError(err);
-  tin::SetErrorCode(err);
-  return err == 0;
+  return Status::FromErrno(TinTranslateSysError(err));
 }
 
-void TcpConnImpl::CloseRead() {
+Status TcpConnImpl::CloseRead() {
   int err = netfd_->CloseRead();
-  tin::SetErrorCode(err);
+  return Status::FromErrno(TinTranslateSysError(err));
 }
 
-void TcpConnImpl::CloseWrite() {
+Status TcpConnImpl::CloseWrite() {
   int err = netfd_->CloseWrite();
-  tin::SetErrorCode(err);
+  return Status::FromErrno(TinTranslateSysError(err));
 }
 
 void TcpConnImpl::Close() {
@@ -133,12 +137,14 @@ void TcpConnImpl::Close() {
 // TcpConn — PIMPL forwarding methods (public API).
 // ---------------------------------------------------------------------------
 
-int TcpConn::Read(void* buf, int nbytes) {
-  return impl_ ? impl_->Read(buf, nbytes) : 0;
+Result<size_t> TcpConn::Read(void* buf, int nbytes) {
+  return impl_ ? impl_->Read(buf, nbytes)
+               : Result<size_t>::Err(TIN_EBADF);
 }
 
-int TcpConn::Write(const void* buf, int nbytes) {
-  return impl_ ? impl_->Write(buf, nbytes) : 0;
+Result<size_t> TcpConn::Write(const void* buf, int nbytes) {
+  return impl_ ? impl_->Write(buf, nbytes)
+               : Result<size_t>::Err(TIN_EBADF);
 }
 
 void TcpConn::SetDeadline(int64_t t) {
@@ -153,8 +159,9 @@ void TcpConn::SetWriteDeadline(int64_t t) {
   if (impl_) impl_->SetWriteDeadline(t);
 }
 
-bool TcpConn::SetKeepAlive(bool enable, int sec) {
-  return impl_ ? impl_->SetKeepAlive(enable, sec) : false;
+Status TcpConn::SetKeepAlive(bool enable, int sec) {
+  return impl_ ? impl_->SetKeepAlive(enable, sec)
+               : Status::FromErrno(TIN_EBADF);
 }
 
 void TcpConn::SetLinger(int sec) {
@@ -173,25 +180,25 @@ void TcpConn::SetWriteBuffer(int bytes) {
   if (impl_) impl_->SetWriteBuffer(bytes);
 }
 
-bool TcpConn::GetSockOpt(int level, int name, void* optval, int* optlen) {
-  if (!impl_) return false;
+Status TcpConn::GetSockOpt(int level, int name, void* optval, int* optlen) {
+  if (!impl_) return Status::FromErrno(TIN_EBADF);
   socklen_t slen = static_cast<socklen_t>(*optlen);
-  bool ok = impl_->GetSockOpt(level, name, optval, &slen);
+  Status s = impl_->GetSockOpt(level, name, optval, &slen);
   *optlen = static_cast<int>(slen);
-  return ok;
+  return s;
 }
 
-bool TcpConn::SetSockOpt(int level, int name, const void* optval, int optlen) {
-  if (!impl_) return false;
+Status TcpConn::SetSockOpt(int level, int name, const void* optval, int optlen) {
+  if (!impl_) return Status::FromErrno(TIN_EBADF);
   return impl_->SetSockOpt(level, name, optval, static_cast<socklen_t>(optlen));
 }
 
-void TcpConn::CloseRead() {
-  if (impl_) impl_->CloseRead();
+Status TcpConn::CloseRead() {
+  return impl_ ? impl_->CloseRead() : Status::FromErrno(TIN_EBADF);
 }
 
-void TcpConn::CloseWrite() {
-  if (impl_) impl_->CloseWrite();
+Status TcpConn::CloseWrite() {
+  return impl_ ? impl_->CloseWrite() : Status::FromErrno(TIN_EBADF);
 }
 
 void TcpConn::Close() {

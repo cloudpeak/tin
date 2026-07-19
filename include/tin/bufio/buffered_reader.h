@@ -10,6 +10,7 @@
 
 #include "tin/io/io.h"
 #include "tin/io/io_buffer.h"
+#include "tin/result.h"
 
 namespace tin {
 
@@ -23,8 +24,8 @@ class BufferedReader {
     reader_ = reader;
   }
 
-  // read n or failed.
-  bool ReadFull(int n);
+  // Reads exactly n bytes. Returns Status.
+  Status ReadFull(int n);
 
   char* Data()  {
     return buffer_.begin();

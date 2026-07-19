@@ -15,4 +15,11 @@ std::string Status::ToString() const {
   return TinErrorName(code_);
 }
 
+std::string Status::ErrorName() const {
+  if (ok()) {
+    return "OK";
+  }
+  return TinErrorName(code_);
+}
+
 }  // namespace tin

@@ -3,8 +3,12 @@
 // found in the LICENSE file.
 
 #pragma once
+#include <cstddef>
+
+#include <absl/strings/string_view.h>
+
+#include "tin/result.h"
 #include "tin/time/time.h"
-#include "absl/strings/string_view.h"
 
 namespace tin {
 namespace io {
@@ -12,29 +16,34 @@ namespace io {
 class Reader {
  public:
   virtual ~Reader() {}
-  virtual int Read(void* buf, int nbytes) = 0;
+  // Reads up to nbytes into buf. Returns the number of bytes read (>= 0).
+  // On error, the Result's status() carries the error code.
+  virtual Result<size_t> Read(void* buf, int nbytes) = 0;
 };
 
 class Writer {
  public:
   virtual ~Writer() {}
-  virtual int Write(const void* buf, int nbytes) = 0;
+  // Writes up to nbytes from buf. Returns the number of bytes written (>= 0).
+  // On error, the Result's status() carries the error code.
+  virtual Result<size_t> Write(const void* buf, int nbytes) = 0;
 };
 
 class IOReadWriter : public Reader, public Writer {
 };
 
-int ReadAtLeast(Reader* reader, void* buf, int nbytes, int min);
+// Reads from reader into buf until at least min bytes are read or an error
+// occurs. Returns the number of bytes read and a status.
+Result<size_t> ReadAtLeast(Reader* reader, void* buf, int nbytes, int min);
 
-int ReadFull(Reader* reader, void* buf, int nbytes);
+// Reads exactly len bytes from reader into buf.
+Result<size_t> ReadFull(Reader* reader, void* buf, int len);
 
-int Write(Writer* writer, const void* buf, int nbytes);
+// Writes all len bytes from buf to writer.
+Result<size_t> Write(Writer* writer, const void* buf, int len);
 
-int WriteString(Writer* writer, const absl::string_view& str);
+// Writes a string to writer.
+Result<size_t> WriteString(Writer* writer, const absl::string_view& str);
 
 }  // namespace io
 }  // namespace tin
-
-
-
-

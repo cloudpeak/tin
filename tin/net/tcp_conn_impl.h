@@ -13,6 +13,7 @@
 #include "tin/net/sys_socket.h"
 #include "tin/time/time.h"
 #include "tin/io/io.h"
+#include "tin/result.h"
 
 namespace tin {
 namespace net {
@@ -30,24 +31,24 @@ class TcpConnImpl
   TcpConnImpl(const TcpConnImpl&) = delete;
   TcpConnImpl& operator=(const TcpConnImpl&) = delete;
 
-  int Read(void* buf, int nbytes);
-  int Write(const void* buf, int nbytes);
+  Result<size_t> Read(void* buf, int nbytes) override;
+  Result<size_t> Write(const void* buf, int nbytes) override;
 
   void SetDeadline(int64_t t);
   void SetReadDeadline(int64_t t);
   void SetWriteDeadline(int64_t t);
 
-  bool SetKeepAlive(bool enable, int sec);
+  Status SetKeepAlive(bool enable, int sec);
   void SetLinger(int sec);
   void SetNoDelay(bool no_delay);
   void SetReadBuffer(int bytes);
   void SetWriteBuffer(int bytes);
 
-  bool GetSockOpt(int level, int name, void* optval, socklen_t* optlen);
-  bool SetSockOpt(int level, int name, const void* optval, socklen_t optlen);
+  Status GetSockOpt(int level, int name, void* optval, socklen_t* optlen);
+  Status SetSockOpt(int level, int name, const void* optval, socklen_t optlen);
 
-  void CloseRead();
-  void CloseWrite();
+  Status CloseRead();
+  Status CloseWrite();
   void Close();
 
   int64_t TotalReadBytes() const {

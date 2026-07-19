@@ -17,7 +17,7 @@ BufferedReader::BufferedReader(tin::io::Reader* reader, int size)
   , total_bytes_stat_(0) {
 }
 
-bool BufferedReader::ReadFull(int n) {
+Status BufferedReader::ReadFull(int n) {
   DCHECK_GT(n, 0);
   buffer_.AdvanceReadablePtr(last_read_);
   last_read_ = 0;
@@ -35,27 +35,26 @@ bool BufferedReader::ReadFull(int n) {
       int write_size = 0;
       buffer_.GetWritablePtr(&write_ptr, &write_size);
       DCHECK_GT(write_size, 0);
-      int nread = reader_->Read(write_ptr, write_size);
+      auto result = reader_->Read(write_ptr, write_size);
+      int nread = static_cast<int>(result.value_or(0));
       DCHECK_GE(nread, 0);
       buffer_.AdvanceWritablePtr(nread);
-      err = tin::GetErrorCode();
-      if (err != 0) {
+      if (!result.ok()) {
+        err = result.code();
         break;
       }
     }
   }
   if (buffer_.buffered() >= n) {
-    SetErrorCode(0);
     err = 0;
   } else if (buffer_.buffered() > 0 && err == TIN_EOF) {
-    SetErrorCode(TIN_UNEXPECTED_EOF);
     err = TIN_UNEXPECTED_EOF;
   }
   if (err != 0)
     n = 0;
   last_read_ = n;
   total_bytes_stat_ += n;
-  return err == 0;
+  return Status::FromErrno(err);
 }
 
 }  // namespace tin

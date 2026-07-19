@@ -1,6 +1,7 @@
 #include "tin/tin.h"
 #include "tin/config.h"
-#include "tin/error.h"
+#include "tin/status.h"
+#include "tin/result.h"
 #include "tin/time.h"
 #include "tin/runtime.h"
 #include "tin/net/tcp.h"
@@ -26,17 +27,17 @@ void HandleClient0(tin::net::TcpConn conn) {
   const int64_t kRWDeadline = 20 * tin::kSecond;
   conn.SetDeadline(kRWDeadline);
   while (true) {
-    int n = conn.Read(buf.get(), kIOBufferSize);
-    int err = tin::GetErrorCode();
+    auto read_result = conn.Read(buf.get(), kIOBufferSize);
+    size_t n = read_result.value_or(0);
     if (n > 0) {
       conn.SetReadDeadline(kRWDeadline);
     }
-    if (err != 0) {
-      VLOG(1) << "Read failed due to: " << tin::GetErrorStr();
+    if (!read_result.ok()) {
+      VLOG(1) << "Read failed due to: " << read_result.error().ToString();
       // FIN received, graceful close, we can still send.
-      if (err == TIN_EOF) {
+      if (read_result.error().IsEOF()) {
         if (n > 0) {
-          conn.Write(buf.get(), n);
+          conn.Write(buf.get(), static_cast<int>(n));
         }
         conn.CloseWrite();
         // delay a while to avoid RST.
@@ -44,10 +45,10 @@ void HandleClient0(tin::net::TcpConn conn) {
       }
       break;
     }
-    DCHECK_GT(n, 0);
-    conn.Write(buf.get(), n);
-    if (tin::GetErrorCode() != 0) {
-      VLOG(1) << "Write failed due to " << tin::GetErrorStr();
+    DCHECK_GT(n, 0u);
+    auto write_result = conn.Write(buf.get(), static_cast<int>(n));
+    if (!write_result.ok()) {
+      VLOG(1) << "Write failed due to " << write_result.error().ToString();
       break;
     }
     conn.SetWriteDeadline(kRWDeadline);
@@ -73,8 +74,8 @@ void HandleClient1(tin::net::TcpConn conn) {
   const int64_t kRWDeadline = 20 * tin::kSecond;
   conn.SetDeadline(kRWDeadline);
   while (true) {
-    int n = conn.Read(buf.get(), kIOBufferSize);
-    int err = tin::GetErrorCode();
+    auto read_result = conn.Read(buf.get(), kIOBufferSize);
+    size_t n = read_result.value_or(0);
     if (n > 0) {
       int64_t now = tin::MonoNow();
       int64_t elapsed = now - last_set_recv_time;
@@ -84,12 +85,12 @@ void HandleClient1(tin::net::TcpConn conn) {
         VLOG(1) << "reset read deadline";
       }
     }
-    if (err != 0) {
-      VLOG(1) << "Read failed due to: " << tin::GetErrorStr();
+    if (!read_result.ok()) {
+      VLOG(1) << "Read failed due to: " << read_result.error().ToString();
       // FIN received, graceful close, we can still send.
-      if (err == TIN_EOF) {
+      if (read_result.error().IsEOF()) {
         if (n > 0) {
-          conn.Write(buf.get(), n);
+          conn.Write(buf.get(), static_cast<int>(n));
         }
         conn.CloseWrite();
         // delay a while to avoid RST.
@@ -97,10 +98,10 @@ void HandleClient1(tin::net::TcpConn conn) {
       }
       break;
     }
-    DCHECK_GT(n, 0);
-    conn.Write(buf.get(), n);
-    if (tin::GetErrorCode() != 0) {
-      VLOG(1) << "Write failed due to " << tin::GetErrorStr();
+    DCHECK_GT(n, 0u);
+    auto write_result = conn.Write(buf.get(), static_cast<int>(n));
+    if (!write_result.ok()) {
+      VLOG(1) << "Write failed due to " << write_result.error().ToString();
       break;
     } else {
       int64_t now = tin::MonoNow();
@@ -133,25 +134,25 @@ void HandleClient2(tin::net::TcpConn conn) {
   const int64_t kRWDeadline = 20 * tin::kSecond;
   conn.SetDeadline(kRWDeadline);
   while (true) {
-    int n = conn.Read(buf.get(), kIOBufferSize);
-    int err = tin::GetErrorCode();
+    auto read_result = conn.Read(buf.get(), kIOBufferSize);
+    size_t n = read_result.value_or(0);
     if (n > 0) {
       // update last recv time.
       last_recv_time = tin::MonoNow();
     }
-    if (err == TIN_ETIMEOUT_INTR) {
-      int64_t elspsed = tin::MonoNow() - last_recv_time;
+    if (read_result.error().IsTimeout()) {
+      int64_t elapsed = tin::MonoNow() - last_recv_time;
       // deadline reached.
-      if (elspsed >= kRWDeadline) {
+      if (elapsed >= kRWDeadline) {
         break;
       }
       conn.SetReadDeadline(kRWDeadline);
-    } else if (err != 0) {
-      VLOG(1) << "Read failed due to: " << tin::GetErrorStr();
+    } else if (!read_result.ok()) {
+      VLOG(1) << "Read failed due to: " << read_result.error().ToString();
       // FIN received, graceful close, we can still send.
-      if (err == TIN_EOF) {
+      if (read_result.error().IsEOF()) {
         if (n > 0) {
-          conn.Write(buf.get(), n);
+          conn.Write(buf.get(), static_cast<int>(n));
         }
         conn.CloseWrite();
         // delay a while to avoid RST.
@@ -162,24 +163,24 @@ void HandleClient2(tin::net::TcpConn conn) {
 
     // write data back.
     bool write_failed = false;
-    int left = n;
+    int left = static_cast<int>(n);
     while (left > 0) {
-      int written = conn.Write(buf.get(), n);
+      auto write_result = conn.Write(buf.get(), static_cast<int>(n));
+      size_t written = write_result.value_or(0);
       if (written > 0) {
-        left -= written;
+        left -= static_cast<int>(written);
         last_send_time = tin::MonoNow();
       }
-      int err = tin::GetErrorCode();
-      if (err == TIN_ETIMEOUT_INTR) {
-        int64_t elspsed = tin::MonoNow() - last_send_time;
+      if (write_result.error().IsTimeout()) {
+        int64_t elapsed = tin::MonoNow() - last_send_time;
         // deadline reached.
-        if (elspsed >= kRWDeadline) {
+        if (elapsed >= kRWDeadline) {
           write_failed = true;
           break;
         }
         conn.SetWriteDeadline(kRWDeadline);
-      } else if (err != 0) {
-        VLOG(1) << "Write failed due to " << tin::GetErrorStr();
+      } else if (!write_result.ok()) {
+        VLOG(1) << "Write failed due to " << write_result.error().ToString();
         write_failed = true;
         break;
       }
@@ -219,20 +220,21 @@ void Dispatch(tin::net::TcpConn conn, const int64_t id) {
 int TinMain(int argc, char** argv) {
   const uint16_t kPort = 2222;
   bool use_ipv6 = false;
-  tin::net::TCPListener listener =
-    tin::net::ListenTcp(use_ipv6 ? "0:0:0:0:0:0:0:0" : "0.0.0.0", kPort);
-  if (tin::GetErrorCode() != 0) {
-    LOG(FATAL) << "Listen failed due to " << tin::GetErrorStr();
+  auto listen_result = tin::net::ListenTcp(
+      use_ipv6 ? "0:0:0:0:0:0:0:0" : "0.0.0.0", kPort);
+  if (!listen_result.ok()) {
+    LOG(FATAL) << "Listen failed due to " << listen_result.error().ToString();
   }
+  tin::net::TCPListener listener = std::move(listen_result.value());
   LOG(INFO) << "echo server is listening on port: " << kPort;
   int64_t id = 0;
   while (true) {
-    tin::net::TcpConn conn = listener.Accept();
-    if (tin::GetErrorCode() == 0) {
-      Dispatch(conn, id);
+    auto accept_result = listener.Accept();
+    if (accept_result.ok()) {
+      Dispatch(std::move(accept_result.value()), id);
       id++;
     } else {
-      LOG(INFO) << "Accept failed due to " << tin::GetErrorStr();
+      LOG(INFO) << "Accept failed due to " << accept_result.error().ToString();
     }
   }
   return 0;
@@ -260,4 +262,3 @@ int main(int argc, char** argv) {
 
   return 0;
 }
-

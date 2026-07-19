@@ -97,45 +97,48 @@ class ResolveHostnameWork : public GletWork {
   std::vector<IPAddress>*& addresses_;
 };
 
-int ResolveHostname(const absl::string_view& hostname,
-                    AddressFamily family,
-                    std::vector<IPAddress>* addresses) {
+Status ResolveHostname(const absl::string_view& hostname,
+                       AddressFamily family,
+                       std::vector<IPAddress>* addresses) {
   if (addresses == nullptr) {
-    tin::SetErrorCode(TIN_EINVAL);
-    return -1;
+    return Status::FromErrno(TIN_EINVAL);
   }
   std::unique_ptr<ResolveHostnameWork> work(
     new ResolveHostnameWork(hostname, family, addresses));
   SubmitGetAddrInfoGletWork(work.get());
-  return work->Result();
+  int ret = work->Result();
+  if (ret != 0) {
+    return Status::FromErrno(TinGetaddrinfoTranslateError(ret));
+  }
+  return Status::OK();
 }
 
 // handy functions.
-tin::net::IPAddress ResolveHostname(const absl::string_view& hostname,
-                                    AddressFamily af) {
+Result<IPAddress> ResolveHostname(const absl::string_view& hostname,
+                                  AddressFamily af) {
   std::vector<IPAddress> addresses;
-  if (ResolveHostname(hostname, af, &addresses) == 0) {
-    if (addresses.empty()) {
-      // must not be empty on success
-      LOG(FATAL) << "ResolveHostname return empty list on success";
-    }
-    return addresses.front();
+  Status s = ResolveHostname(hostname, af, &addresses);
+  if (!s.ok()) {
+    return Result<IPAddress>::Err(s);
   }
-  return IPAddress();
+  if (addresses.empty()) {
+    // must not be empty on success
+    LOG(FATAL) << "ResolveHostname return empty list on success";
+  }
+  return Result<IPAddress>::Ok(addresses.front());
 }
 
-IPAddress ResolveHostname(const absl::string_view& hostname) {
+Result<IPAddress> ResolveHostname(const absl::string_view& hostname) {
   return ResolveHostname(hostname, ADDRESS_FAMILY_UNSPECIFIED);
 }
 
-IPAddress ResolveHostname4(const absl::string_view& hostname) {
+Result<IPAddress> ResolveHostname4(const absl::string_view& hostname) {
   return ResolveHostname(hostname, ADDRESS_FAMILY_IPV4);
 }
 
-IPAddress ResolveHostname6(const absl::string_view& hostname) {
+Result<IPAddress> ResolveHostname6(const absl::string_view& hostname) {
   return ResolveHostname(hostname, ADDRESS_FAMILY_IPV6);
 }
 
 }  // namespace net
 }  // namespace tin
-
