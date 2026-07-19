@@ -5,7 +5,7 @@
 #include <utility>
 #include <functional>
 
-#include <cliff/strings/string_util.h>
+#include "base/strings/string_util.h"
 
 #include "context/zcontext.h"
 #include "tin/runtime/m.h"
@@ -31,9 +31,9 @@ Greenlet::~Greenlet() {
 void Greenlet::SetName(const char* name) {
   // TODO
   if (name != NULL)
-    cliff::strlcpy(name_, name, ABSL_ARRAYSIZE(name_));
+    base::strlcpy(name_, name, ABSL_ARRAYSIZE(name_));
   else
-    cliff::strlcpy(name_, "greenlet", ABSL_ARRAYSIZE(name_));
+    base::strlcpy(name_, "greenlet", ABSL_ARRAYSIZE(name_));
 }
 
 Timer* Greenlet::GetTimer() {

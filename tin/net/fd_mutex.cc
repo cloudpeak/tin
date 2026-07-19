@@ -27,7 +27,7 @@ const uint64_t kMutexWMask   = (uint64_t)((1LL << 20) - 1) << 43;  // NOLINT
 
 bool FdMutex::Incref() {
   while (true) {
-    uint64_t old_value = state_.load(quark::memory_order_acquire);
+    uint64_t old_value = state_.load(std::memory_order_acquire);
     if ((old_value & kMutexClosed) != 0) {
       // already closed, return false.
       return false;
@@ -45,7 +45,7 @@ bool FdMutex::Incref() {
 
 bool FdMutex::IncrefAndClose() {
   while (true) {
-    uint64_t old_value = state_.load(quark::memory_order_acquire);
+    uint64_t old_value = state_.load(std::memory_order_acquire);
     if ((old_value & kMutexClosed) != 0) {
       return false;
     }
@@ -73,7 +73,7 @@ bool FdMutex::IncrefAndClose() {
 
 bool FdMutex::Deref() {
   while (true) {
-    uint64_t old_value = state_.load(quark::memory_order_acquire);
+    uint64_t old_value = state_.load(std::memory_order_acquire);
     if ((old_value & kMutexRefMask) == 0) {
       LOG(FATAL) << "net: inconsistent fdMutex";
     }
@@ -100,7 +100,7 @@ bool FdMutex::RWLock(bool read) {
   }
 
   while (true) {
-    uint64_t old_value = state_.load(quark::memory_order_acquire);
+    uint64_t old_value = state_.load(std::memory_order_acquire);
     if ((old_value & kMutexClosed) != 0) {
       return false;
     }
@@ -143,7 +143,7 @@ bool FdMutex::RWUnlock(bool read) {
   }
 
   while (true) {
-    uint64_t old_value = state_.load(quark::memory_order_acquire);
+    uint64_t old_value = state_.load(std::memory_order_acquire);
     if (((old_value & mutex_bit) == 0) || ((old_value & kMutexRefMask) == 0)) {
       LOG(FATAL) << "net: inconsistent fdMutex";
     }

@@ -5,13 +5,13 @@
 #pragma once
 
 #include <base/compiler_specific.h>
-#include "cliff/build/build_config.h"
+#include "build/build_config.h"
 #include "tin/runtime/util.h"
 
 namespace tin::runtime {
 
 // note, GUintptr is POD type, memset on GUintptr should be OK.
-class ALIGNAS(SIZE_OF_POINTER) GUintptr {
+class ALIGNAS(sizeof(void*)) GUintptr {
  public:
   GUintptr()
     : integer_(0) {

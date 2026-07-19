@@ -4,7 +4,7 @@
 
 #pragma once
 #include "cstdint"
-#include "quark/atomic.hpp"
+#include <atomic>
 
 namespace tin {
 namespace net {
@@ -23,7 +23,7 @@ class FdMutex {
   bool RWUnlock(bool read);
 
  private:
-  quark::atomic_uint64_t state_;
+  std::atomic<uint64_t> state_;
   uint32_t rsema_;
   uint32_t wsema_;
 };

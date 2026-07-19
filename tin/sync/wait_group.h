@@ -4,7 +4,7 @@
 
 #pragma once
 #include <stdlib.h>
-#include "quark/atomic.hpp"
+#include <atomic>
 #include "tin/sync/mutex.h"
 
 namespace tin {
@@ -21,7 +21,7 @@ class WaitGroup {
   void Wait();
 
  private:
-  quark::atomic_uint64_t state_;
+  std::atomic<uint64_t> state_;
   uint32_t sem_;
 };
 

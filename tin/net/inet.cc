@@ -5,7 +5,7 @@
 #include <cstdio>
 #include <cstring>
 #include <absl/strings/str_format.h>
-#include <cliff/strings/string_util.h>
+#include "base/strings/string_util.h"
 
 #include "build/build_config.h"
 #if defined(OS_WIN)
@@ -16,7 +16,6 @@
 
 #include "cstdint"
 
-#include <cliff/strings/string_util.h>
 #include "tin/error/error.h"
 
 #include "tin/net/inet.h"
@@ -45,7 +44,7 @@ int INetNToP4(const unsigned char* src, char* dst, size_t size) {
   if (l <= 0 || (size_t) l >= size) {
     return TIN_ENOSPC;
   }
-  cliff::strlcpy(dst, tmp, size);
+  base::strlcpy(dst, tmp, size);
 
   return 0;
 }
@@ -136,7 +135,7 @@ static int INetNToP6(const unsigned char* src, char* dst, size_t size) {
   if ((size_t)(tp - tmp) > size) {
     return TIN_ENOSPC;
   }
-  cliff::strlcpy(dst, tmp, kInetAddrStrLen6);
+  base::strlcpy(dst, tmp, kInetAddrStrLen6);
   size_t copy_size =  absl::string_view(tmp, tp - tmp).copy(dst, size);
   dst[copy_size] = '\0';
   return 0;

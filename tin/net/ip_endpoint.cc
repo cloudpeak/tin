@@ -4,7 +4,7 @@
 
 
 
-#include <cliff/base/sys_byteorder.h>
+#include "base/sys_byteorder.h"
 
 #if defined(OS_WIN)
 #include <winsock2.h>
@@ -47,7 +47,7 @@ bool GetIPAddressFromSockAddr(const struct sockaddr* sock_addr,
     *address = reinterpret_cast<const uint8_t*>(&addr->sin_addr);
     *address_len = IPAddress::kIPv4AddressSize;
     if (port)
-      *port = cliff::NetToHost16(addr->sin_port);
+      *port = base::NetToHost16(addr->sin_port);
     return true;
   }
 
@@ -59,7 +59,7 @@ bool GetIPAddressFromSockAddr(const struct sockaddr* sock_addr,
     *address = reinterpret_cast<const uint8_t*>(&addr->sin6_addr);
     *address_len = IPAddress::kIPv6AddressSize;
     if (port)
-      *port = cliff::NetToHost16(addr->sin6_port);
+      *port = base::NetToHost16(addr->sin6_port);
     return true;
   }
 
@@ -122,7 +122,7 @@ bool IPEndPoint::ToSockAddr(struct sockaddr* address,
     struct sockaddr_in* addr = reinterpret_cast<struct sockaddr_in*>(address);
     memset(addr, 0, sizeof(struct sockaddr_in));
     addr->sin_family = AF_INET;
-    addr->sin_port = cliff::HostToNet16(port_);
+    addr->sin_port = base::HostToNet16(port_);
     memcpy(&addr->sin_addr, &address_.bytes()[0], // vector_as_array
            IPAddress::kIPv4AddressSize);
     break;
@@ -135,7 +135,7 @@ bool IPEndPoint::ToSockAddr(struct sockaddr* address,
         reinterpret_cast<struct sockaddr_in6*>(address);
     memset(addr6, 0, sizeof(struct sockaddr_in6));
     addr6->sin6_family = AF_INET6;
-    addr6->sin6_port = cliff::HostToNet16(port_);
+    addr6->sin6_port = base::HostToNet16(port_);
     memcpy(&addr6->sin6_addr, &address_.bytes()[0], // vector_as_array(&address_.bytes()),
            IPAddress::kIPv6AddressSize);
     break;

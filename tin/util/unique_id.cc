@@ -6,7 +6,6 @@
 
 #include "tin/sync/mutex.h"
 #include "tin/util/unique_id.h"
-#include "quark/atomic.hpp"
 
 namespace tin {
 

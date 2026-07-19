@@ -40,13 +40,6 @@ if(NOT BASE_DIR)
 	set_property(TARGET base PROPERTY FOLDER "tin_deps")
 endif()
 
-if(NOT QUARK_DIR)
-	set(QUARK_DIR ${CMAKE_CURRENT_SOURCE_DIR}/third_party/quark)
-	message("QUARK_DIR not defined, default to ${QUARK_DIR}") 
-	add_subdirectory("${QUARK_DIR}")
-	set_property(TARGET quark PROPERTY FOLDER "tin_deps")
-endif()
-
 if(NOT ZCONTEXT_DIR)
 	set(ZCONTEXT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/third_party/zcontext)
 	message("ZCONTEXT_DIR not defined, default to ${ZCONTEXT_DIR}") 
@@ -168,14 +161,9 @@ include_directories(${PROJECT_SOURCE_DIR})
 # "base/..."` resolves) and `-iquote ${BASE_ROOT}` (so `#include
 # "features.h"` / `#include "build/build_config.h"` resolve, without
 # affecting `#include <features.h>`).
-# cliff shim: provides <cliff/...> headers that re-export base's utilities
-# (strlcpy, NetToHost16, RefCountedThreadSafe, atomicops, build_config).
-# cliff is no longer available; tin sources still reference cliff:: symbols,
-# so we provide thin shims that forward to base. The shims are pure C++
-# header-only wrappers over base and work on all platforms (Linux, macOS,
-# Windows). Previously this was guarded by if(UNIX) which broke Windows.
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/third_party/cliff_shim)
-include_directories(${QUARK_DIR}/include)
+# tin sources use base:: directly (strlcpy, NetToHost16, RefCountedThreadSafe,
+# build_config) and std::atomic for atomic operations. The former cliff_shim
+# and quark (Boost.Atomic fork) dependencies have been removed.
 include_directories(${ZCONTEXT_DIR}/zcontext/include)
 
 if (UNIX)
@@ -401,9 +389,9 @@ target_link_libraries(tin PUBLIC
 
 file(GLOB ABSL_LIBS "${CMAKE_INSTALL_PREFIX}/lib/*absl_*")
 if (WIN32)
-# cliff.lib was a legacy library; tin now uses the header-only cliff_shim
-# instead, so it is no longer linked.
-set(DEP_LIBS tin base quark zcontext DbgHelp.lib Psapi.lib Mswsock.lib ws2_32.lib version.lib
+# tin now uses base:: directly and std::atomic; the former cliff_shim and
+# quark dependencies have been removed.
+set(DEP_LIBS tin base zcontext DbgHelp.lib Psapi.lib Mswsock.lib ws2_32.lib version.lib
 	${ABSL_LIBS}
 )
 
@@ -414,9 +402,9 @@ LIST(APPEND DEP_LIBS
 
 endif()
 elseif(APPLE)
-set(DEP_LIBS tin base quark zcontext pthread)
+set(DEP_LIBS tin base zcontext pthread)
 else()
-set(DEP_LIBS tin base quark zcontext pthread rt absl::log_globals)
+set(DEP_LIBS tin base zcontext pthread rt absl::log_globals)
 endif()
 
 if(NOT DEFINED TIN_BUILD_EXAMPLES)
@@ -434,8 +422,8 @@ endif()
 # and target_include_directories(my_app PRIVATE /path/to/tin/install/include).
 #
 # NOTE: full find_package(tin) support (via install(EXPORT) + tinConfig.cmake)
-# is not yet enabled because tin's PUBLIC link dependencies (base, absl::* ,
-# quark, zcontext) are built via add_subdirectory and are not part of any
+# is not yet enabled because tin's PUBLIC link dependencies (base, absl::*,
+# zcontext) are built via add_subdirectory and are not part of any
 # CMake export set. Enabling install(EXPORT) requires those dependencies to
 # be exported first (or found via find_dependency in the config file). That
 # is tracked as a follow-up task — see docs/api-design-review.md §2.5.
