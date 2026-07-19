@@ -12,10 +12,15 @@
 #include "tin/time/time.h"
 #include "tin/runtime/runtime.h"
 #include "tin/net/netfd.h"
-#include "tin/net/tcp_conn.h"
+#include "tin/net/tcp_conn_impl.h"  // internal: TcpConnImpl
+#include "tin/net/tcp_conn.h"       // public: TcpConn (PIMPL)
 
 namespace tin {
 namespace net {
+
+// ---------------------------------------------------------------------------
+// TcpConnImpl — full implementation (internal).
+// ---------------------------------------------------------------------------
 
 TcpConnImpl::TcpConnImpl(NetFD* netfd)
   : netfd_(netfd) ,
@@ -78,7 +83,6 @@ void TcpConnImpl::SetLinger(int sec) {
 }
 
 void TcpConnImpl::SetNoDelay(bool no_delay) {
-  // Microsoft Windows disable TCP_NODELAY default.
   int on = no_delay ? 1 : 0;
   (void)SetSockOpt(IPPROTO_TCP, TCP_NODELAY, &on, sizeof(on));
 }
@@ -123,6 +127,84 @@ void TcpConnImpl::CloseWrite() {
 
 void TcpConnImpl::Close() {
   netfd_->Close();
+}
+
+// ---------------------------------------------------------------------------
+// TcpConn — PIMPL forwarding methods (public API).
+// ---------------------------------------------------------------------------
+
+int TcpConn::Read(void* buf, int nbytes) {
+  return impl_ ? impl_->Read(buf, nbytes) : 0;
+}
+
+int TcpConn::Write(const void* buf, int nbytes) {
+  return impl_ ? impl_->Write(buf, nbytes) : 0;
+}
+
+void TcpConn::SetDeadline(int64_t t) {
+  if (impl_) impl_->SetDeadline(t);
+}
+
+void TcpConn::SetReadDeadline(int64_t t) {
+  if (impl_) impl_->SetReadDeadline(t);
+}
+
+void TcpConn::SetWriteDeadline(int64_t t) {
+  if (impl_) impl_->SetWriteDeadline(t);
+}
+
+bool TcpConn::SetKeepAlive(bool enable, int sec) {
+  return impl_ ? impl_->SetKeepAlive(enable, sec) : false;
+}
+
+void TcpConn::SetLinger(int sec) {
+  if (impl_) impl_->SetLinger(sec);
+}
+
+void TcpConn::SetNoDelay(bool no_delay) {
+  if (impl_) impl_->SetNoDelay(no_delay);
+}
+
+void TcpConn::SetReadBuffer(int bytes) {
+  if (impl_) impl_->SetReadBuffer(bytes);
+}
+
+void TcpConn::SetWriteBuffer(int bytes) {
+  if (impl_) impl_->SetWriteBuffer(bytes);
+}
+
+bool TcpConn::GetSockOpt(int level, int name, void* optval, int* optlen) {
+  if (!impl_) return false;
+  socklen_t slen = static_cast<socklen_t>(*optlen);
+  bool ok = impl_->GetSockOpt(level, name, optval, &slen);
+  *optlen = static_cast<int>(slen);
+  return ok;
+}
+
+bool TcpConn::SetSockOpt(int level, int name, const void* optval, int optlen) {
+  if (!impl_) return false;
+  return impl_->SetSockOpt(level, name, optval, static_cast<socklen_t>(optlen));
+}
+
+void TcpConn::CloseRead() {
+  if (impl_) impl_->CloseRead();
+}
+
+void TcpConn::CloseWrite() {
+  if (impl_) impl_->CloseWrite();
+}
+
+void TcpConn::Close() {
+  if (impl_) impl_->Close();
+}
+
+int64_t TcpConn::TotalReadBytes() const {
+  return impl_ ? impl_->TotalReadBytes() : 0;
+}
+
+// Factory: single allocation via std::make_shared.
+TcpConn MakeTcpConn(NetFD* netfd) {
+  return TcpConn(std::make_shared<TcpConnImpl>(netfd));
 }
 
 }  // namespace net

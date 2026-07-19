@@ -1,0 +1,31 @@
+// Copyright (c) 2016 Tin Project. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+#pragma once
+#include <stdlib.h>
+#include <atomic>
+#include "tin/sync/mutex.h"
+
+namespace tin {
+
+class WaitGroup {
+ public:
+  explicit WaitGroup(int delta = 0);
+  WaitGroup(const WaitGroup&) = delete;
+  WaitGroup& operator=(const WaitGroup&) = delete;
+  ~WaitGroup();
+
+  void Add(int32_t delta);
+  void Done();
+  void Wait();
+
+ private:
+  std::atomic<uint64_t> state_;
+  uint32_t sem_;
+};
+
+
+
+
+}  // namespace tin

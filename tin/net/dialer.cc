@@ -3,11 +3,15 @@
 // found in the LICENSE file.
 
 #include <absl/log/log.h>
+#include <memory>
 #include "tin/error/error.h"
 #include "tin/time/time.h"
 #include "tin/net/ip_endpoint.h"
 #include "tin/net/netfd.h"
-#include "tin/net/dialer.h"
+#include "tin/net/dialer.h"         // public: DialTcp, ListenTcp
+#include "tin/net/tcp_conn.h"       // public: TcpConn, MakeTcpConn
+#include "tin/net/listener.h"       // public: TCPListener (PIMPL)
+#include "tin/net/listener_impl.h"  // internal: TCPListenerImpl
 #include "tin/runtime/runtime.h"
 
 namespace tin {
@@ -92,9 +96,10 @@ TCPListener ListenTcp(const IPAddress& address, uint16_t port, int backlog) {
   }
   if (netfd == nullptr) {
     SetErrorCode(TinTranslateSysError(err));
-    return TCPListener(nullptr);
+    return TCPListener();
   }
-  return TCPListener(new TCPListenerImpl(netfd, backlog));
+  // P2-1 PIMPL: use make_shared for single allocation.
+  return TCPListener(std::make_shared<TCPListenerImpl>(netfd, backlog));
 }
 
 TCPListener ListenTcp(const absl::string_view& address, uint16_t port,
@@ -102,7 +107,7 @@ TCPListener ListenTcp(const absl::string_view& address, uint16_t port,
   IPAddress ip_address;
   if (!ip_address.AssignFromIPLiteral(address)) {
     SetErrorCode(TIN_EINVAL);
-    return TCPListener(nullptr);
+    return TCPListener();
   }
   return ListenTcp(ip_address, port, backlog);
 }

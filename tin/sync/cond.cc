@@ -7,15 +7,28 @@
 
 #include "tin/sync/atomic.h"
 #include "tin/runtime/raw_mutex.h"
-
-#include "tin/sync/cond.h"
+#include "tin/runtime/semaphore.h"  // internal: SyncSema
+#include "tin/sync/cond.h"          // public: Cond (PIMPL)
 
 namespace tin {
+
+// P2-1 PIMPL: Cond::Impl wraps the runtime-internal SyncSema.
+struct Cond::Impl {
+  runtime::SyncSema sem_;
+};
+
+Cond::Cond(Mutex* lock)
+  : lock_(lock)
+  , impl_(new Impl())
+  , waiters_(0) {
+}
+
+Cond::~Cond() = default;
 
 void Cond::Wait() {
   atomic::Inc32(&waiters_, 1);
   lock_->Unlock();
-  sem_.Acquire();
+  impl_->sem_.Acquire();
   lock_->Lock();
 }
 
@@ -38,7 +51,7 @@ void Cond::SignalImpl(bool all) {
       new_waiters = 0;
     }
     if (atomic::cas32(&waiters_, old_waiters, new_waiters)) {
-      sem_.Release(old_waiters - new_waiters);
+      impl_->sem_.Release(old_waiters - new_waiters);
     }
   }
 }

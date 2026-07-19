@@ -151,7 +151,10 @@ endif()
 
 string(REPLACE ";" " " CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 
-include_directories(${PROJECT_SOURCE_DIR})
+# P2-1: include/ is the PUBLIC include path (clean public headers, no
+# runtime/ internals). The project root is PRIVATE to the tin target so
+# that internal .cc files can still find tin/runtime/... headers.
+include_directories(${PROJECT_SOURCE_DIR}/include)
 # Do NOT add ${BASE_DIR} to the global include path here. Doing so adds
 # `-I tin/third_party/base`, which shadows glibc's <features.h> with base's
 # features.h — and libstdc++ 11's <bits/os_defines.h> does `#include
@@ -266,8 +269,6 @@ endif()
 
 if (WIN32)
     LIST(APPEND SOURCES
-		tin/all.h
-		tin/tin.h
 		tin/bufio/bufio.h
 		tin/bufio/buffered_reader.h
 		tin/communication/chan.h
@@ -285,7 +286,7 @@ if (WIN32)
 		tin/net/inet.h
 		tin/net/ip_address.h
 		tin/net/ip_endpoint.h
-		tin/net/listener.h
+		tin/net/listener_impl.h
 		tin/net/net.h
 		tin/net/netfd.h
 		tin/net/netfd_common.h
@@ -296,7 +297,7 @@ if (WIN32)
 		tin/net/sockaddr_storage.h
 		tin/net/sys_addrinfo.h
 		tin/net/sys_socket.h
-		tin/net/tcp_conn.h
+		tin/net/tcp_conn_impl.h
 		tin/net/winsock_util.h
 		tin/platform/platform.h
 		tin/platform/platform_win.h
@@ -324,7 +325,6 @@ if (WIN32)
 		tin/runtime/timer/timer_queue.h
 		tin/sync/atomic.h
 		tin/sync/atomic_flag.h
-		tin/sync/cond.h
 		tin/sync/mutex.h
 		tin/sync/rwmutex.h
 		tin/sync/wait_group.h
@@ -367,12 +367,17 @@ if(WIN32)
   )
 endif()
 
-# Export the source directory as a PUBLIC include path so that downstream
+# P2-1: Export include/ as the PUBLIC include path so that downstream
 # targets (examples, `find_package(tin)` consumers) resolve `#include "tin/..."`
-# regardless of whether they are in the build tree or installed.
+# via the clean public headers. The project root remains PRIVATE (internal).
 target_include_directories(tin PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+)
+
+# Internal include path: project root (for tin/runtime/..., tin/net/sys_socket.h, etc.)
+target_include_directories(tin PRIVATE
+  ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
 # tin's public headers include <absl/...> and <base/...>, so the dependency

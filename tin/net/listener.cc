@@ -9,11 +9,16 @@
 #include "tin/time/time.h"
 #include "tin/runtime/runtime.h"
 #include "tin/net/netfd.h"
-
-#include "tin/net/listener.h"
+#include "tin/net/listener_impl.h"  // internal: TCPListenerImpl
+#include "tin/net/listener.h"       // public: TCPListener (PIMPL)
+#include "tin/net/tcp_conn.h"       // public: TcpConn, MakeTcpConn
 
 namespace tin {
 namespace net {
+
+// ---------------------------------------------------------------------------
+// TCPListenerImpl — full implementation (internal).
+// ---------------------------------------------------------------------------
 
 TCPListenerImpl::TCPListenerImpl(NetFD* netfd, int backlog)
   : netfd_(netfd) {
@@ -42,6 +47,22 @@ TcpConn TCPListenerImpl::Accept() {
     return TcpConn();
   }
   return MakeTcpConn(newfd);
+}
+
+// ---------------------------------------------------------------------------
+// TCPListener — PIMPL forwarding methods (public API).
+// ---------------------------------------------------------------------------
+
+void TCPListener::SetDeadline(int64_t t) {
+  if (impl_) impl_->SetDeadline(t);
+}
+
+TcpConn TCPListener::Accept() {
+  return impl_ ? impl_->Accept() : TcpConn();
+}
+
+void TCPListener::Close() {
+  if (impl_) impl_->Close();
 }
 
 }  // namespace net

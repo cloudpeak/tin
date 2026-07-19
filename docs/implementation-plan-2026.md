@@ -464,7 +464,7 @@ class Mutex {
 
 ## 四、P2：模块边界与一致性（工程化）
 
-### P2-1 物理分离公共头文件（`include/tin/`）
+### P2-1 物理分离公共头文件（`include/tin/`）✅ 已完成
 
 **问题**：评审 6.x，公共头直接依赖 runtime 内部。
 
@@ -509,6 +509,14 @@ class TcpConn {
 ```
 
 **注意**：此步工作量大，建议分模块逐步迁移，先迁 `sync/` 再迁 `net/`。
+
+**实施结果**（2026-07-20）：
+- `include/tin/` 目录已建立，包含所有公共 API 头文件
+- `TcpConn` / `TCPListener` / `Cond` 均已 PIMPL 化，用户不再看到 `TcpConnImpl`、`TCPListenerImpl`、`SyncSema`
+- 内部实现头重命名为 `tcp_conn_impl.h` / `listener_impl.h` 避免同名冲突
+- CMakeLists.txt: `include/` 为 PUBLIC，项目根为 PRIVATE
+- echo 编译验证：0 个 `tin/runtime/` 头文件被拉入
+- 全部 41 个测试通过
 
 **验证**：编译 echo 只需 `#include "tin/net/tcp_conn.h"`，不拉入 `runtime/` 头。
 
@@ -655,7 +663,7 @@ void ClearQueue(std::deque<T>& queue, std::false_type) {
 
 ### 6.3 P2 验收
 
-- [ ] `include/tin/` 公共头目录建立，echo 编译不拉入 `runtime/`（P2-1 未实施）
+- [x] `include/tin/` 公共头目录建立，echo 编译不拉入 `runtime/`（P2-1 已完成：PIMPL 隐藏 TcpConnImpl/TCPListenerImpl/SyncSema）
 - [x] `NULL`→`nullptr`、`typedef`→`using` 全量替换
 - [x] 拼写错误修复（含 `deprecated` 别名过渡）
 - [x] 调试代码清理干净
@@ -685,7 +693,7 @@ void ClearQueue(std::deque<T>& queue, std::false_type) {
 | P1-3 | `weak_ptr` 防循环引用 | 🟡 中 | 漏改导致连接泄漏回归 |
 | P1-4 | 替换 `tin::atomic` | 🟡 中 | 内存序语义差异 |
 | P1-5 | 优化自造 mutex（保留不替换） | 🟡 中 | 内存序注释遗漏；`owner_` 检测误报 |
-| P2-1 | PIMPL + `include/` 分离 | 🔴 高 | 大规模文件移动，构建系统重写 |
+| P2-1 | PIMPL + `include/` 分离 | 🟢 已完成 | 大规模文件移动，构建系统重写 |
 | P2-2 | 命名风格统一 | 🟢 低 | 机械替换 |
 | P2-3 | 拼写修复 | 🟡 中 | 公开 API 破坏兼容 |
 | P3-1 | 消除 `uintptr_t` | 🔴 高 | runtime 核心数据结构重写 |
