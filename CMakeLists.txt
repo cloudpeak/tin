@@ -19,6 +19,11 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+# Jumbo (unity) build for base — merges multiple .cc files into fewer
+# translation units to speed up compilation. Pass -DBASE_JUMBO_BUILD=ON
+# to enable. Default OFF for debuggability.
+option(BASE_JUMBO_BUILD "Enable jumbo (unity) build for base" OFF)
+
 # build third party.
 if(NOT BASE_DIR)
 	set(BASE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/third_party/base)
