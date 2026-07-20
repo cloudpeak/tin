@@ -17,9 +17,14 @@ namespace tin {
 // scheduler via SemAcquire/SemRelease, which park/unpark coroutines rather
 // than blocking OS threads. Standard library locks would break M:N scheduling.
 //
+// Go 1.9+ starvation mode (Phase 4): when a waiter has blocked for more than
+// 1ms, the mutex enters starvation mode. In starvation mode, ownership is
+// handed off directly to the next waiter via SemRelease(handoff=true),
+// preventing newly-arriving goroutines from stealing the lock.
+//
 // Memory ordering: all atomic operations on `state_` use acquire/release
 // semantics via tin::atomic wrappers (which delegate to std::atomic). The
-// fast-path CAS (0 �?kMutexLocked) is acquire, ensuring subsequent reads
+// fast-path CAS (0 -> kMutexLocked) is acquire, ensuring subsequent reads
 // see the critical section's prior writes. Unlock uses release semantics
 // to publish critical-section writes before the lock bit is cleared.
 // ---------------------------------------------------------------------------
@@ -30,12 +35,17 @@ class Mutex {
   Mutex& operator=(const Mutex&) = delete;
   ~Mutex();
   void Lock();
-  bool TryLock();  // P1-5: non-blocking attempt; returns false if already held
+  bool TryLock();  // non-blocking attempt; returns false if already held
   void Unlock();
 
  private:
-  int32_t state_;   // bitfield: kMutexLocked | kMutexWoken | waiter count
-  uint32_t sema_;   // self-made semaphore (parks coroutine, not OS thread)
+  // Go 1.15 sync/mutex.go state bitfield layout:
+  //   bit 0: kMutexLocked
+  //   bit 1: kMutexWoken
+  //   bit 2: kMutexStarving
+  //   bits 3+: waiter count
+  int32_t state_;
+  uint32_t sema_;
 };
 
 class  MutexGuard {

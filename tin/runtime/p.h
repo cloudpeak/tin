@@ -14,6 +14,7 @@
 
 namespace tin::runtime {
 class M;
+struct Sudog;
 
 // P status
 enum {
@@ -131,6 +132,11 @@ class P {
 
   bool CasStatus(uint32_t old_status, uint32_t new_status);
 
+  // ---- Per-P sudog cache (Go 1.15 runtime2.go:606-607) ----
+  static constexpr int kSudogCacheSize = 128;
+  Sudog* AcquireSudogFromCache();
+  void ReleaseSudogToCache(Sudog* s);
+
  private:
   bool RunqPutSlow(G* gp, uint32_t h, uint32_t t);
   uint32_t RunqGrab(GUintptr* batch, int batch_size, uint32_t batch_head,
@@ -159,6 +165,10 @@ class P {
   std::atomic<uint32_t> num_timers_{0};
   std::atomic<uint32_t> adjust_timers_{0};
   std::atomic<uint32_t> deleted_timers_{0};
+
+  // ---- Per-P sudog cache (Go 1.15 runtime2.go:606-607) ----
+  Sudog* sudogcache_[kSudogCacheSize] = {};
+  int sudogcache_len_ = 0;
 };
 
 }  // namespace tin::runtime

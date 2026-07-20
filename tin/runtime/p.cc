@@ -13,6 +13,7 @@
 #include "tin/runtime/scheduler.h"
 
 #include "tin/runtime/p.h"
+#include "tin/runtime/semaphore.h"
 
 namespace tin::runtime {
 
@@ -199,6 +200,25 @@ void P::MoveRunqToGlobal() {
 
 bool P::CasStatus(uint32_t old_status, uint32_t new_status) {
   return atomic::cas32(&status_, old_status, new_status);
+}
+
+// ---- Per-P sudog cache (Go 1.15 proc.go:acquireSudog/releaseSudog) ----
+
+Sudog* P::AcquireSudogFromCache() {
+  if (sudogcache_len_ > 0) {
+    sudogcache_len_--;
+    return sudogcache_[sudogcache_len_];
+  }
+  return nullptr;
+}
+
+void P::ReleaseSudogToCache(Sudog* s) {
+  if (sudogcache_len_ < kSudogCacheSize) {
+    sudogcache_[sudogcache_len_] = s;
+    sudogcache_len_++;
+  } else {
+    delete s;
+  }
 }
 
 }  // namespace tin::runtime

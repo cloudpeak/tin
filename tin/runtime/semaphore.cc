@@ -11,6 +11,7 @@
 #include "tin/runtime/raw_mutex.h"
 #include "tin/runtime/coroutine.h"
 #include "tin/runtime/m.h"
+#include "tin/runtime/p.h"
 #include "tin/runtime/scheduler.h"
 #include "tin/runtime/timer/timer_queue.h"
 #include "tin/runtime/env.h"
@@ -114,6 +115,62 @@ void SemSetDeadline(G* gp, Sudog* s, int64_t deadline) {
   AddTimer(timer);
 }
 
+// ---- Per-P sudog cache (Go 1.15 proc.go:acquireSudog/releaseSudog) ----
+
+Sudog* AcquireSudog() {
+  P* p = GetP();
+  if (p != nullptr) {
+    Sudog* s = p->AcquireSudogFromCache();
+    if (s != nullptr) {
+      // Clear fields for reuse.
+      s->gp = nullptr;
+      s->selectdone = nullptr;
+      s->next = nullptr;
+      s->prev = nullptr;
+      s->elem = nullptr;
+      s->nrelease = 0;
+      s->waitlink = nullptr;
+      s->address = nullptr;
+      s->wakedup = 0;
+      s->ticket = 0;
+      return s;
+    }
+  }
+  return new Sudog;
+}
+
+void ReleaseSudog(Sudog* s) {
+  // Clear fields before returning to cache.
+  s->gp = nullptr;
+  s->selectdone = nullptr;
+  s->next = nullptr;
+  s->prev = nullptr;
+  s->elem = nullptr;
+  s->nrelease = 0;
+  s->waitlink = nullptr;
+  s->address = nullptr;
+  s->wakedup = 0;
+  s->ticket = 0;
+
+  P* p = GetP();
+  if (p != nullptr) {
+    p->ReleaseSudogToCache(s);
+  } else {
+    delete s;
+  }
+}
+
+// Forward declaration — InternalYield is defined in runtime.cc.
+// It parks the current G and puts it on the global runq, equivalent to
+// Go 1.15 proc.go:goyield.
+void InternalYield();
+
+void GoYield() {
+  InternalYield();
+}
+
+// SemAcquire — Go 1.15 sema.go:semacquire.
+// Returns true if woken via handoff (ticket=1), false otherwise.
 bool SemAcquire(uint32_t* addr) {
   G* gp = GetG();
   if (gp != gp->M()->CurG()) {
@@ -122,12 +179,12 @@ bool SemAcquire(uint32_t* addr) {
 
   // Easy case.
   if (CanSemAcquire(addr)) {
-    return true;
+    return false;
   }
   // if interrupted by timer queue.
   bool interruptd = false;
   // timed is true if been added in timer queue.
-  Sudog* s = new Sudog;
+  Sudog* s = AcquireSudog();
   SemaRoot* root = semroot(addr);
   while (true) {
     root->lock.Lock();
@@ -148,17 +205,30 @@ bool SemAcquire(uint32_t* addr) {
 
     root->queue(addr, s);
     s->wakedup = 0;
+    s->ticket = 0;
 
     ParkUnlock(&root->lock);
+
+    // Go 1.15 sema.go: after wakeup, check ticket for handoff.
+    if (s->ticket > 0) {
+      // Handoff: the semaphore token was pre-consumed by SemRelease.
+      // No need to CanSemAcquire — just return.
+      break;
+    }
+
     if (CanSemAcquire(addr)) {
       break;
     }
   }
-  delete s;
-  return !interruptd;
+  bool handoff = (s->ticket > 0);
+  ReleaseSudog(s);
+  return handoff && !interruptd;
 }
 
-void SemRelease(uint32_t* addr) {
+// SemRelease — Go 1.15 sema.go:semrelease1.
+// If handoff is true, pre-consume the semaphore token and set the waiter's
+// ticket=1 so the waiter returns immediately from SemAcquire.
+void SemRelease(uint32_t* addr, bool handoff) {
   SemaRoot* root = semroot(addr);
   atomic::inc32(addr, 1);
   if (atomic::load32(&root->nwait) == 0) {
@@ -182,11 +252,26 @@ void SemRelease(uint32_t* addr) {
       break;
     }
   }
-  if (s != nullptr)
+
+  if (s != nullptr) {
     s->wakedup = kWakedUpByReleaser;
+    // Go 1.15 sema.go:semrelease1 — handoff mechanism.
+    if (handoff && CanSemAcquire(addr)) {
+      // Pre-consume the token so the waiter doesn't need to CanSemAcquire.
+      s->ticket = 1;
+    } else {
+      s->ticket = 0;
+    }
+  }
+
   root->lock.Unlock();
   if (s != nullptr) {
     Ready(s->gp);
+    // Go 1.15 sema.go:readyWith — if handoff with ticket=1, yield to let
+    // the woken goroutine run immediately (only if not holding locks).
+    if (s->ticket == 1 && GetG()->M()->Locks() == 0) {
+      GoYield();
+    }
   }
 }
 
@@ -206,9 +291,10 @@ void SyncSema::Acquire() {
     if (wake != nullptr) {
       wake->next = nullptr;
       Ready(wake->gp);
+      ReleaseSudog(wake);
     }
   } else {
-    Sudog* w = new Sudog;
+    Sudog* w = AcquireSudog();
     w->gp = GetG();
     w->nrelease = -1;
     w->next = nullptr;
@@ -220,7 +306,7 @@ void SyncSema::Acquire() {
     }
     tail_ = w;
     ParkUnlock(&lock_);
-    delete w;
+    ReleaseSudog(w);
   }
 }
 
@@ -235,10 +321,11 @@ void SyncSema::Release(uint32_t n) {
     }
     wake->next = nullptr;
     Ready(wake->gp);
+    ReleaseSudog(wake);
     n--;
   }
   if (n > 0) {
-    Sudog* w = new Sudog;
+    Sudog* w = AcquireSudog();
     w->gp = GetG();
     w->nrelease = static_cast<int32_t>(n);
     w->next = nullptr;
@@ -249,7 +336,7 @@ void SyncSema::Release(uint32_t n) {
     }
     tail_ = w;
     ParkUnlock(&lock_);
-    delete w;
+    ReleaseSudog(w);
   } else {
     lock_.Unlock();
   }
@@ -262,6 +349,7 @@ void RuntimeSemacquire(uint32_t* addr) {
 }
 
 void RuntimeSemrelease(uint32_t* addr) {
-  runtime::SemRelease(addr);
+  runtime::SemRelease(addr, false);
 }
+
 }  // namespace tin
