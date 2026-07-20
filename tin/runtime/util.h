@@ -10,17 +10,17 @@
 
 namespace tin::runtime {
 
-class Greenlet;
+class Coroutine;
 class P;
 class M;
-using G = Greenlet;
+using G = Coroutine;
 
 inline G* GetG() {
-  return glet_tls;
+  return coro_tls;
 }
 
 inline void SetG(G* gp) {
-  glet_tls = gp;
+  coro_tls = gp;
 }
 
 P* GetP();

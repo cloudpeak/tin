@@ -11,7 +11,7 @@
 #include "tin/config/config.h"
 #include "tin/runtime/util.h"
 #include "tin/runtime/runtime.h"
-#include "tin/runtime/greenlet.h"
+#include "tin/runtime/coroutine.h"
 #include "tin/runtime/p.h"
 #include "tin/runtime/scheduler.h"
 
@@ -88,15 +88,12 @@ void M::OnSysThreadStop() {
 void M::ThreadMain() {
   OnSysThreadStart();
 
-  g0_ = Greenlet::Create(G0StaticProc,
-                         nullptr,
-                         true,
-                         reinterpret_cast<intptr_t>(this),
-                         false,
-                         rtm_conf->StackSize(),
-                         "sysg0");
+  g0_ = Coroutine::CreateG0(&G0StaticProc,
+                           reinterpret_cast<intptr_t>(this),
+                           rtm_conf->StackSize(),
+                           "sysg0");
   g0_->SetM(this);
-  glet_tls = g0_;
+  coro_tls = g0_;
   // switch to g0
   jump_zcontext(&sys_context_,
                 *g0_->MutableContext(),

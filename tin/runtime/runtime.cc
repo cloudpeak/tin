@@ -8,7 +8,7 @@
 
 #include "tin/error/error.h"
 #include "tin/runtime/util.h"
-#include "tin/runtime/greenlet.h"
+#include "tin/runtime/coroutine.h"
 #include "tin/runtime/m.h"
 #include "tin/runtime/p.h"
 #include "tin/runtime/scheduler.h"

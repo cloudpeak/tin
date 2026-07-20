@@ -15,7 +15,7 @@
 #include "tin/time/time.h"
 #include "tin/error/error.h"
 #include "tin/runtime/runtime.h"
-#include "tin/runtime/greenlet.h"
+#include "tin/runtime/coroutine.h"
 #include "tin/communication/chan.h"
 #include "tin/runtime/net/pollops.h"
 

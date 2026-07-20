@@ -14,11 +14,11 @@
 
 namespace tin::runtime {
 
-GletWork::GletWork() {
+CoroWork::CoroWork() {
   gp_ = GetG();
 }
 
-void GletWork::Resume() {
+void CoroWork::Resume() {
   {
     SchedulerLocker guard;
     sched->GlobalRunqPut(gp_);
@@ -26,24 +26,24 @@ void GletWork::Resume() {
   WakePIfNecessary();
 }
 
-void GletWork::Finalize() {
+void CoroWork::Finalize() {
   SaveLastError(GetLastSystemErrorCode());
   Resume();
 }
 
-bool SubmitGletWorkUnlockF(void* arg1, void* arg2) {
-  GletWork* work = static_cast<GletWork*>(arg1);
+bool SubmitCoroWorkUnlockF(void* arg1, void* arg2) {
+  CoroWork* work = static_cast<CoroWork*>(arg1);
     ThreadPool::GetInstance()->AddWork(work);
   return true;
 }
 
-void SubmitGletWork(GletWork* work) {
-  Park(SubmitGletWorkUnlockF, work, nullptr);
+void SubmitCoroWork(CoroWork* work) {
+  Park(SubmitCoroWorkUnlockF, work, nullptr);
   SetErrorCode(TinTranslateSysError(work->LastError()));
 }
 
-void SubmitGetAddrInfoGletWork(GletWork* work) {
-  Park(SubmitGletWorkUnlockF, work, nullptr);
+void SubmitGetAddrInfoCoroWork(CoroWork* work) {
+  Park(SubmitCoroWorkUnlockF, work, nullptr);
   SetErrorCode(TinGetaddrinfoTranslateError(work->LastError()));
 }
 

@@ -12,7 +12,7 @@
 
 #include "tin/runtime/util.h"
 #include "tin/runtime/timer/timer_queue.h"
-#include "tin/runtime/greenlet.h"
+#include "tin/runtime/coroutine.h"
 #include "tin/runtime/m.h"
 #include "tin/runtime/threadpoll.h"
 #include "tin/runtime/scheduler.h"
@@ -45,9 +45,9 @@ int Env::Initialize(EntryFn fn, int argc, char** argv, tin::Config* new_conf) {
   timer_q_ = std::make_unique<TimerQueue>();
   sched = sched_.get();
   timer_q = timer_q_.get();
-  // glet_tls is thread_local and cannot be a member of Env; it remains a
+  // coro_tls is thread_local and cannot be a member of Env; it remains a
   // raw pointer managed manually (deleted in Deinitialize).
-  glet_tls = new Greenlet;
+  coro_tls = new Coroutine;
   ThreadPool::GetInstance()->Start();
   M::New(absl::bind_front(&SysInit), nullptr);
 
@@ -64,8 +64,8 @@ void Env::Deinitialize() {
     if (timer_q_)
       timer_q_->Join();
   }
-  delete glet_tls;
-  glet_tls = nullptr;
+  delete coro_tls;
+  coro_tls = nullptr;
   // Clear non-owning global pointers before unique_ptr members are reset.
   sched = nullptr;
   timer_q = nullptr;
@@ -81,11 +81,11 @@ int Env::WaitMainExit() {
 void Env::SysInit() {
   GetM()->SetM0Flag();
   sched->Init();
-  SpawnSimple(&MainGlet, nullptr, "main");
+  SpawnInternal([] { MainCoro(0); }, "main");
   M::New(absl::bind_front(&SysMon), nullptr);
 }
 
-void* Env::MainGlet(intptr_t) {
+void* Env::MainCoro(intptr_t) {
   int code = rtm_env->fn_(rtm_env->argc_, rtm_env->argv_);
   rtm_env->exit_code_ = code;
   rtm_env->OnMainExit();
@@ -154,7 +154,7 @@ bool StopRequested() {
 std::unique_ptr<Env> rtm_env;
 Scheduler* sched = nullptr;
 TimerQueue* timer_q = nullptr;
-thread_local Greenlet* glet_tls = nullptr;
+thread_local Coroutine* coro_tls = nullptr;
 
 tin::Config* rtm_conf = nullptr;
 

@@ -198,7 +198,7 @@ tin/net/sockaddr_storage.cc
 tin/net/tcp_conn.cc
 tin/bufio/bufio.cc
 tin/runtime/env.cc
-tin/runtime/greenlet.cc
+tin/runtime/coroutine.cc
 tin/runtime/m.cc
 tin/runtime/p.cc
 tin/runtime/raw_mutex_sema.cc
@@ -299,7 +299,7 @@ if (WIN32)
 		tin/platform/platform.h
 		tin/platform/platform_win.h
 		tin/runtime/env.h
-		tin/runtime/greenlet.h
+		tin/runtime/coroutine.h
 		tin/runtime/guintptr.h
 		tin/runtime/m.h
 		tin/runtime/p.h

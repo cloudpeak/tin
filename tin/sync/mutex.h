@@ -14,12 +14,12 @@ namespace tin {
 //
 // P1-5: This is a self-made mutex that MUST be preserved (not replaced with
 // std::mutex or absl::Mutex). tin's mutex cooperates with the coroutine
-// scheduler via SemAcquire/SemRelease, which park/unpark greenlets rather
+// scheduler via SemAcquire/SemRelease, which park/unpark coroutines rather
 // than blocking OS threads. Standard library locks would break M:N scheduling.
 //
 // Memory ordering: all atomic operations on `state_` use acquire/release
 // semantics via tin::atomic wrappers (which delegate to std::atomic). The
-// fast-path CAS (0 â†?kMutexLocked) is acquire, ensuring subsequent reads
+// fast-path CAS (0 ï¿½?kMutexLocked) is acquire, ensuring subsequent reads
 // see the critical section's prior writes. Unlock uses release semantics
 // to publish critical-section writes before the lock bit is cleared.
 // ---------------------------------------------------------------------------
@@ -35,7 +35,7 @@ class Mutex {
 
  private:
   int32_t state_;   // bitfield: kMutexLocked | kMutexWoken | waiter count
-  uint32_t sema_;   // self-made semaphore (parks greenlet, not OS thread)
+  uint32_t sema_;   // self-made semaphore (parks coroutine, not OS thread)
 };
 
 class  MutexGuard {

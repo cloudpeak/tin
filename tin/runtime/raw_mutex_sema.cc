@@ -10,7 +10,7 @@
 #include "tin/sync/atomic.h"
 #include "tin/runtime/runtime.h"
 #include "tin/runtime/util.h"
-#include "tin/runtime/greenlet.h"
+#include "tin/runtime/coroutine.h"
 #include "tin/runtime/m.h"
 #include "tin/runtime/p.h"
 #include "tin/runtime/scheduler.h"
@@ -38,7 +38,7 @@ RawMutex::~RawMutex() {
 }
 
 bool RawMutex::TryLock() {
-  // P1-5: Non-blocking attempt. acquire CAS on key_: 0 �?kLocked.
+  // P1-5: Non-blocking attempt. acquire CAS on key_: 0 �?kLocked.
   // Returns false if already held or has waiters.
   if (atomic::acquire_cas(&key_, 0, kLocked)) {  // acquire
     owner_ = GetM();
@@ -108,7 +108,7 @@ void RawMutex::Lock() {
         if ((v & kLocked) != 0) {
           // Queued.  Wait.
           // SemaSleep parks the M (OS thread) on the M's semaphore.
-          // This is NOT a greenlet park —RawMutex is runtime-internal
+          // This is NOT a coroutine park —RawMutex is runtime-internal
           // and operates at the M (thread) level.
           SemaSleep(-1);
           i = 0;

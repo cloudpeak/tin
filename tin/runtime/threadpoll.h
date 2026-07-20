@@ -28,10 +28,10 @@ class  Work {
   virtual void Run() = 0;
 };
 
-class GletWork : public Work {
+class CoroWork : public Work {
  public:
-  GletWork();
-  virtual ~GletWork() {}
+  CoroWork();
+  virtual ~CoroWork() {}
   virtual void Run() = 0;
   int LastError() const {return last_error_;}
   void SaveLastError(int err) {last_error_ = err;}
@@ -45,8 +45,8 @@ class GletWork : public Work {
   G* gp_;
 };
 
-void SubmitGletWork(GletWork* work);
-void SubmitGetAddrInfoGletWork(GletWork* work);
+void SubmitCoroWork(CoroWork* work);
+void SubmitGetAddrInfoCoroWork(CoroWork* work);
 
 
 class ThreadPool {

@@ -69,9 +69,9 @@ void Mutex::Lock() {
     if (atomic::cas32(&state_, old_state, new_state)) {  // acquire
       if ((old_state & kMutexLocked) == 0)
         break;
-      // Slow path: park the greenlet on the self-made semaphore.
+      // Slow path: park the coroutine on the self-made semaphore.
       // SemAcquire cooperates with the scheduler to park/unpark this
-      // greenlet without blocking the OS thread.
+      // coroutine without blocking the OS thread.
       tin::runtime::SemAcquire(&sema_);
       awoke = true;
       iter = 0;
@@ -105,8 +105,8 @@ void Mutex::Unlock() {
     // Grab the right to wake someone.
     new_state = (old_state - (1 << kMutexWaiterShift)) | kMutexWoken;
     if (atomic::cas32(&state_, old_state, new_state)) {  // acquire
-      // Wake one parked greenlet via the self-made semaphore.
-      // SemRelease cooperates with the scheduler to unpark a greenlet.
+      // Wake one parked coroutine via the self-made semaphore.
+      // SemRelease cooperates with the scheduler to unpark a coroutine.
       tin::runtime::SemRelease(&sema_);
     }
     old_state = state_;  // relaxed read (retry loop)

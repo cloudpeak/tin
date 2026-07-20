@@ -127,7 +127,7 @@ void ExitSyscall();
 
 void WakePIfNecessary();
 
-void SwitchG(Greenlet* from, Greenlet* to, intptr_t args);
+void SwitchG(Coroutine* from, Coroutine* to, intptr_t args);
 
 }  // namespace tin::runtime
 #endif  // TIN_RUNTIME_SCHEDULER_H_

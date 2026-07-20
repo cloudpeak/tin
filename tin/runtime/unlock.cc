@@ -5,7 +5,7 @@
 #include <cstdlib>
 
 #include "tin/runtime/p.h"
-#include "tin/runtime/greenlet.h"
+#include "tin/runtime/coroutine.h"
 #include "tin/runtime/unlock.h"
 
 namespace tin {
@@ -13,7 +13,7 @@ namespace runtime {
 
 void UnLockInfo::RunInternal() {
   if (!f_(arg1_, arg2_)) {
-    owner_->SetState(GLET_RUNNABLE);
+    owner_->SetState(CoroutineState::kRunnable);
     GetP()->RunqPut(owner_, false);
   }
   Clear();

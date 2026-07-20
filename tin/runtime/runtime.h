@@ -26,7 +26,7 @@ void LockOSThread();
 
 void UnlockOSThread();
 
-// Per-greenlet errno model (deprecated).
+// Per-coroutine errno model (deprecated).
 // New code should use Status/Result<T> instead. See include/tin/status.h.
 [[deprecated("Use Status/Result<T> instead")]]
 void SetErrorCode(int error_code);

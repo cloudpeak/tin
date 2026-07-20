@@ -67,7 +67,7 @@ int SyncResolveHostname(const absl::string_view& hostname, AddressFamily af,
   return 0;
 }
 
-class ResolveHostnameWork : public GletWork {
+class ResolveHostnameWork : public CoroWork {
  public:
   ResolveHostnameWork(const absl::string_view& hostname,  // NOLINT
                       AddressFamily& family,  // NOLINT
@@ -104,7 +104,7 @@ Status ResolveHostname(const absl::string_view& hostname,
   }
   std::unique_ptr<ResolveHostnameWork> work(
     new ResolveHostnameWork(hostname, family, addresses));
-  SubmitGetAddrInfoGletWork(work.get());
+  SubmitGetAddrInfoCoroWork(work.get());
   int ret = work->Result();
   if (ret != 0) {
     return Status::FromErrno(TinGetaddrinfoTranslateError(ret));

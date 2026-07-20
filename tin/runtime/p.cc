@@ -9,7 +9,7 @@
 
 #include "tin/sync/atomic.h"
 #include "tin/runtime/runtime.h"
-#include "tin/runtime/greenlet.h"
+#include "tin/runtime/coroutine.h"
 #include "tin/runtime/scheduler.h"
 
 #include "tin/runtime/p.h"

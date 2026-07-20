@@ -8,7 +8,7 @@
 
 #include "context/zcontext.h"
 #include "tin/sync/atomic.h"
-#include "tin/runtime/greenlet.h"
+#include "tin/runtime/coroutine.h"
 #include "tin/runtime/p.h"
 #include "tin/runtime/m.h"
 #include "tin/runtime/runtime.h"
@@ -195,7 +195,7 @@ void Scheduler::InjectGList(G* glist) {
     for (n = 0; glist != nullptr; n++) {
       G* gp = glist;
       glist = GpCastBack(gp->SchedLink());
-      gp->SetState(GLET_RUNNABLE);
+      gp->SetState(CoroutineState::kRunnable);
       GlobalRunqPut(gp);
     }
   }
@@ -258,7 +258,7 @@ top:
     gp = NetPoll(false);
     if (gp != 0) {
       InjectGList(GpCastBack(gp->SchedLink()));
-      gp->SetState(GLET_RUNNABLE);
+      gp->SetState(CoroutineState::kRunnable);
       *inherit_time = false;
       return gp;
     }
@@ -348,7 +348,7 @@ stop: {
       if (p != nullptr) {
         AcquireP(p);
         InjectGList(GpCastBack(gp->SchedLink()));
-        gp->SetState(GLET_RUNNABLE);
+        gp->SetState(CoroutineState::kRunnable);
         *inherit_time = false;
         return gp;
       }
@@ -494,10 +494,10 @@ int Scheduler::Init() {
 }
 
 void Scheduler::MakeReady(G* gp) {
-  if (gp->GetState() != GLET_WAITING) {
+  if (gp->GetState() != CoroutineState::kWaiting) {
     LOG(FATAL) << "bad g->status in ready";
   }
-  gp->SetState(GLET_RUNNABLE);
+  gp->SetState(CoroutineState::kRunnable);
 
   GetP()->RunqPut(gp, true);
 
@@ -554,7 +554,7 @@ void Scheduler::HandoffP(P* p) {
 // should not called from g0.
 void Scheduler::ExitSyscall0(G* gp) {
   M* curm = gp->M();
-  gp->SetState(GLET_RUNNABLE);
+  gp->SetState(CoroutineState::kRunnable);
   P* p = nullptr;
   {
     RawMutexGuard guard(&lock_);
@@ -691,11 +691,11 @@ void ParkUnlock(RawMutex* lock) {
 void Park(UnlockFunc unlockf, void* arg1, void* arg2) {
   G* gp = GetG();
   M* mp = gp->M();
-  if (gp->GetState() != GLET_RUNNING) {
+  if (gp->GetState() != CoroutineState::kRunning) {
     LOG(FATAL) << "gopark: bad g status";
   }
   mp->GetUnlockInfo()->Set(unlockf, arg1, arg2, gp);
-  gp->SetState(GLET_WAITING);
+  gp->SetState(CoroutineState::kWaiting);
   sched->Reschedule();
 }
 
@@ -722,14 +722,14 @@ bool ExitSyscallUnlockFunc(void* arg1, void* arg2) {
 
 void EnterSyscallBlock() {
   G* gp = GetG();
-  gp->SetState(GLET_SYSCALL);
+  gp->SetState(CoroutineState::kSyscall);
   sched->HandoffP(ReleaseP());
 }
 
 void ExitSyscall() {
   G* gp = GetG();
   if (sched->ExitSyscallFast()) {
-    gp->SetState(GLET_RUNNING);
+    gp->SetState(CoroutineState::kRunning);
     return;
   }
   sched->ExitSyscall0(gp);
@@ -739,11 +739,11 @@ void WakePIfNecessary() {
   sched->WakePIfNecessary();
 }
 
-void SwitchG(Greenlet* from, Greenlet* to, intptr_t args) {
+void SwitchG(Coroutine* from, Coroutine* to, intptr_t args) {
   from->M()->SetCurG(to);
   to->SetM(from->M());
   SetG(to);
-  to->SetState(GLET_RUNNING);
+  to->SetState(CoroutineState::kRunning);
   jump_zcontext(from->MutableContext(), *to->MutableContext(), args);
 }
 

@@ -9,25 +9,28 @@
 #define TIN_RUNTIME_H_
 
 #include <functional>
-#include <absl/functional/bind_front.h>
+#include <utility>
 
 namespace tin {
 
+// Spawn options for fine-grained control over coroutine creation.
+struct SpawnOptions {
+  int stack_size = 0;           // 0 = use global config default
+  const char* name = "coroutine";
+};
+
 // Spawn a new coroutine. Accepts any callable and forwards arguments.
-void RuntimeSpawn(std::function<void()>* closure);
-
-inline void DoSpawn(std::function<void()> closure) {
-  RuntimeSpawn(&closure);
-}
-
 template <typename Functor, typename... Args>
 void Spawn(Functor&& functor, Args&&... args) {
-  auto closure = [functor = std::forward<Functor>(functor),
-                  ...args = std::forward<Args>(args)]() mutable {
-    std::invoke(functor, args...);
-  };
-  DoSpawn(closure);
+  SpawnClosure([fn = std::forward<Functor>(functor),
+                ...args = std::forward<Args>(args)]() mutable {
+    std::invoke(fn, args...);
+  });
 }
+
+// Type-erased internal entry point (called by the Spawn template above).
+void SpawnClosure(std::function<void()> closure,
+                  const SpawnOptions& opts = {});
 
 // Scheduling and exception helpers.
 void Sched();

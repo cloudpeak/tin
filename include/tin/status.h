@@ -3,7 +3,7 @@
 // found in the LICENSE file.
 //
 // Status: an immutable, value-semantic error type inspired by leveldb::Status.
-// Designed to replace tin's global errno-per-greenlet error model.
+// Designed to replace tin's global errno-per-coroutine error model.
 // A Status is small (one int), trivially copyable, and can be safely ignored
 // — but unlike errno it is explicit and local to the call that produced it.
 

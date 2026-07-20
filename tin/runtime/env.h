@@ -15,7 +15,7 @@
 namespace tin::runtime {
 
 class Scheduler;
-class Greenlet;
+class Coroutine;
 class TimerQueue;
 
 class Env {
@@ -38,7 +38,7 @@ class Env {
 
   // Request the runtime to stop. Sets exit_flag_ and notifies
   // main_signal_ so WaitForPowerOff() returns. Can be called from
-  // any greenlet or from a signal handler on the main thread.
+  // any coroutine or from a signal handler on the main thread.
   void RequestStop(int exit_code = 0);
 
   // Returns the exit code set by Stop() or by the entry function's
@@ -54,7 +54,7 @@ class Env {
   void SignalInit();
   void PreInit();
   static void SysInit();
-  static void* MainGlet(intptr_t);
+  static void* MainCoro(intptr_t);
   void OnMainExit();
 
  private:
@@ -83,7 +83,7 @@ extern std::unique_ptr<Env> rtm_env;
 // that use `sched->...` and `timer_q->...` do not need modification.
 extern Scheduler* sched;
 extern TimerQueue* timer_q;
-extern thread_local Greenlet* glet_tls;
+extern thread_local Coroutine* coro_tls;
 extern tin::Config* rtm_conf;
 
 int InitializeEnv(EntryFn fn, int argc, char** argv, Config* new_conf);

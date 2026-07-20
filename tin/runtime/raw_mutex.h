@@ -61,10 +61,10 @@ class  RawMutexGuard {
 // Sleep()/TimedSleep() transition clear→M* (register sleeper) then block.
 //
 // TimedSleep  —only callable on g0 (the per-M system goroutine). Uses
-//               the M's semaphore directly (no greenlet state machine).
-// TimedSleepG —callable on any user greenlet. Wraps the sleep in
+//               the M's semaphore directly (no coroutine state machine).
+// TimedSleepG —callable on any user coroutine. Wraps the sleep in
 //               EnterSyscallBlock/ExitSyscall so the scheduler knows the
-//               greenlet is blocked and can run others on the same M.
+//               coroutine is blocked and can run others on the same M.
 // ---------------------------------------------------------------------------
 class Note {
  public:
@@ -73,7 +73,7 @@ class Note {
   void Sleep();
   void Clear();
   bool TimedSleep(int64_t ns);   // g0-only: sleep on M semaphore
-  bool TimedSleepG(int64_t ns);  // any greenlet: sleep with syscall block/unblock
+  bool TimedSleepG(int64_t ns);  // any coroutine: sleep with syscall block/unblock
 
  private:
   bool SleepInternal(int64_t ns);

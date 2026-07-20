@@ -9,7 +9,7 @@
 #include "tin/runtime/util.h"
 #include "tin/runtime/runtime.h"
 #include "tin/runtime/scheduler.h"
-#include "tin/runtime/greenlet.h"
+#include "tin/runtime/coroutine.h"
 
 #include "tin/runtime/timer/timer_queue.h"
 
@@ -81,8 +81,8 @@ void TimerQueue::AddTimerLocked(Timer* t) {
     if (!created_) {
       created_ = true;
 
-      SpawnSimple(absl::bind_front(&TimerQueue::Proc, this),
-                  "timer_queue");
+      SpawnInternal(absl::bind_front(&TimerQueue::Proc, this),
+                   "timer_queue");
       wait_group_.Add(1);
     }
   }
