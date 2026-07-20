@@ -834,6 +834,28 @@ uint32_t Scheduler::Retake(int64_t now) {
   return n;
 }
 
+// Go 1.15 proc.go:4875+ — SCHEDTRACE debug output.
+void Scheduler::SchedTrace(bool detailed) {
+  int64_t now = MonoNow() / 1000000;  // ms
+  LOG(INFO) << "SCHED " << now << "ms: m=" << mcount_
+            << " p=" << rtm_conf->MaxProcs()
+            << " idlep=" << nr_idlep_
+            << " spinning=" << nr_spinning_
+            << " runnable=" << runq_size_;
+  if (!detailed) return;
+  for (int i = 0; i < rtm_conf->MaxProcs(); i++) {
+    P* p = allp_[i];
+    if (p == nullptr) continue;
+    int runqsize = p->RunqEmpty() ? 0 : 1;
+    LOG(INFO) << "  P" << i << " status=" << p->GetStatus()
+              << " schedtick=" << p->SchedTick()
+              << " syscalltick=" << p->SyscallTick()
+              << " runqsize=" << runqsize
+              << " timers=" << p->NumTimers()
+              << " deletedTimers=" << p->DeletedTimers();
+  }
+}
+
 void Scheduler::DoUnlock(UnLockInfo* info) {
   if (!info->F()(info->Arg1(), info->Arg2())) {
     GetP()->RunqPut(info->Owner(), false);

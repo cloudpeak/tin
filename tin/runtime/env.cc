@@ -3,6 +3,7 @@
 // found in the LICENSE file.
 
 #include <csignal>
+#include <cstdlib>
 #include <memory>
 #include <thread>
 
@@ -30,6 +31,16 @@ Env::Env()
 
 void Env::PreInit() {
   num_processors_ = static_cast<int>(std::thread::hardware_concurrency());
+
+  // Go 1.15 proc.go:4875+ — read SCHEDTRACE / SCHEDDETAIL env vars.
+  const char* trace = std::getenv("TIN_SCHEDTRACE");
+  if (trace != nullptr) {
+    schedtrace_ms_ = atoi(trace);
+  }
+  const char* detail = std::getenv("TIN_SCHEDDETAIL");
+  if (detail != nullptr && detail[0] != '0') {
+    scheddetail_ = true;
+  }
 }
 
 int Env::Initialize(EntryFn fn, int argc, char** argv, tin::Config* new_conf) {

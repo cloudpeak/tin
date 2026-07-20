@@ -57,10 +57,15 @@ class Scheduler {
   // Go 1.15 proc.go:4746-4813 — sysmon calls this to take back Ps
   // stuck in kPsyscall for too long.
   uint32_t Retake(int64_t now);
+
+  // Go 1.15 proc.go:4875+ — dump scheduler state for debugging.
+  // Called by sysmon when TIN_SCHEDTRACE env var is set.
+  void SchedTrace(bool detailed);
   uint32_t NrIdleP() {return nr_idlep_; }
   uint32_t NrSpinning() {
     return nr_spinning_;
   }
+  int32_t MCount() const { return mcount_; }
 
   uint32_t LastPollTime();
   uint32_t* MutableLastPollTime() {

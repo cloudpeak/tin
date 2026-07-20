@@ -137,6 +137,12 @@ class P {
   Sudog* AcquireSudogFromCache();
   void ReleaseSudogToCache(Sudog* s);
 
+  // ---- Per-P goid cache (Go 1.15 runtime2.go:582-583) ----
+  // Batch-allocates goroutine IDs to reduce contention on the global
+  // counter. When goidcache_ >= goidcacheend_, refills a batch of 16
+  // from the global source.
+  int64_t AllocGoid();
+
  private:
   bool RunqPutSlow(G* gp, uint32_t h, uint32_t t);
   uint32_t RunqGrab(GUintptr* batch, int batch_size, uint32_t batch_head,
@@ -169,6 +175,10 @@ class P {
   // ---- Per-P sudog cache (Go 1.15 runtime2.go:606-607) ----
   Sudog* sudogcache_[kSudogCacheSize] = {};
   int sudogcache_len_ = 0;
+
+  // ---- Per-P goid cache (Go 1.15 runtime2.go:582-583) ----
+  int64_t goidcache_ = 0;     // next available goid
+  int64_t goidcacheend_ = 0;  // upper bound of current batch
 };
 
 }  // namespace tin::runtime

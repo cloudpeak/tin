@@ -21,9 +21,9 @@
 namespace tin {
 namespace runtime {
 
-// Global goroutine ID counter (ref: Go 1.15 proc.go sched.goidgen).
-// Phase 1 uses a simple global atomic; Phase 6 (Step 6.1) will replace
-// this with per-P batched allocation (goidcache / goidcacheend).
+// Global goroutine ID counter for G0 coroutines (created before any P
+// exists). User coroutines get their goid from P::AllocGoid() which batches
+// from this counter (Go 1.15 proc.go:3403-3413).
 static std::atomic<int64_t> g_next_goid{1};
 
 Coroutine::Coroutine()
@@ -58,6 +58,13 @@ Coroutine* Coroutine::Create(std::function<void()> closure,
                            const SpawnOptions& opts) {
   int stack_size = opts.stack_size > 0 ? opts.stack_size : kDefaultStackSize;
   std::unique_ptr<Coroutine> coro(new Coroutine);
+  // Go 1.15 proc.go:newproc1 — override the goid assigned in the constructor
+  // with a per-P batched allocation. This reduces contention on the global
+  // atomic counter. G0 coroutines (CreateG0) keep the constructor's goid.
+  P* curp = GetP();
+  if (curp != nullptr) {
+    coro->goid_ = curp->AllocGoid();
+  }
   coro->flags_ = 0;
   coro->args_ = 0;
   coro->entry_ = nullptr;

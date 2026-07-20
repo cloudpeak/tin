@@ -221,4 +221,21 @@ void P::ReleaseSudogToCache(Sudog* s) {
   }
 }
 
+// ---- Per-P goid cache (Go 1.15 proc.go:3403-3413) ----
+
+// Global goroutine ID source. P::AllocGoid batches 16 IDs at a time
+// from this counter to reduce atomic contention.
+static std::atomic<int64_t> g_next_goid{1};
+static constexpr int64_t kGoidBatch = 16;
+
+int64_t P::AllocGoid() {
+  if (goidcache_ < goidcacheend_) {
+    return goidcache_++;
+  }
+  // Refill: atomically reserve a batch of kGoidBatch from the global counter.
+  goidcache_ = g_next_goid.fetch_add(kGoidBatch, std::memory_order_relaxed);
+  goidcacheend_ = goidcache_ + kGoidBatch;
+  return goidcache_++;
+}
+
 }  // namespace tin::runtime

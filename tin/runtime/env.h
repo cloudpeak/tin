@@ -30,6 +30,12 @@ class Env {
   int NumberOfProcessors() {
     return num_processors_;
   }
+
+  // Go 1.15 proc.go:4875+ — SCHEDTRACE / SCHEDDETAIL env vars.
+  // schedtrace_ > 0: dump scheduler state every schedtrace_ ms.
+  // scheddetail_: if true, include per-P details.
+  int schedtrace_ms() const { return schedtrace_ms_; }
+  bool scheddetail() const { return scheddetail_; }
   int WaitMainExit();
   bool ExitFlag() const {
     return exit_flag_ == true;
@@ -62,6 +68,8 @@ class Env {
   char** argv_;
   tin::Config* conf_;
   int num_processors_;
+  int schedtrace_ms_ = 0;   // TIN_SCHEDTRACE in milliseconds (0 = disabled)
+  bool scheddetail_ = false;  // TIN_SCHEDDETAIL
   absl::Notification main_signal_;
   tin::AtomicFlag exit_flag_;
   bool main_exited_ = false;
