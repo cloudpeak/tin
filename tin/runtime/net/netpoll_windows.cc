@@ -46,7 +46,7 @@ void NetPollInit() {
 void NetPollShutdown() {
   if (!NetPollInited())
     return;
-  PostQueuedCompletionStatus(iocphandle, 0, nullptr, nullptr);
+  NetPollBreak();
 }
 
 void NetPollPreDeinit() {
@@ -70,6 +70,13 @@ void NetPollArm(PollDescriptor* pd, int mode) {
   LOG(FATAL) << "unused";
 }
 
+void NetPollBreak() {
+  // IOCP: PostQueuedCompletionStatus is the break mechanism.
+  if (iocphandle != INVALID_HANDLE_VALUE) {
+    PostQueuedCompletionStatus(iocphandle, 0, nullptr, nullptr);
+  }
+}
+
 void handlecompletion(G** gpp, NetOP* op, DWORD error_no, uint32_t qty) {
   if (op == nullptr) {
     LOG(FATAL) << "NetPoll: GetQueuedCompletionStatus returned op == nil";
@@ -83,7 +90,9 @@ void handlecompletion(G** gpp, NetOP* op, DWORD error_no, uint32_t qty) {
   NetPollReady(gpp, op->pd, mode);
 }
 
-G* NetPoll(bool block) {
+// Go 1.15 netpoll_windows.go equivalent.
+// IOCP natively supports timeouts via GetQueuedCompletionStatusEx.
+G* NetPoll(int64_t delay_ns) {
   overlappedEntry entries[64];
   DWORD qty, flags, i;
   ULONG_PTR  key = 0;
@@ -91,9 +100,16 @@ G* NetPoll(bool block) {
   DWORD error_no;
   NetOP* op;
   G* gp = nullptr;
-  DWORD wait = 0;
-  if (block) {
-    wait = INFINITE;
+  DWORD wait;
+  if (delay_ns < 0) {
+    wait = INFINITE;  // block indefinitely
+  } else if (delay_ns == 0) {
+    wait = 0;  // non-blocking
+  } else {
+    // ns → ms, at least 1ms for sub-ms delays.
+    int64_t ms = delay_ns / 1000000;
+    if (ms == 0) ms = 1;
+    wait = static_cast<DWORD>(ms);
   }
 
   bool shutdown_flag = false;
@@ -105,7 +121,7 @@ G* NetPoll(bool block) {
                                      (LPOVERLAPPED_ENTRY)&entries[0],
                                      n, &n, wait, 0) == 0) {
       error_no = GetLastError();
-      if (!block && error_no == WAIT_TIMEOUT) {
+      if (delay_ns == 0 && error_no == WAIT_TIMEOUT) {
         return nullptr;
       }
       LOG(INFO) << "NetPoll: GetQueuedCompletionStatusEx failed";
@@ -138,7 +154,7 @@ G* NetPoll(bool block) {
                                   reinterpret_cast<LPOVERLAPPED*>(&op),
                                   wait) == 0) {
       error_no = GetLastError();
-      if (!block && error_no == WAIT_TIMEOUT) {
+      if (delay_ns == 0 && error_no == WAIT_TIMEOUT) {
         return nullptr;
       }
       if (op == nullptr) {

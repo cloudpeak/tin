@@ -14,7 +14,12 @@ namespace tin::runtime {
 
 namespace {
 uint32_t net_poll_Inited = 0;
-}
+
+// Go 1.15 runtime/netpoll.go:18 — atomic counter incremented each time
+// a G commits to blocking on network I/O. Never decremented.
+// Used by FindRunnable as a heuristic: if 0, skip non-blocking NetPoll.
+uint32_t net_poll_waiters = 0;
+}  // namespace
 
 bool NetPollInited() {
   return atomic::acquire_load32(&net_poll_Inited) != 0;
@@ -27,6 +32,10 @@ void NetPollPostInit() {
 void NetPollDeinit() {
   NetPollPreDeinit();
   atomic::store32(&net_poll_Inited, 0);
+}
+
+uint32_t NetPollWaiters() {
+  return atomic::relaxed_load32(&net_poll_waiters);
 }
 
 void NetPollReady(G** gpp, PollDescriptor* pd, int32_t mode) {
@@ -63,7 +72,14 @@ int NetPollCheckErr(PollDescriptor* pd, int32_t mode) {
 bool NetPollBlockCommit(void* arg1, void* arg2) {
   uintptr_t gp = reinterpret_cast<uintptr_t>(arg1);
   uintptr_t* gpp = reinterpret_cast<uintptr_t*>(arg2);
-  return atomic::release_cas(gpp, kPdWait, gp);
+  if (!atomic::release_cas(gpp, kPdWait, gp)) {
+    return false;
+  }
+  // Go 1.15 netpoll.go:140 — increment netpollWaiters so that
+  // FindRunnable knows to do a non-blocking NetPoll check.
+  atomic::relaxed_store32(&net_poll_waiters,
+                           atomic::relaxed_load32(&net_poll_waiters) + 1);
+  return true;
 }
 
 bool NetPollBlock(PollDescriptor* pd, int32_t mode, bool waitio) {

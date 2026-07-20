@@ -19,6 +19,11 @@ bool NetPollInited();
 
 void NetPollPostInit();
 
+// Go 1.15 runtime/netpoll.go:18 — returns the count of goroutines that
+// have ever committed to blocking on network I/O. Used by FindRunnable
+// as a heuristic to decide whether to do a non-blocking NetPoll.
+uint32_t NetPollWaiters();
+
 void NetPollShutdown();
 
 void NetPollPreDeinit();
@@ -31,7 +36,15 @@ int32_t NetPollClose(uintptr_t fd);
 
 void NetPollArm(PollDescriptor* pd, int mode);
 
-G* NetPoll(bool block);
+// Go 1.15 netpoll_epoll.go:106 — poll for ready network Gs.
+//   delay_ns < 0  → block indefinitely
+//   delay_ns == 0  → non-blocking poll
+//   delay_ns > 0   → block at most delay_ns nanoseconds
+G* NetPoll(int64_t delay_ns);
+
+// Wake up a blocked NetPoll call. Used by WakeNetPoller (timer add)
+// and NetPollShutdown to interrupt epoll_wait / kevent / IOCP.
+void NetPollBreak();
 
 int NetPollCheckErr(PollDescriptor* pd, int32_t mode);
 

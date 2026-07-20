@@ -274,9 +274,11 @@ top:
   // === Per-P timer check (Go 1.15 model) ===
   // Run any expired timers on the current P first. A timer callback may
   // Ready() a G which then shows up in curp's runq.
+  // poll_until is kept in function scope so the blocking NetPoll below
+  // can use it as a timeout (Go 1.15 proc.go:2928-2930).
+  int64_t now = 0;
+  int64_t poll_until = 0;
   {
-    int64_t now = 0;
-    int64_t poll_until = 0;
     bool ran_timer = false;
     CheckTimers(curp, 0, &now, &poll_until, &ran_timer);
     if (ran_timer) {
@@ -303,8 +305,10 @@ top:
     }
   }
 
-  if (NetPollInited() && last_poll_ != 0) {
-    gp = NetPoll(false);
+  // Go 1.15 proc.go:2888-2897 — non-blocking NetPoll, but only if there
+  // are netpoll waiters and the scheduler hasn't polled recently.
+  if (NetPollInited() && last_poll_ != 0 && NetPollWaiters() > 0) {
+    gp = NetPoll(0);
     if (gp != 0) {
       InjectGList(GpCastBack(gp->SchedLink()));
       gp->SetState(CoroutineState::kRunnable);
@@ -393,8 +397,18 @@ stop: {
     }
   }
 
+  // Go 1.15 proc.go:2928-2942 — blocking NetPoll with timeout = poll_until - now.
+  // If poll_until is 0 (no timers pending), block indefinitely.
   if (NetPollInited() && atomic::exchange32(&last_poll_, 0) != 0) {
-    gp = NetPoll(true);
+    int64_t delta = -1;  // block indefinitely by default
+    if (poll_until != 0) {
+      int64_t now_ns = MonoNow();
+      delta = poll_until - now_ns;
+      if (delta < 0) {
+        delta = 0;  // timer already expired, poll non-blocking
+      }
+    }
+    gp = NetPoll(delta);
     uint32_t now = static_cast<uint32_t>(MonoNow() / tin::kMillisecond);
     if (now == 0)
       now = 1;

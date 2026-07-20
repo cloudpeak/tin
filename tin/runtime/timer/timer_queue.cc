@@ -15,6 +15,7 @@
 #include "tin/runtime/scheduler.h"
 #include "tin/runtime/coroutine.h"
 #include "tin/runtime/p.h"
+#include "tin/runtime/net/netpoll.h"
 
 #include "tin/runtime/timer/timer_queue.h"
 
@@ -171,10 +172,12 @@ void WakeupSleeperFn(void* arg, uintptr_t seq) {
 
 void WakeNetPoller(int64_t when) {
   (void)when;
-  // tin's NetPoll blocks indefinitely; the simplest correct behavior is to
-  // wake an idle P (if any) so its FindRunnable will call CheckTimers and
-  // pick up the newly-added timer. SysMon also calls WakeupP when it sees
-  // an expired deadline.
+  // Go 1.15 time.go:resettimer — wake up any M blocked in NetPoll so
+  // its epoll_wait/kevent/IOCP returns early and the scheduler loop
+  // can pick up the newly-added timer.
+  if (NetPollInited() && NetPollWaiters() > 0) {
+    NetPollBreak();
+  }
   sched->WakePIfNecessary();
 }
 
