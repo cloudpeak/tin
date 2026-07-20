@@ -580,16 +580,36 @@ void Scheduler::WakeupP() {
 }
 
 void Scheduler::HandoffP(P* p) {
-  // if it has local work, start it straight away
+  // Go 1.15 proc.go:1987-2043 — hand off P to another M.
+  //
+  // When P is in kPsyscall (from EnterSyscallBlock), we try to CAS it
+  // to kPidle before starting a new M so that AcquireP (which expects
+  // kPidle) works. If the CAS fails, ExitSyscallFast reacquired P and
+  // we have nothing to do.
+  //
+  // If there's no work to do, we leave P in kPsyscall (don't put it in
+  // the idle list) so ExitSyscallFast can quickly reacquire it. retake
+  // will idle it if the syscall runs too long (>10ms).
+
+  // If P has local work, start a new M straight away.
   if (!p->RunqEmpty() || sched->GlobalRunqSize() != 0) {
+    if (p->GetStatus() == kPsyscall &&
+        !p->CasStatus(kPsyscall, kPidle)) {
+      return;  // ExitSyscallFast reacquired P
+    }
     StartM(p, false);
     return;
   }
 
-  // no local work, check that there are no spinning/idle M's,
-  // otherwise our help is not required
+  // No local work, check that there are no spinning/idle M's,
+  // otherwise our help is not required.
   if (atomic::load32(&nr_spinning_) + atomic::load32(&nr_idlep_) == 0 &&
       atomic::cas32(&nr_spinning_, 0, 1)) {
+    if (p->GetStatus() == kPsyscall &&
+        !p->CasStatus(kPsyscall, kPidle)) {
+      atomic::inc32(&nr_spinning_, -1);  // undo spinning count
+      return;  // ExitSyscallFast reacquired P
+    }
     StartM(p, true);
     return;
   }
@@ -597,6 +617,10 @@ void Scheduler::HandoffP(P* p) {
   lock_.Lock();
   if (runq_size_ != 0) {
     lock_.Unlock();
+    if (p->GetStatus() == kPsyscall &&
+        !p->CasStatus(kPsyscall, kPidle)) {
+      return;  // ExitSyscallFast reacquired P
+    }
     StartM(p, false);
     return;
   }
@@ -604,9 +628,23 @@ void Scheduler::HandoffP(P* p) {
   if ((nr_idlep_ == static_cast<uint32_t>(rtm_conf->MaxProcs() - 1))
       && atomic::load32(&last_poll_) != 0) {
     lock_.Unlock();
+    if (p->GetStatus() == kPsyscall &&
+        !p->CasStatus(kPsyscall, kPidle)) {
+      return;  // ExitSyscallFast reacquired P
+    }
     StartM(p, false);
     return;
   }
+
+  // Go 1.15: If P is in kPsyscall (from EnterSyscallBlock), leave it
+  // there instead of putting it in the idle list. ExitSyscallFast can
+  // quickly reacquire it; retake will idle it if the syscall runs
+  // too long (>10ms).
+  if (p->GetStatus() == kPsyscall) {
+    lock_.Unlock();
+    return;
+  }
+
   PIdlePut(p);
   lock_.Unlock();
 }
@@ -614,6 +652,12 @@ void Scheduler::HandoffP(P* p) {
 // should not called from g0.
 void Scheduler::ExitSyscall0(G* gp) {
   M* curm = gp->M();
+  // Clear oldp. If P was still in kPsyscall (HandoffP left it there
+  // because there was no work), retake will eventually take it. If P
+  // was already transitioned (by HandoffP or retake), there's nothing
+  // to clean up.
+  curm->SetOldP(nullptr);
+
   gp->SetState(CoroutineState::kRunnable);
   P* p = nullptr;
   {
@@ -639,12 +683,14 @@ void Scheduler::ExitSyscall0(G* gp) {
 bool Scheduler::ExitSyscallFast() {
   G* gp = GetG();
   M* curm = gp->M();
-  P* curp = curm->P();
-  // Try to re-acquire the last P.
-  if (curp != 0 && curp->GetStatus() != kPsyscall &&
-      curp->CasStatus(kPsyscall, kPrunning)) {
-    // There's a cpu for us, so we can run.
-    curp->SetM(curm);
+  P* oldp = curm->OldP();
+  // Go 1.15 proc.go:3035-3090 — try to re-acquire the old P if it's
+  // still in kPsyscall. This gives syscall affinity: the G tends to
+  // return to its original P, improving cache locality.
+  if (oldp != nullptr && oldp->CasStatus(kPsyscall, kPrunning)) {
+    curm->SetP(oldp);
+    oldp->SetM(curm);
+    curm->SetOldP(nullptr);
     return true;
   }
 
@@ -652,6 +698,7 @@ bool Scheduler::ExitSyscallFast() {
   curm->SetP(nullptr);
   if (idlep_ != nullptr) {
     if (ExitSyscallPIdle()) {
+      curm->SetOldP(nullptr);
       return true;
     }
   }
@@ -689,6 +736,45 @@ void Scheduler::ResetSpinning() {
 
 uint32_t Scheduler::LastPollTime() {
   return atomic::acquire_load32(&last_poll_);
+}
+
+// Go 1.15 proc.go:4746-4813 — sysmon calls this to take back Ps stuck
+// in kPsyscall for too long. Returns the number of Ps retaken.
+//
+// Algorithm:
+// - For each P in kPsyscall, check if syscalltick changed since last pass.
+// - If changed: this is a new syscall. Record sysmontick and skip (give
+//   the syscall a chance to complete).
+// - If unchanged: the syscall has been running for at least one sysmon
+//   cycle (up to 10ms). CAS kPsyscall → kPidle and hand off to a new M.
+//
+// tin does not implement the _Prunning preemptone branch (no async
+// preemption).
+uint32_t Scheduler::Retake(int64_t now) {
+  uint32_t n = 0;
+  int nprocs = rtm_conf->MaxProcs();
+  for (int i = 0; i < nprocs; i++) {
+    P* p = allp_[i];
+    if (p == nullptr) continue;
+    uint32_t s = p->GetStatus();
+    if (s == kPsyscall) {
+      uint32_t t = p->SyscallTick();
+      if (p->SysmonTick() != t) {
+        // First observation of this syscall. Record sysmontick
+        // and give it one cycle before retaking.
+        p->SetSysmonTick(t);
+        continue;
+      }
+      // Same syscalltick as last observation → syscall has been
+      // running for at least one sysmon cycle. Take the P back.
+      if (p->CasStatus(kPsyscall, kPidle)) {
+        n++;
+        HandoffP(p);
+      }
+    }
+    // Skip kPrunning (tin has no async preemption / preemptone)
+  }
+  return n;
 }
 
 void Scheduler::DoUnlock(UnLockInfo* info) {
@@ -782,11 +868,23 @@ bool ExitSyscallUnlockFunc(void* arg1, void* arg2) {
 
 void EnterSyscallBlock() {
   G* gp = GetG();
+  M* curm = gp->M();
+  P* p = curm->P();
+  // Go 1.9+ proc.go:3035 — save oldp for ExitSyscallFast affinity.
+  curm->SetOldP(p);
   gp->SetState(CoroutineState::kSyscall);
-  // Go 1.15 runtime2.go:571 — increment syscalltick so sysmon (Phase 2
-  // retake) can detect long-running syscalls.
-  gp->M()->P()->IncSyscallTick();
-  sched->HandoffP(ReleaseP());
+  // Go 1.15 runtime2.go:571 — increment syscalltick so sysmon retake
+  // can detect long-running syscalls.
+  p->IncSyscallTick();
+  // Set P to kPsyscall (not kPidle) so:
+  // 1. ExitSyscallFast can quickly reacquire it (syscall affinity)
+  // 2. retake can take it back if the syscall runs too long (>10ms)
+  curm->SetP(nullptr);
+  p->SetStatus(kPsyscall);
+  p->SetM(nullptr);
+  // HandoffP may start a new M (if there's work) or leave P in
+  // kPsyscall (if there's no work, for fast ExitSyscall reacquisition).
+  sched->HandoffP(p);
 }
 
 void ExitSyscall() {

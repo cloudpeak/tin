@@ -54,6 +54,9 @@ class Scheduler {
   bool ExitSyscallFast();
   bool ExitSyscallPIdle();
   void ResetSpinning();
+  // Go 1.15 proc.go:4746-4813 — sysmon calls this to take back Ps
+  // stuck in kPsyscall for too long.
+  uint32_t Retake(int64_t now);
   uint32_t NrIdleP() {return nr_idlep_; }
   uint32_t NrSpinning() {
     return nr_spinning_;

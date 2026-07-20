@@ -84,6 +84,15 @@ void SysMon() {
     } else {
       idle++;
     }
+
+    // --- Retake: take back Ps stuck in kPsyscall for too long
+    // (Go 1.15 proc.go:4746-4813). EnterSyscallBlock sets P to
+    // kPsyscall; if the syscall runs longer than one sysmon cycle
+    // (~10ms), retake CASes it to kPidle and hands it off to a new M.
+    uint32_t retaken = sched->Retake(now);
+    if (retaken > 0) {
+      idle = 0;  // reset idle count — we did work
+    }
   }
 }
 
