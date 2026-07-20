@@ -3,7 +3,7 @@
 // found in the LICENSE file.
 
 
-#include <thread>
+#include <cstdint>
 #include <cstdlib>
 
 #include "context/zcontext.h"
@@ -489,7 +489,7 @@ void Scheduler::OnSwitch(G* curg) {
 }
 
 int Scheduler::Init() {
-  ResizeProc(std::thread::hardware_concurrency());
+  ResizeProc(rtm_conf->MaxProcs());
   return 0;
 }
 
