@@ -4,10 +4,9 @@
 
 #include  "tin/net/sockaddr_storage.h"
 
-#include <string.h>
+#include <cstring>
 
-namespace tin {
-namespace net {
+namespace tin::net {
 
 SockaddrStorage::SockaddrStorage()
   : addr_len(sizeof(addr_storage)),
@@ -25,5 +24,4 @@ void SockaddrStorage::operator=(const SockaddrStorage& other) {
   memcpy(addr, other.addr, addr_len);
 }
 
-}  // namespace net
-}  // namespace tin
+}  // namespace tin::net

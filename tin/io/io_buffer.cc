@@ -19,16 +19,16 @@
 
 namespace tin {
 
-static const int kInitialIOBufferSize = 32;
+static const int kInitialIoBufferSize = 32;
 
-IOBuffer::IOBuffer()
-  : storage_(new char[kInitialIOBufferSize]),
+IoBuffer::IoBuffer()
+  : storage_(new char[kInitialIoBufferSize]),
     write_idx_(0),
     read_idx_(0),
-    storage_size_(kInitialIOBufferSize) {
+    storage_size_(kInitialIoBufferSize) {
 }
 
-IOBuffer::IOBuffer(size_t size)
+IoBuffer::IoBuffer(size_t size)
   : write_idx_(0),
     read_idx_(0),
     storage_size_(static_cast<int>(size)) {
@@ -38,11 +38,11 @@ IOBuffer::IOBuffer(size_t size)
   storage_ = new char[size];
 }
 
-IOBuffer::~IOBuffer() {
+IoBuffer::~IoBuffer() {
   delete[] storage_;
 }
 
-std::string IOBuffer::str() const {
+std::string IoBuffer::str() const {
   std::string s;
   char* readable_ptr;
   int readable_size;
@@ -53,7 +53,7 @@ std::string IOBuffer::str() const {
 
 // returns the number of characters written.
 // appends up-to-'size' bytes to the SimpleBuffer.
-int IOBuffer::Write(const void* ptr, size_t sz) {
+int IoBuffer::Write(const void* ptr, size_t sz) {
   int size = static_cast<int>(sz);
   const char* bytes = static_cast<const char*>(ptr);
   bool has_room = ((storage_size_ - write_idx_) >= size);
@@ -61,28 +61,28 @@ int IOBuffer::Write(const void* ptr, size_t sz) {
     (void)ReserveMore(size);
   }
   memcpy(storage_ + write_idx_, bytes, size);
-  IOBuffer::AdvanceWritablePtr(size);
+  IoBuffer::AdvanceWritablePtr(size);
   return size;
 }
 
 // stores a pointer into the simple buffer in *ptr,
 // and stores the number of characters which are allowed
 // to be written in *size.
-void IOBuffer::GetWritablePtr(char** ptr, int* size) const {
+void IoBuffer::GetWritablePtr(char** ptr, int* size) const {
   *ptr = storage_ + write_idx_;
-  *size = IOBuffer::free();
+  *size = IoBuffer::free();
 }
 
 // stores a pointer into the simple buffer in *ptr,
 // and stores the number of characters which are allowed
 // to be read in *size.
-void IOBuffer::GetReadablePtr(char** ptr, int* size) const {
+void IoBuffer::GetReadablePtr(char** ptr, int* size) const {
   *ptr = storage_ + read_idx_;
   *size = write_idx_ - read_idx_;
 }
 
 // returns the number of bytes read into 'bytes'
-int IOBuffer::Read(char* bytes, size_t sz) {
+int IoBuffer::Read(char* bytes, size_t sz) {
   int size = static_cast<int>(sz);
   char* read_ptr = nullptr;
   int read_size = 0;
@@ -96,7 +96,7 @@ int IOBuffer::Read(char* bytes, size_t sz) {
 }
 
 
-void IOBuffer::Reset(int size = kInitialIOBufferSize) {
+void IoBuffer::Reset(int size = kInitialIoBufferSize) {
   delete[] storage_;
   storage_ = new char[size],
   write_idx_ = 0;
@@ -106,7 +106,7 @@ void IOBuffer::Reset(int size = kInitialIOBufferSize) {
 
 // Attempts to reserve a contiguous block of buffer space by either reclaiming
 // old data that is already read, and reallocate large storage as needed.
-bool IOBuffer::ReserveMore(int size) {
+bool IoBuffer::ReserveMore(int size) {
   bool changed = false;
   if (size > 0 && free() < size) {
     char* read_ptr = nullptr;
@@ -151,7 +151,7 @@ bool IOBuffer::ReserveMore(int size) {
 ////////////////////////////////////////////////////////////////////////////////
 
 // removes the oldest 'amount_to_consume' characters.
-void IOBuffer::AdvanceReadablePtr(int amount_to_advance) {
+void IoBuffer::AdvanceReadablePtr(int amount_to_advance) {
   read_idx_ += amount_to_advance;
   if (read_idx_ > storage_size_) {
     read_idx_ = storage_size_;
@@ -163,7 +163,7 @@ void IOBuffer::AdvanceReadablePtr(int amount_to_advance) {
 // Moves the internal pointers around such that the
 // amount of data specified here is expected to
 // already be resident (as if it was Written)
-void IOBuffer::AdvanceWritablePtr(int amount_to_advance) {
+void IoBuffer::AdvanceWritablePtr(int amount_to_advance) {
   write_idx_ += amount_to_advance;
   if (write_idx_ > storage_size_) {
     write_idx_ = storage_size_;
@@ -171,7 +171,7 @@ void IOBuffer::AdvanceWritablePtr(int amount_to_advance) {
 }
 
 
-void IOBuffer::Swap(IOBuffer* other) {
+void IoBuffer::Swap(IoBuffer* other) {
   char* tmp = storage_;
   storage_ = other->storage_;
   other->storage_ = tmp;

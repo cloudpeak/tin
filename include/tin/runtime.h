@@ -21,9 +21,11 @@ inline void DoSpawn(std::function<void()> closure) {
 }
 
 template <typename Functor, typename... Args>
-void Spawn(Functor functor, Args&&... args) {
-  auto boundFunction = absl::bind_front(functor, std::forward<Args>(args)...);
-  std::function<void()> closure = [boundFunction]() mutable { boundFunction(); };
+void Spawn(Functor&& functor, Args&&... args) {
+  auto closure = [functor = std::forward<Functor>(functor),
+                  ...args = std::forward<Args>(args)]() mutable {
+    std::invoke(functor, args...);
+  };
   DoSpawn(closure);
 }
 

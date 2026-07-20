@@ -4,10 +4,10 @@
 //
 // P2-1 PIMPL: TcpConn's implementation (TcpConnImpl) is hidden behind a
 // forward-declared Impl class. Users no longer see NetFD, sys_socket.h,
-// or io::IOReadWriter. All methods are explicit forwarding wrappers.
+// or io::IoReadWriter. All methods are explicit forwarding wrappers.
 //
 // NOTE: socklen_t is replaced with int in the public API to avoid leaking
-// platform socket headers. The implementation translates int ↔ socklen_t
+// platform socket headers. The implementation translates int ? socklen_t
 // internally.
 
 #ifndef TIN_NET_TCP_CONN_H_
@@ -18,8 +18,7 @@
 
 #include "tin/result.h"
 
-namespace tin {
-namespace net {
+namespace tin::net {
 
 // PIMPL: forward-declared implementation. Defined in tcp_conn_impl.h (internal).
 class TcpConnImpl;
@@ -38,8 +37,12 @@ class TcpConn {
   Result<size_t> Read(void* buf, int nbytes);
   Result<size_t> Write(const void* buf, int nbytes);
 
+  // t: absolute deadline in nanoseconds since epoch (0 = no deadline).
+  // The deadline applies to both Read and Write operations.
   void SetDeadline(int64_t t);
+  // t: absolute deadline in nanoseconds since epoch (0 = no deadline).
   void SetReadDeadline(int64_t t);
+  // t: absolute deadline in nanoseconds since epoch (0 = no deadline).
   void SetWriteDeadline(int64_t t);
 
   Status SetKeepAlive(bool enable, int sec);
@@ -63,18 +66,13 @@ class TcpConn {
   bool IsValid() const { return impl_ != nullptr; }
 
  private:
-  friend TcpConn MakeTcpConn(class NetFD* netfd);
+  friend TcpConn MakeTcpConn(std::unique_ptr<class NetFD> netfd);
   explicit TcpConn(std::shared_ptr<TcpConnImpl> impl)
     : impl_(std::move(impl)) {}
 
   std::shared_ptr<TcpConnImpl> impl_;
 };
 
-// Factory: creates a TcpConn from a NetFD. Defined in tcp_conn.cc.
-// Declared here so dialer.cc / listener.cc can call it.
-TcpConn MakeTcpConn(class NetFD* netfd);
-
-}  // namespace net
-}  // namespace tin
+}  // namespace tin::net
 
 #endif  // TIN_NET_TCP_CONN_H_

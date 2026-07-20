@@ -2,14 +2,13 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#pragma once
-
+#ifndef TIN_RUNTIME_NET_NETPOLL_H_
+#define TIN_RUNTIME_NET_NETPOLL_H_
 #include <string>
 
 #include "tin/runtime/net/poll_descriptor.h"
 
-namespace tin {
-namespace runtime {
+namespace tin::runtime {
 
 const uintptr_t kPdReady = 1;
 const uintptr_t kPdWait = 2;
@@ -48,5 +47,5 @@ void NetpollReadDeadline(void* arg, uintptr_t seq);
 
 void NetPollWriteDeadline(void* arg, uintptr_t seq);
 
-}  // namespace runtime
-}  // namespace tin
+}  // namespace tin::runtime
+#endif  // TIN_RUNTIME_NET_NETPOLL_H_

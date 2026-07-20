@@ -2,17 +2,15 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#pragma once
+#ifndef TIN_NET_POLL_DESC_H_
+#define TIN_NET_POLL_DESC_H_
 #include <string>
 
-namespace tin {
-
-// forward declaration.
-namespace runtime {
+namespace tin::runtime {
 struct PollDescriptor;
 }
 
-namespace net {
+namespace tin::net {
 
 class PollDesc {
  public:
@@ -46,11 +44,5 @@ class PollDesc {
   uintptr_t runtime_ctx_;
 };
 
-}  // namespace net
-}  // namespace tin
-
-
-
-
-
-
+}  // namespace tin::net
+#endif  // TIN_NET_POLL_DESC_H_

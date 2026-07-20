@@ -15,8 +15,7 @@
 #include <ws2tcpip.h>
 #endif
 
-namespace tin {
-namespace net {
+namespace tin::net {
 
 // Convenience struct for when you need a |struct sockaddr|.
 struct SockaddrStorage {
@@ -29,7 +28,6 @@ struct SockaddrStorage {
   struct sockaddr* const addr;
 };
 
-}  // namespace net
-}  // namespace tin
+}  // namespace tin::net
 
 #endif  // NET_BASE_SOCKADDR_STORAGE_H_

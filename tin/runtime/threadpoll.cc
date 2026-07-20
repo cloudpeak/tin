@@ -12,8 +12,7 @@
 
 #include "tin/runtime/threadpoll.h"
 
-namespace tin {
-namespace runtime {
+namespace tin::runtime {
 
 GletWork::GletWork() {
   gp_ = GetG();
@@ -121,5 +120,4 @@ void ThreadPool::Run() {
   }
 }
 
-}  // namespace runtime
-}  // namespace tin
+}  // namespace tin::runtime

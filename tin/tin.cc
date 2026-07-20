@@ -7,27 +7,25 @@
 
 #include "tin/tin.h"
 
+#include <memory>
+
 namespace tin {
 
 namespace {
-Config* conf = nullptr;
+std::unique_ptr<Config> conf;
 }
 
 void Initialize() {
-  conf = new tin::Config;
+  conf = std::make_unique<Config>();
   *conf = DefaultConfig();
   PlatformInit();
 }
 
-void PowerOn(EntryFn fn, int argc, char** argv, Config* new_conf) {
+void PowerOn(EntryFn entry, int argc, char** argv, Config* new_conf) {
   if (new_conf != nullptr) {
     *conf = *new_conf;
   }
-  runtime::InitializeEnv(fn, argc, argv, conf);
-}
-
-void PowerOn(EntryFn fn, Config* new_conf) {
-  return PowerOn(fn, 0, nullptr, new_conf);
+  runtime::InitializeEnv(std::move(entry), argc, argv, conf.get());
 }
 
 int WaitForPowerOff() {
@@ -35,11 +33,20 @@ int WaitForPowerOff() {
 }
 
 void Deinitialize() {
-  delete conf;
+  runtime::DeInitializeEnv();
+  conf.reset();
+}
+
+void Stop(int exit_code) {
+  runtime::RequestStop(exit_code);
+}
+
+bool StopRequested() {
+  return runtime::StopRequested();
 }
 
 Config* GetWorkingConfig() {
-  return conf;
+  return conf.get();
 }
 
 Config DefaultConfig() {
@@ -53,40 +60,24 @@ Config DefaultConfig() {
 }
 
 // ---------------------------------------------------------------------------
-// Runtime class implementation.
-// ---------------------------------------------------------------------------
-
-Runtime::Runtime()
-  : conf_(DefaultConfig()) {
-  Initialize();
-}
-
-Runtime::Runtime(const Config& conf)
-  : conf_(conf) {
-  Initialize();
-}
-
-Runtime::~Runtime() {
-  Deinitialize();
-}
-
-int Runtime::Run(EntryFn entry, int argc, char** argv) {
-  PowerOn(std::move(entry), argc, argv, &conf_);
-  return WaitForPowerOff();
-}
-
-// ---------------------------------------------------------------------------
 // Convenience functions.
 // ---------------------------------------------------------------------------
 
 int Run(EntryFn entry, int argc, char** argv) {
-  Runtime rt;
-  return rt.Run(std::move(entry), argc, argv);
+  Initialize();
+  PowerOn(std::move(entry), argc, argv);
+  int ret = WaitForPowerOff();
+  Deinitialize();
+  return ret;
 }
 
-int Run(EntryFn entry, int argc, char** argv, const Config& conf) {
-  Runtime rt(conf);
-  return rt.Run(std::move(entry), argc, argv);
+int Run(EntryFn entry, int argc, char** argv, const Config& config) {
+  Initialize();
+  Config conf = config;
+  PowerOn(std::move(entry), argc, argv, &conf);
+  int ret = WaitForPowerOff();
+  Deinitialize();
+  return ret;
 }
 
 }  // namespace tin

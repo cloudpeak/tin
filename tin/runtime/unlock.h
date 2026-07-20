@@ -2,7 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#pragma once
+#ifndef TIN_RUNTIME_UNLOCK_H_
+#define TIN_RUNTIME_UNLOCK_H_
 #include <cstdlib>
 
 #include "tin/runtime/util.h"
@@ -93,17 +94,4 @@ class UnLockInfo {
 
 }  // namespace runtime
 }   // namespace tin
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+#endif  // TIN_RUNTIME_UNLOCK_H_

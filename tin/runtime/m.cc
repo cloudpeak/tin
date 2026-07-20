@@ -17,8 +17,7 @@
 
 #include "tin/runtime/m.h"
 
-namespace tin {
-namespace runtime {
+namespace tin::runtime {
 
 M::M()
   : next_waitm_(0)
@@ -227,5 +226,4 @@ void M::ClearDeadQueue() {
 // -----------------------------------------------------
 
 
-}  // namespace runtime
-}  // namespace tin
+}  // namespace tin::runtime

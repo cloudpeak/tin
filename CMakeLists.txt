@@ -197,7 +197,6 @@ tin/net/resolve.cc
 tin/net/sockaddr_storage.cc
 tin/net/tcp_conn.cc
 tin/bufio/bufio.cc
-tin/bufio/buffered_reader.cc
 tin/runtime/env.cc
 tin/runtime/greenlet.cc
 tin/runtime/m.cc
@@ -270,16 +269,14 @@ endif()
 if (WIN32)
     LIST(APPEND SOURCES
 		tin/bufio/bufio.h
-		tin/bufio/buffered_reader.h
-		tin/communication/chan.h
-		tin/communication/queue.h
-		tin/config/config.h
+			tin/communication/chan.h
+			tin/config/config.h
 		tin/config/default.h
 		tin/error/error.h
 		tin/error/error_inl.h
 		tin/io/io.h
 		tin/io/io_buffer.h
-		tin/net/address_family.h
+			tin/net/address_family.h
 		tin/net/address_list.h
 		tin/net/dialer.h
 		tin/net/fd_mutex.h

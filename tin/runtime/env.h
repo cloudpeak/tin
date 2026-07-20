@@ -2,8 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#pragma once
-
+#ifndef TIN_RUNTIME_ENV_H_
+#define TIN_RUNTIME_ENV_H_
 #include <memory>
 
 #include "absl/synchronization/notification.h"
@@ -12,8 +12,7 @@
 #include "tin/sync/atomic_flag.h"
 #include "tin/config/config.h"
 
-namespace tin {
-namespace runtime {
+namespace tin::runtime {
 
 class Scheduler;
 class Greenlet;
@@ -37,6 +36,20 @@ class Env {
     return exit_flag_ == true;
   }
 
+  // Request the runtime to stop. Sets exit_flag_ and notifies
+  // main_signal_ so WaitForPowerOff() returns. Can be called from
+  // any greenlet or from a signal handler on the main thread.
+  void RequestStop(int exit_code = 0);
+
+  // Returns the exit code set by Stop() or by the entry function's
+  // return value.
+  int exit_code() const { return exit_code_; }
+
+  // Returns true if OnMainExit() has already done cleanup (JoinAll +
+  // timer_q->Join). Used by Deinitialize() to avoid double-cleanup when
+  // Stop() was called before the entry function returned.
+  bool main_exited() const { return main_exited_; }
+
  private:
   void SignalInit();
   void PreInit();
@@ -52,6 +65,8 @@ class Env {
   int num_processors_;
   absl::Notification main_signal_;
   tin::AtomicFlag exit_flag_;
+  bool main_exited_ = false;
+  int exit_code_ = 0;
   // Owned by Env via unique_ptr (P1-1). The global non-owning pointers
   // `sched` and `timer_q` below are set to point at these in Initialize()
   // and cleared in Deinitialize(), so existing call sites (sched->Init()
@@ -74,6 +89,11 @@ extern tin::Config* rtm_conf;
 int InitializeEnv(EntryFn fn, int argc, char** argv, Config* new_conf);
 void DeInitializeEnv();
 
+// Request the runtime to stop (sets exit_flag_ + notifies main_signal_).
+void RequestStop(int exit_code = 0);
 
-}  // namespace runtime
-}  // namespace tin
+// Returns true if the runtime is shutting down.
+bool StopRequested();
+
+}  // namespace tin::runtime
+#endif  // TIN_RUNTIME_ENV_H_

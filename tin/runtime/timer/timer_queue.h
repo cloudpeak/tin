@@ -2,7 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#pragma once
+#ifndef TIN_RUNTIME_TIMER_TIMER_QUEUE_H_
+#define TIN_RUNTIME_TIMER_TIMER_QUEUE_H_
 #include <vector>
 
 #include "tin/time/time.h"
@@ -78,12 +79,4 @@ class TimerQueue {
 
 }  // namespace runtime
 }   // namespace tin
-
-
-
-
-
-
-
-
-
+#endif  // TIN_RUNTIME_TIMER_TIMER_QUEUE_H_

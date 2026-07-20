@@ -2,8 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#pragma once
-
+#ifndef TIN_RUNTIME_NET_POLL_DESCRIPTOR_H_
+#define TIN_RUNTIME_NET_POLL_DESCRIPTOR_H_
 #include "base/memory/ref_counted.h"
 #include "base/memory/scoped_refptr.h"
 
@@ -70,8 +70,4 @@ inline PollDescriptor* NewPollDescriptor() {
 }
 
 } // namespace tin::runtime
-
-
-
-
-
+#endif  // TIN_RUNTIME_NET_POLL_DESCRIPTOR_H_

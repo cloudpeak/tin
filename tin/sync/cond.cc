@@ -5,7 +5,8 @@
 #include <absl/log/check.h>
 #include <absl/log/log.h>
 
-#include "tin/sync/atomic.h"
+#include <atomic>
+
 #include "tin/runtime/raw_mutex.h"
 #include "tin/runtime/semaphore.h"  // internal: SyncSema
 #include "tin/sync/cond.h"          // public: Cond (PIMPL)
@@ -26,7 +27,7 @@ Cond::Cond(Mutex* lock)
 Cond::~Cond() = default;
 
 void Cond::Wait() {
-  atomic::Inc32(&waiters_, 1);
+  waiters_.fetch_add(1, std::memory_order_seq_cst);
   lock_->Unlock();
   impl_->sem_.Acquire();
   lock_->Lock();
@@ -42,7 +43,8 @@ void Cond::Broadcast() {
 
 void Cond::SignalImpl(bool all) {
   while (true) {
-    uint32_t old_waiters = atomic::load32(&waiters_);
+    std::atomic_thread_fence(std::memory_order_seq_cst);
+    uint32_t old_waiters = waiters_.load(std::memory_order_acquire);
     if (old_waiters == 0) {
       return;
     }
@@ -50,7 +52,10 @@ void Cond::SignalImpl(bool all) {
     if (all) {
       new_waiters = 0;
     }
-    if (atomic::cas32(&waiters_, old_waiters, new_waiters)) {
+    std::atomic_thread_fence(std::memory_order_seq_cst);
+    if (waiters_.compare_exchange_strong(
+            old_waiters, new_waiters,
+            std::memory_order_acquire, std::memory_order_relaxed)) {
       impl_->sem_.Release(old_waiters - new_waiters);
     }
   }

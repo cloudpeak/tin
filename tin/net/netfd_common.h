@@ -2,7 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#pragma once
+#ifndef TIN_NET_NETFD_COMMON_H_
+#define TIN_NET_NETFD_COMMON_H_
 #include <string>
 #include "tin/net/fd_mutex.h"
 #include "tin/net/poll_desc.h"
@@ -73,9 +74,4 @@ class NetFDCommon {
   PollDesc pd_;
 };
 } // namespace tin::net
-
-
-
-
-
-
+#endif  // TIN_NET_NETFD_COMMON_H_

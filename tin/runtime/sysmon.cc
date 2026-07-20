@@ -12,8 +12,7 @@
 
 #include "tin/runtime/sysmon.h"
 
-namespace tin {
-namespace runtime {
+namespace tin::runtime {
 
 void SysMon() {
   while (!rtm_env->ExitFlag()) {
@@ -36,5 +35,4 @@ void SysMon() {
 void SysMonJoin() {
 }
 
-}  // namespace runtime
-}  // namespace tin
+}  // namespace tin::runtime

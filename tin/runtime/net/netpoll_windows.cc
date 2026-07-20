@@ -13,8 +13,7 @@
 #include "tin/runtime/net/NetPoll.h"
 
 
-namespace tin {
-namespace runtime {
+namespace tin::runtime {
 
 struct PollDescriptor;
 
@@ -160,5 +159,4 @@ G* NetPoll(bool block) {
   return gp;
 }
 
-}  // namespace runtime
-}  // namespace tin
+}  // namespace tin::runtime

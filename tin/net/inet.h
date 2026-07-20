@@ -2,11 +2,11 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#pragma once
+#ifndef TIN_NET_INET_H_
+#define TIN_NET_INET_H_
 #include <string>
 
-namespace tin {
-namespace net {
+namespace tin::net {
 
 int InetNToP(int af, const void* src, char* dst, size_t size);
 
@@ -17,5 +17,5 @@ bool InetNToP(bool ipv4, const void* src, std::string* dst);
 
 bool INetPToN(bool ipv4, const char* src, void* dst);
 
-}  // namespace net
-}  // namespace tin
+}  // namespace tin::net
+#endif  // TIN_NET_INET_H_

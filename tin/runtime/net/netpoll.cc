@@ -10,8 +10,7 @@
 #include "tin/runtime/scheduler.h"
 #include "tin/runtime/net/netpoll.h"
 
-namespace tin {
-namespace runtime {
+namespace tin::runtime {
 
 namespace {
 uint32_t net_poll_Inited = 0;
@@ -180,5 +179,4 @@ void NetPollWriteDeadline(void* arg, uintptr_t seq) {
   NetPollDeadlineImpl(static_cast<PollDescriptor*>(arg), seq, false, true);
 }
 
-}  // namespace runtime
-}  // namespace tin
+}  // namespace tin::runtime

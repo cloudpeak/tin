@@ -2,10 +2,9 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#pragma once
-
-namespace tin {
-namespace runtime {
+#ifndef TIN_RUNTIME_SPIN_H_
+#define TIN_RUNTIME_SPIN_H_
+namespace tin::runtime {
 namespace spin {
 
 const int kActiveSpin = 4;
@@ -18,5 +17,5 @@ bool CanSpin(int i);
 
 void DoSpin();
 
-}  // namespace runtime
-}  // namespace tin
+}  // namespace tin::runtime
+#endif  // TIN_RUNTIME_SPIN_H_

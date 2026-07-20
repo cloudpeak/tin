@@ -2,7 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#pragma once
+#ifndef TIN_COMMUNICATION_CHAN_H_
+#define TIN_COMMUNICATION_CHAN_H_
 #include <utility>
 #include <deque>
 
@@ -86,7 +87,7 @@ class Channel
     runtime::SemRelease(&used_space_sem_);
   }
 
-  bool IsClosed() {
+  bool IsClosed() const {
     return atomic::acquire_load32(&closed_) != 0;  // acquire
   }
 
@@ -127,3 +128,4 @@ Chan<T> MakeChan(uint32_t max_size = kDefaultChanSize) {
 
 
 }  // namespace tin
+#endif  // TIN_COMMUNICATION_CHAN_H_

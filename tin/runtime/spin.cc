@@ -11,8 +11,7 @@
 #include "tin/runtime/scheduler.h"
 #include "tin/runtime/spin.h"
 
-namespace tin {
-namespace runtime {
+namespace tin::runtime {
 
 bool CanSpin(int i) {
   int32_t max_proc = rtm_conf->MaxProcs();
@@ -33,5 +32,4 @@ void DoSpin() {
   return;
 }
 
-}  // namespace runtime
-}  // namespace tin
+}  // namespace tin::runtime

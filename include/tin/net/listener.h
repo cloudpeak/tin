@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 //
-// P2-1 PIMPL: TCPListener's implementation (TCPListenerImpl) is hidden
+// P2-1 PIMPL: TcpListener's implementation (TcpListenerImpl) is hidden
 // behind a forward-declared Impl class.
 
 #ifndef TIN_NET_LISTENER_H_
@@ -16,14 +16,14 @@
 
 namespace tin::net {
 
-class TCPListenerImpl;
+class TcpListenerImpl;
 
-class TCPListener {
+class TcpListener {
  public:
-  TCPListener() = default;
-  ~TCPListener() = default;
-  TCPListener(const TCPListener& other) = default;
-  TCPListener& operator=(const TCPListener& other) = default;
+  TcpListener() = default;
+  ~TcpListener() = default;
+  TcpListener(const TcpListener& other) = default;
+  TcpListener& operator=(const TcpListener& other) = default;
 
   Status SetDeadline(int64_t t);
   Result<TcpConn> Accept();
@@ -32,13 +32,16 @@ class TCPListener {
   bool IsValid() const { return impl_ != nullptr; }
 
  private:
-  friend Result<TCPListener> ListenTcp(const class IPAddress&,
+  friend Result<TcpListener> ListenTcp(const class IpAddress&,
                                        uint16_t, int);
-  explicit TCPListener(std::shared_ptr<TCPListenerImpl> impl)
+  explicit TcpListener(std::shared_ptr<TcpListenerImpl> impl)
     : impl_(std::move(impl)) {}
 
-  std::shared_ptr<TCPListenerImpl> impl_;
+  std::shared_ptr<TcpListenerImpl> impl_;
 };
+
+// Deprecated alias for backward compatibility. Use TcpListener instead.
+using TCPListener = TcpListener;
 
 }  // namespace tin::net
 

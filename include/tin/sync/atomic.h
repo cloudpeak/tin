@@ -2,13 +2,14 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#pragma once
+#ifndef TIN_SYNC_ATOMIC_H_
+#define TIN_SYNC_ATOMIC_H_
 #include <cstdint>
 #include <atomic>
 #include <type_traits>
 
 // ---------------------------------------------------------------------------
-// tin::atomic — thin wrapper over std::atomic.
+// tin::atomic —thin wrapper over std::atomic.
 //
 // History: this header previously forwarded to cliff:: (a Chromium //base
 // shim) for atomic operations, pulling `using namespace cliff;` into the
@@ -18,8 +19,8 @@
 //
 // The public function signatures are intentionally kept identical to the
 // legacy API (volatile pointers, lowercase function names, `32` suffix for
-// 32-bit variants) so that existing callers — atomic_flag.h, raw_mutex.h,
-// m.h, netfd_common.h, etc. — compile without changes.
+// 32-bit variants) so that existing callers —atomic_flag.h, raw_mutex.h,
+// m.h, netfd_common.h, etc. —compile without changes.
 //
 // The volatile qualifier on the pointer parameters is retained for source
 // compatibility but is stripped internally via const_cast before
@@ -323,14 +324,14 @@ inline int32_t load32(volatile const int32_t* ptr) {
 
 // --- increment32 ---
 
-inline int32_t relaxed_Inc32(volatile int32_t* ptr, int32_t increment) {
+inline int32_t relaxed_inc32(volatile int32_t* ptr, int32_t increment) {
   // fetch_add returns the old value; the legacy NoBarrier_AtomicIncrement
   // returns the new value.
   return atomic_addr(ptr)->fetch_add(increment, std::memory_order_relaxed)
          + increment;
 }
 
-inline int32_t Inc32(volatile int32_t* ptr, int32_t increment) {
+inline int32_t inc32(volatile int32_t* ptr, int32_t increment) {
   return atomic_addr(ptr)->fetch_add(increment, std::memory_order_seq_cst)
          + increment;
 }
@@ -421,14 +422,15 @@ inline uint32_t load32(volatile const uint32_t* ptr) {
       reinterpret_cast<volatile const int32_t*>(ptr)));
 }
 
-inline int32_t relaxed_Inc32(volatile uint32_t* ptr, uint32_t increment) {
-  return relaxed_Inc32(reinterpret_cast<volatile int32_t*>(ptr),
+inline int32_t relaxed_inc32(volatile uint32_t* ptr, uint32_t increment) {
+  return relaxed_inc32(reinterpret_cast<volatile int32_t*>(ptr),
                        static_cast<int32_t>(increment));
 }
 
-inline int32_t Inc32(volatile uint32_t* ptr, uint32_t increment) {
-  return Inc32(reinterpret_cast<volatile int32_t*>(ptr),
+inline int32_t inc32(volatile uint32_t* ptr, uint32_t increment) {
+  return inc32(reinterpret_cast<volatile int32_t*>(ptr),
                static_cast<int32_t>(increment));
 }
 
 }  // namespace tin::atomic
+#endif  // TIN_SYNC_ATOMIC_H_

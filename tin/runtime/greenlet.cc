@@ -4,6 +4,7 @@
 
 #include <utility>
 #include <functional>
+#include <string>
 
 #include "base/strings/string_util.h"
 
@@ -29,11 +30,10 @@ Greenlet::~Greenlet() {
 }
 
 void Greenlet::SetName(const char* name) {
-  // TODO
   if (name != nullptr)
-    base::strlcpy(name_, name, ABSL_ARRAYSIZE(name_));
+    name_ = name;
   else
-    base::strlcpy(name_, "greenlet", ABSL_ARRAYSIZE(name_));
+    name_ = "greenlet";
 }
 
 Timer* Greenlet::GetTimer() {

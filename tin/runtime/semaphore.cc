@@ -96,7 +96,7 @@ void OnSemDeadlineReached(void* arg, uintptr_t seq) {
     RawMutexGuard guard(&root->lock);
     if (s->wakedup == 0) {
       // remove from list.
-      atomic::Inc32(&root->nwait, -1);
+      atomic::inc32(&root->nwait, -1);
       root->dequeue(s);
       gp = s->gp;
     }
@@ -138,10 +138,10 @@ bool SemAcquire(uint32_t* addr) {
       break;
     }
     // Add ourselves to nwait to disable "easy case" in semrelease.
-    atomic::Inc32(&root->nwait, 1);
+    atomic::inc32(&root->nwait, 1);
     // Check CanSemAcquire to avoid missed wakeup.
     if (CanSemAcquire(addr)) {
-      atomic::Inc32(&root->nwait, -1);
+      atomic::inc32(&root->nwait, -1);
       root->lock.Unlock();
       break;
     }
@@ -160,7 +160,7 @@ bool SemAcquire(uint32_t* addr) {
 
 void SemRelease(uint32_t* addr) {
   SemaRoot* root = semroot(addr);
-  atomic::Inc32(addr, 1);
+  atomic::inc32(addr, 1);
   if (atomic::load32(&root->nwait) == 0) {
     return;
   }
@@ -177,7 +177,7 @@ void SemRelease(uint32_t* addr) {
   Sudog* s = root->head;
   for ( ; s != nullptr; s = s->next) {
     if (s->elem == addr) {
-      atomic::Inc32(&root->nwait, -1);
+      atomic::inc32(&root->nwait, -1);
       root->dequeue(s);
       break;
     }

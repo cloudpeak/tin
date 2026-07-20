@@ -6,10 +6,9 @@
 #define NET_BASE_ADDRESS_FAMILY_H_
 
 
-namespace tin {
-namespace net {
+namespace tin::net {
 
-class IPAddress;
+class IpAddress;
 
 // Enum wrapper around the address family types supported by host resolver
 // procedures.
@@ -35,12 +34,11 @@ enum {
 using HostResolverFlags = int;
 
 // Returns AddressFamily for |address|.
-AddressFamily GetAddressFamily(const IPAddress& address);
+AddressFamily GetAddressFamily(const IpAddress& address);
 
 // Maps the given AddressFamily to either AF_INET, AF_INET6 or AF_UNSPEC.
 int ConvertAddressFamily(AddressFamily address_family);
 
-}  // namespace net
-}  // namespace tin
+}  // namespace tin::net
 
 #endif  // NET_BASE_ADDRESS_FAMILY_H_

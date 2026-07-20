@@ -6,11 +6,10 @@
 #ifndef NET_BASE_WINSOCK_UTIL_H_
 #define NET_BASE_WINSOCK_UTIL_H_
 
-#include <stddef.h>
+#include <cstddef>
 #include <winsock2.h>
 
-namespace tin {
-namespace net {
+namespace tin::net {
 
 // Bluetooth address size. Windows Bluetooth is supported via winsock.
 static const size_t kBluetoothAddressSize = 6;
@@ -28,7 +27,6 @@ void AssertEventNotSignaled(WSAEVENT hEvent);
 // optimization.  The code still works if this function simply returns false.
 bool ResetEventIfSignaled(WSAEVENT hEvent);
 
-}  // namespace net
-}  // namespace tin
+}  // namespace tin::net
 
 #endif  // NET_BASE_WINSOCK_UTIL_H_

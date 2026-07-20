@@ -9,61 +9,57 @@
 #include "tin/time/time.h"
 #include "tin/runtime/runtime.h"
 #include "tin/net/netfd.h"
-#include "tin/net/listener_impl.h"  // internal: TCPListenerImpl
-#include "tin/net/listener.h"       // public: TCPListener (PIMPL)
-#include "tin/net/tcp_conn.h"       // public: TcpConn, MakeTcpConn
+#include "tin/net/listener_impl.h"  // internal: TcpListenerImpl
+#include "tin/net/listener.h"       // public: TcpListener (PIMPL)
+#include "tin/net/tcp_conn_impl.h"  // internal: MakeTcpConn
 
-namespace tin {
-namespace net {
+namespace tin::net {
 
 // ---------------------------------------------------------------------------
-// TCPListenerImpl — full implementation (internal).
+// TcpListenerImpl ? full implementation (internal).
 // ---------------------------------------------------------------------------
 
-TCPListenerImpl::TCPListenerImpl(NetFD* netfd, int backlog)
-  : netfd_(netfd) {
+TcpListenerImpl::TcpListenerImpl(std::unique_ptr<NetFD> netfd, int backlog)
+  : netfd_(std::move(netfd)) {
 }
 
-TCPListenerImpl::~TCPListenerImpl() {
-  delete netfd_;
-}
+TcpListenerImpl::~TcpListenerImpl() = default;
 
-Status TCPListenerImpl::SetDeadline(int64_t t) {
+Status TcpListenerImpl::SetDeadline(int64_t t) {
   int err = netfd_->SetDeadline(t);
   return Status::FromErrno(TinTranslateSysError(err));
 }
 
-Status TCPListenerImpl::Close() {
+Status TcpListenerImpl::Close() {
   int err = netfd_->Close();
   return Status::FromErrno(TinTranslateSysError(err));
 }
 
-Result<TcpConn> TCPListenerImpl::Accept() {
+Result<TcpConn> TcpListenerImpl::Accept() {
   NetFD* newfd = nullptr;
   int err = netfd_->Accept(&newfd);
   if (err != 0) {
     delete newfd;
     return Result<TcpConn>::Err(TinTranslateSysError(err));
   }
-  return Result<TcpConn>::Ok(MakeTcpConn(newfd));
+  return Result<TcpConn>::Ok(MakeTcpConn(std::unique_ptr<NetFD>(newfd)));
 }
 
 // ---------------------------------------------------------------------------
-// TCPListener — PIMPL forwarding methods (public API).
+// TcpListener ? PIMPL forwarding methods (public API).
 // ---------------------------------------------------------------------------
 
-Status TCPListener::SetDeadline(int64_t t) {
+Status TcpListener::SetDeadline(int64_t t) {
   return impl_ ? impl_->SetDeadline(t) : Status::FromErrno(TIN_EBADF);
 }
 
-Result<TcpConn> TCPListener::Accept() {
+Result<TcpConn> TcpListener::Accept() {
   return impl_ ? impl_->Accept()
                : Result<TcpConn>::Err(TIN_EBADF);
 }
 
-Status TCPListener::Close() {
+Status TcpListener::Close() {
   return impl_ ? impl_->Close() : Status::FromErrno(TIN_EBADF);
 }
 
-}  // namespace net
-}  // namespace tin
+}  // namespace tin::net

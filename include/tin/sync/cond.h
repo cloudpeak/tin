@@ -10,6 +10,7 @@
 #define TIN_SYNC_COND_H_
 
 #include "tin/sync/mutex.h"
+#include <atomic>
 
 namespace tin {
 
@@ -30,7 +31,7 @@ class Cond {
   // PIMPL: hides runtime::SyncSema from the public header.
   struct Impl;
   std::unique_ptr<Impl> impl_;
-  uint32_t waiters_;
+  std::atomic<uint32_t> waiters_{0};
 };
 
 }  // namespace tin

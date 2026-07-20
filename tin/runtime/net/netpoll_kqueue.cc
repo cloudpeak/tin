@@ -2,9 +2,9 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include <assert.h>
-#include <stdlib.h>
-#include <string.h>
+#include <cassert>
+#include <cstdlib>
+#include <cstring>
 #include <errno.h>
 
 #include <sys/sysctl.h>
@@ -13,7 +13,7 @@
 #include <sys/time.h>
 #include <unistd.h>
 #include <fcntl.h>
-#include <time.h>
+#include <ctime>
 
 
 #include "tin/runtime/runtime.h"
@@ -24,8 +24,7 @@ namespace {
 int kq = -1;
 }
 
-namespace tin {
-namespace runtime {
+namespace tin::runtime {
 
 struct PollDescriptor;
 
@@ -110,5 +109,4 @@ G* NetPoll(bool block) {
   return nullptr;
 }
 
-}  // namespace runtime
-}  // namespace tin
+}  // namespace tin::runtime

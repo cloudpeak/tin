@@ -2,8 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#pragma once
-
+#ifndef TIN_RUNTIME_M_H_
+#define TIN_RUNTIME_M_H_
 #include <list>
 #include <memory>
 #include <semaphore>
@@ -171,12 +171,4 @@ class M  {
 };
 
 } // namespace tin::runtime
-
-
-
-
-
-
-
-
-
+#endif  // TIN_RUNTIME_M_H_

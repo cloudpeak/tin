@@ -11,8 +11,7 @@
 #include "tin/runtime/net/netpoll.h"
 #include "tin/runtime/net/pollops.h"
 
-namespace tin {
-namespace runtime {
+namespace tin::runtime {
 namespace pollops {
 
 void ServerInit() {
@@ -223,5 +222,4 @@ void Unblock(PollDescriptor* pd) {
 }
 
 }  // namespace pollops
-}  // namespace runtime
-}  // namespace tin
+}  // namespace tin::runtime

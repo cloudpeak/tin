@@ -2,22 +2,12 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#pragma once
-#include <cstdlib>
-#include <absl/functional/bind_front.h>
+#ifndef TIN_RUNTIME_SPAWN_H_
+#define TIN_RUNTIME_SPAWN_H_
 
-namespace tin {
-void RuntimeSpawn(std::function<void()>* closure);
+// Spawn is declared in the public header include/tin/runtime.h.
+// This file forwards to it so internal code can use the same API
+// without duplicating the template definition.
+#include "tin/runtime.h"
 
-inline void  DoSpawn(std::function<void()> closure) {
-  RuntimeSpawn(&closure);
-}
-
-template <typename Functor, typename... Args>
-void Spawn(Functor functor, Args&&... args) {
-  auto boundFunction = absl::bind_front(functor, std::forward<Args>(args)...);
-  std::function<void()> closure = [boundFunction]() mutable { boundFunction(); };
-  DoSpawn(closure);
-}
-
-}  // namespace tin
+#endif  // TIN_RUNTIME_SPAWN_H_

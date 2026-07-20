@@ -2,13 +2,12 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#pragma once
-
+#ifndef TIN_RUNTIME_P_H_
+#define TIN_RUNTIME_P_H_
 #include "tin/runtime/util.h"
 #include "tin/runtime/guintptr.h"
 
-namespace tin {
-namespace runtime {
+namespace tin::runtime {
 class M;
 
 // P status
@@ -106,9 +105,5 @@ class P {
   tin::runtime::M* m_;
 };
 
-}  // namespace runtime
-}  // namespace tin
-
-
-
-
+}  // namespace tin::runtime
+#endif  // TIN_RUNTIME_P_H_

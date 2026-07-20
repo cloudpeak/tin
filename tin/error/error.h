@@ -2,8 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#pragma once
-
+#ifndef TIN_ERROR_ERROR_H_
+#define TIN_ERROR_ERROR_H_
 #include "tin/error/error_inl.h"
 
 /* Expand this list if necessary. */
@@ -98,6 +98,7 @@ enum tin_errno_t {
 #define XX(code, _) TIN_ ## code = TIN__ ## code,
   TIN_ERRNO_MAP(XX)
 #undef XX
+  // Sentinel marking the end of the error code range (not a valid error).
   TIN_ERRNO_MAX = TIN__EOF - 1
 };
 
@@ -105,6 +106,13 @@ int TinTranslateSysError(int sys_errno);
 
 int TinGetaddrinfoTranslateError(int sys_err);
 
+// SysErrorTranslator: RAII helper that translates a system errno to a tin
+// error code on scope exit. Usage:
+//   int err = 0;
+//   {
+//     SysErrorTranslator t(&err);
+//     err = some_syscall();
+//   }  // err is now translated to TIN_ error code
 class SysErrorTranslator {
  public:
   explicit SysErrorTranslator(int* error_code)
@@ -123,5 +131,14 @@ inline const char* TinErrorName(int err) {
   switch (err) {
     TIN_ERRNO_MAP(TIN_ERR_NAME_GEN)
   }
-  return "unkown error";
+  return "unknown error";
 }
+
+#define TIN_ERR_DESC_GEN(name, desc) case TIN_ ## name: return desc;
+inline const char* TinErrorDescription(int err) {
+  switch (err) {
+    TIN_ERRNO_MAP(TIN_ERR_DESC_GEN)
+  }
+  return "unknown error";
+}
+#endif  // TIN_ERROR_ERROR_H_

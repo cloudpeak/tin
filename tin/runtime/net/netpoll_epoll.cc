@@ -18,8 +18,7 @@ namespace {
 int epfd = -1;
 }
 
-namespace tin {
-namespace runtime {
+namespace tin::runtime {
 
 struct PollDescriptor;
 
@@ -98,5 +97,4 @@ G* NetPoll(bool block) {
   }
 }
 
-}  // namespace runtime
-}  // namespace tin
+}  // namespace tin::runtime

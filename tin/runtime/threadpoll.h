@@ -2,7 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#pragma once
+#ifndef TIN_RUNTIME_THREADPOLL_H_
+#define TIN_RUNTIME_THREADPOLL_H_
 #include <cstdlib>
 #include <vector>
 #include <deque>
@@ -14,8 +15,7 @@
 
 #include "tin/runtime/env.h"
 
-namespace tin {
-namespace runtime {
+namespace tin::runtime {
 
 class M;
 // consider replace with shared_ptr<Work>
@@ -72,8 +72,5 @@ private:
   absl::Notification dry_;
 };
 
-}  // namespace runtime
-}  // namespace tin
-
-
-
+}  // namespace tin::runtime
+#endif  // TIN_RUNTIME_THREADPOLL_H_

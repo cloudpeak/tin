@@ -19,8 +19,7 @@
 
 #include "tin/net/netfd_posix.h"
 
-namespace tin {
-namespace net {
+namespace tin::net {
 
 NetFD::NetFD(uintptr_t sysfd,
              AddressFamily family,
@@ -141,7 +140,7 @@ int NetFD::CloseWrite() {
   return Shutdown(SHUT_WR);
 }
 
-int NetFD::Dial(IPEndPoint* local, IPEndPoint* remote, int64_t deadline) {
+int NetFD::Dial(IpEndpoint* local, IpEndpoint* remote, int64_t deadline) {
   int err = 0;
   SockaddrStorage lstorage;
   if (local != nullptr) {
@@ -179,7 +178,7 @@ int NetFD::Dial(IPEndPoint* local, IPEndPoint* remote, int64_t deadline) {
   return 0;
 }
 
-int NetFD::Bind(const IPEndPoint& address) {
+int NetFD::Bind(const IpEndpoint& address) {
   int err = 0;
   SockaddrStorage storage;
   if (address.ToSockAddr(storage.addr, &storage.addr_len)) {
@@ -370,5 +369,4 @@ NetFD* NewFD(AddressFamily family, int sotype, int* error_code) {
   return new NetFD(sysfd, family, sotype, "unused");
 }
 
-}  // namespace net
-}  // namespace tin
+}  // namespace tin::net

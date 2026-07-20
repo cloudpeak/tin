@@ -21,8 +21,7 @@
 
 #include "tin/net/netfd_windows.h"
 
-namespace tin {
-namespace net {
+namespace tin::net {
 
 class WinIoServer;
 
@@ -37,9 +36,9 @@ SockaddrStorage addr_ipv6_any;
 absl::once_flag addr_any_init_once_flag;
 
 void InitAddrAny() {
-  IPEndPoint addr4(IPAddress::IPv4AllZeros(), 0);
+  IpEndpoint addr4(IpAddress::IPv4AllZeros(), 0);
   addr4.ToSockAddr(addr_ipv4_any.addr, &addr_ipv4_any.addr_len);
-  IPEndPoint addr6(IPAddress::IPv6AllZeros(), 0);
+  IpEndpoint addr6(IpAddress::IPv6AllZeros(), 0);
   addr6.ToSockAddr(addr_ipv6_any.addr, &addr_ipv6_any.addr_len);
 }
 
@@ -454,7 +453,7 @@ int NetFD::Connect(SockaddrStorage* laddr, SockaddrStorage* raddr,
   return err;
 }
 
-int NetFD::Dial(IPEndPoint* local, IPEndPoint* remote, int64_t deadline) {
+int NetFD::Dial(IpEndpoint* local, IpEndpoint* remote, int64_t deadline) {
   int err = 0;
   SockaddrStorage lstorage;
   if (local != nullptr) {
@@ -493,7 +492,7 @@ int NetFD::Dial(IPEndPoint* local, IPEndPoint* remote, int64_t deadline) {
 }
 
 /* the magic 511 constant is from nginx */
-int NetFD::Bind(const IPEndPoint& address) {
+int NetFD::Bind(const IpEndpoint& address) {
   SockaddrStorage storage;
   if (address.ToSockAddr(storage.addr, &storage.addr_len)) {
     if (::bind(sysfd_, storage.addr, storage.addr_len) == 0) {
@@ -607,5 +606,4 @@ int NetFD::Write(const void* buf, int len, int* nwritten) {
   return err;
 }
 
-}  // namespace net
-}  // namespace tin
+}  // namespace tin::net

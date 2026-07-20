@@ -2,7 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#pragma once
+#ifndef TIN_NET_NETFD_H_
+#define TIN_NET_NETFD_H_
 #include <string>
 #include "build/build_config.h"
 
@@ -12,11 +13,7 @@
 #include "tin/net/netfd_posix.h"
 #endif
 
-namespace tin {
-namespace net {
+namespace tin::net {
 
-}  // namespace net
-}  // namespace tin
-
-
-
+}  // namespace tin::net
+#endif  // TIN_NET_NETFD_H_

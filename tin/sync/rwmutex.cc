@@ -28,18 +28,18 @@ RWMutex::~RWMutex() {
 }
 
 void RWMutex::RLock() {
-  if (atomic::Inc32(&reader_count_, 1) < 0) {
+  if (atomic::inc32(&reader_count_, 1) < 0) {
     runtime::SemAcquire(&reader_sem_);
   }
 }
 
 void RWMutex::RUnlock() {
-  int32_t r = atomic::Inc32(&reader_count_, -1);
+  int32_t r = atomic::inc32(&reader_count_, -1);
   if (r < 0) {
     if (r + 1 == 0 || r + 1 == -kRWMutexMaxReaders) {
       LOG(FATAL) << "sync: RUnlock of unlocked RWMutex";
     }
-    if (atomic::Inc32(&reader_wait_, -1) == 0) {
+    if (atomic::inc32(&reader_wait_, -1) == 0) {
       runtime::SemRelease(&writer_sem_);
     }
   }
@@ -48,14 +48,14 @@ void RWMutex::RUnlock() {
 void RWMutex::Lock() {
   w_.Lock();
   int32_t r =
-    atomic::Inc32(&reader_count_, -kRWMutexMaxReaders) + kRWMutexMaxReaders;
-  if (r != 0 && atomic::Inc32(&reader_wait_, r) != 0) {
+    atomic::inc32(&reader_count_, -kRWMutexMaxReaders) + kRWMutexMaxReaders;
+  if (r != 0 && atomic::inc32(&reader_wait_, r) != 0) {
     runtime::SemAcquire(&writer_sem_);
   }
 }
 
 void RWMutex::Unlock() {
-  int32_t r = atomic::Inc32(&reader_count_, kRWMutexMaxReaders);
+  int32_t r = atomic::inc32(&reader_count_, kRWMutexMaxReaders);
   if (r >= kRWMutexMaxReaders) {
     LOG(FATAL) << "sync: Unlock of unlocked RWMutex";
   }

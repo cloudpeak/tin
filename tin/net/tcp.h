@@ -3,7 +3,7 @@
 // found in the LICENSE file.
 //
 // Public aggregate header for tin's TCP networking API: TcpConn
-// (tcp_conn.h), TCPListener + ListenTcp (listener.h), DialTcp (dialer.h)
+// (tcp_conn.h), TcpListener + ListenTcp (listener.h), DialTcp (dialer.h)
 // and DNS resolution helpers (resolve.h). Including this single header is
 // sufficient to write a TCP server or client on top of tin.
 

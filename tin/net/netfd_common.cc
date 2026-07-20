@@ -14,8 +14,7 @@
 
 #include "tin/net/netfd_common.h"
 
-namespace tin {
-namespace net {
+namespace tin::net {
 
 NetFDCommon::NetFDCommon(uintptr_t sysfd,
                          AddressFamily family,
@@ -111,5 +110,4 @@ int NetFDCommon::SetDeadlineImpl(int64_t t, int mode) {
   return 0;
 }
 
-}  // namespace net
-}  // namespace tin
+}  // namespace tin::net

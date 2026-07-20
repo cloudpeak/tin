@@ -2,10 +2,9 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#pragma once
-
-namespace tin {
-namespace runtime {
+#ifndef TIN_RUNTIME_NET_POLLOPS_H_
+#define TIN_RUNTIME_NET_POLLOPS_H_
+namespace tin::runtime {
 struct PollDescriptor;
 
 namespace pollops {
@@ -22,7 +21,5 @@ void WaitCanceled(PollDescriptor* pd, int mode);
 void SetDeadline(PollDescriptor* pd, int64_t d, int mode);
 
 }  // namespace pollops
-}  // namespace runtime
-}  // namespace tin
-
-
+}  // namespace tin::runtime
+#endif  // TIN_RUNTIME_NET_POLLOPS_H_

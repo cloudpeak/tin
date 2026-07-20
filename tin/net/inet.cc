@@ -20,8 +20,7 @@
 
 #include "tin/net/inet.h"
 
-namespace tin {
-namespace net {
+namespace tin::net {
 
 const int kInetAddrStrLen = 16;
 const int kInetAddrStrLen6 = 46;
@@ -325,5 +324,4 @@ bool INetPToN(bool ipv4, const char* src, void* dst) {
   return INetPToN(ipv4 ? AF_INET : AF_INET6, src, dst) == 0;
 }
 
-}  // namespace net
-}  // namespace tin
+}  // namespace tin::net

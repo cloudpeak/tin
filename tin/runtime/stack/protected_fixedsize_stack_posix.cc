@@ -18,8 +18,7 @@ extern "C" {
 
 #include "tin/runtime/stack/protected_fixedsize_stack.h"
 
-namespace tin {
-namespace runtime {
+namespace tin::runtime {
 
 ProtectedFixedSizeStack::ProtectedFixedSizeStack()
   : size_(0)
@@ -58,5 +57,4 @@ void* ProtectedFixedSizeStack::Allocate(size_t size) {
   return sp_;
 }
 
-}  // namespace runtime
-}  // namespace tin
+}  // namespace tin::runtime

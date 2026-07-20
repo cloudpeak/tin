@@ -5,8 +5,6 @@
 #ifndef TIN_CONFIG_CONFIG_H_
 #define TIN_CONFIG_CONFIG_H_
 
-#pragma once
-
 #include "tin/config/default.h"
 
 namespace tin {
@@ -30,12 +28,12 @@ class Config {
   void EnableStackProtection(bool enable) { enable_stack_protection_ = enable; }
 
  private:
-  int max_procs_;
-  int max_machine_;
-  int stack_size_;
-  int os_thread_stack_size_;
-  bool ignore_sigpipe_;
-  bool enable_stack_protection_;
+  int max_procs_ = 1;
+  int max_machine_ = 4;
+  int stack_size_ = kDefaultStackSize;
+  int os_thread_stack_size_ = kDefaultOSThreadStackSize;
+  bool ignore_sigpipe_ = true;
+  bool enable_stack_protection_ = false;
 };
 
 }  // namespace tin

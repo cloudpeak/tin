@@ -15,27 +15,24 @@
 #include "tin/net/tcp_conn_impl.h"  // internal: TcpConnImpl
 #include "tin/net/tcp_conn.h"       // public: TcpConn (PIMPL)
 
-namespace tin {
-namespace net {
+namespace tin::net {
 
 // ---------------------------------------------------------------------------
-// TcpConnImpl — full implementation (internal).
+// TcpConnImpl ? full implementation (internal).
 // ---------------------------------------------------------------------------
 
-TcpConnImpl::TcpConnImpl(NetFD* netfd)
-  : netfd_(netfd) ,
+TcpConnImpl::TcpConnImpl(std::unique_ptr<NetFD> netfd)
+  : netfd_(std::move(netfd)) ,
     total_read_bytes_(0) {
 }
 
-TcpConnImpl::~TcpConnImpl() {
-  delete netfd_;
-}
+TcpConnImpl::~TcpConnImpl() = default;
 
 Result<size_t> TcpConnImpl::Read(void* buf, int nbytes) {
   LOG_IF(FATAL, nbytes == 0) << "Read on zero buffer.";
   int nread = 0;
   int err = netfd_->Read(buf, nbytes, &nread);
-  // If some data was read, return it as success — the error (if any)
+  // If some data was read, return it as success ? the error (if any)
   // will surface on the next call to Read().
   if (nread > 0) {
     total_read_bytes_ += nread;
@@ -134,7 +131,7 @@ void TcpConnImpl::Close() {
 }
 
 // ---------------------------------------------------------------------------
-// TcpConn — PIMPL forwarding methods (public API).
+// TcpConn ? PIMPL forwarding methods (public API).
 // ---------------------------------------------------------------------------
 
 Result<size_t> TcpConn::Read(void* buf, int nbytes) {
@@ -210,9 +207,8 @@ int64_t TcpConn::TotalReadBytes() const {
 }
 
 // Factory: single allocation via std::make_shared.
-TcpConn MakeTcpConn(NetFD* netfd) {
-  return TcpConn(std::make_shared<TcpConnImpl>(netfd));
+TcpConn MakeTcpConn(std::unique_ptr<NetFD> netfd) {
+  return TcpConn(std::make_shared<TcpConnImpl>(std::move(netfd)));
 }
 
-}  // namespace net
-}  // namespace tin
+}  // namespace tin::net

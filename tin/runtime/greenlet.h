@@ -2,8 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#pragma once
-
+#ifndef TIN_RUNTIME_GREENLET_H_
+#define TIN_RUNTIME_GREENLET_H_
 #include <cstdlib>
 #include <memory>
 
@@ -76,7 +76,7 @@ class Greenlet {
   void SetName(const char* name);
 
   const char* GetName() {
-    return name_;
+    return name_.c_str();
   }
 
   zcontext_t* MutableContext() {
@@ -117,12 +117,12 @@ class Greenlet {
   GUintptr schedlink_;
   tin::runtime::M* m_;
   tin::runtime::M* lockedm_;
-  std::function<void()>  cb_;
-  GreenletFunc entry_;
-  std::function<void()> closure_;
+  std::function<void()>  cb_;        // unused (legacy); retained for ABI compat
+  GreenletFunc entry_;               // zcontext entry point (C ABI, do not change)
+  std::function<void()> closure_;    // user closure executed by the greenlet
   intptr_t args_;
-  void* retval_;
-  char name_[32];
+  void* retval_;                     // return value from entry_ (zcontext ABI)
+  std::string name_;
   std::unique_ptr<Stack> stack_;
   zcontext_t context_;
   int state_;
@@ -140,13 +140,4 @@ void SpawnSimple(std::function<void()> closure,  const char* name = nullptr);
 void RuntimeSpawn(std::function<void()>* closure);
 
 }  // namespace tin
-
-
-
-
-
-
-
-
-
-
+#endif  // TIN_RUNTIME_GREENLET_H_

@@ -16,8 +16,7 @@
 
 #include "tin/runtime/scheduler.h"
 
-namespace tin {
-namespace runtime {
+namespace tin::runtime {
 const int kTinProcsLimit = 256;
 
 bool ExitSyscallUnlockFunc(void* arg1, void* arg2);
@@ -153,7 +152,7 @@ void Scheduler::GlobalRunqBatch(G* ghead, G* gtail, int32_t n) {
 
 // Try get a batch of G's from the global runnable queue.
 // Sched must be locked.
-G* Scheduler::GlobalRunqGet(P* p, int32_t maximium) {
+G* Scheduler::GlobalRunqGet(P* p, int32_t maximum) {
   if (runq_size_ == 0) {
     return nullptr;
   }
@@ -162,8 +161,8 @@ G* Scheduler::GlobalRunqGet(P* p, int32_t maximium) {
   if (n > runq_size_) {
     n = runq_size_;
   }
-  if (maximium > 0 && n > maximium) {
-    n = maximium;
+  if (maximum > 0 && n > maximum) {
+    n = maximum;
   }
   if (n > p->RunqCapacity() / 2) {
     n = p->RunqCapacity() / 2;
@@ -214,14 +213,14 @@ void Scheduler::PIdlePut(P* p) {
   }
   p->SetLink(idlep_);
   idlep_ = p;
-  atomic::relaxed_Inc32(&nr_idlep_, 1);
+  atomic::relaxed_inc32(&nr_idlep_, 1);
 }
 
 P* Scheduler::PIdleGet() {
   P* p = idlep_;
   if (p != nullptr) {
     idlep_ = p->Link();
-    atomic::relaxed_Inc32(&nr_idlep_, -1);
+    atomic::relaxed_inc32(&nr_idlep_, -1);
     if (!p->RunqEmpty()) {
       LOG(FATAL) << "pidleput: P has non-empty run queue";
     }
@@ -277,7 +276,7 @@ top:
 
   if (!curm->GetSpinning()) {
     curm->SetSpinning(true);
-    atomic::Inc32(&nr_spinning_, 1);
+    atomic::inc32(&nr_spinning_, 1);
   }
 
   for (int i = 0;
@@ -311,7 +310,7 @@ stop: {
   bool was_spinning = curm->GetSpinning();
   if (curm->GetSpinning()) {
     curm->SetSpinning(false);
-    if (atomic::Inc32(&nr_spinning_, -1) < 0) {
+    if (atomic::inc32(&nr_spinning_, -1) < 0) {
       LOG(FATAL) << "FindRunnable: negative nmspinning";
     }
   }
@@ -327,7 +326,7 @@ stop: {
         AcquireP(p);
         if (was_spinning) {
           curm->SetSpinning(true);
-          atomic::Inc32(&nr_spinning_, 1);
+          atomic::inc32(&nr_spinning_, 1);
         }
         goto top;
       }
@@ -384,7 +383,7 @@ void Scheduler::MGetForP(P* curp, bool spinning, P** newp, M** newm) {
     curp = PIdleGet();
     if (curp == nullptr) {
       if (spinning) {
-        if (atomic::Inc32(&nr_spinning_, -1) < 0) {
+        if (atomic::inc32(&nr_spinning_, -1) < 0) {
           LOG(FATAL) << "negative nmspinning";
         }
       }
@@ -619,7 +618,7 @@ void Scheduler::ResetSpinning() {
     LOG(FATAL) << "resetspinning: not a spinning m";
   }
   gp->M()->SetSpinning(false);
-  uint32_t nr_spinning = atomic::Inc32(&nr_spinning_, -1);
+  uint32_t nr_spinning = atomic::inc32(&nr_spinning_, -1);
   if (static_cast<int32_t>(nr_spinning) < 0) {
     LOG(FATAL) << "ResetSpinning: negative nr_spinning";
   }
@@ -751,5 +750,4 @@ void SwitchG(Greenlet* from, Greenlet* to, intptr_t args) {
 // -------------------------------------------------------------
 
 
-}  // namespace runtime
-}  // namespace tin
+}  // namespace tin::runtime

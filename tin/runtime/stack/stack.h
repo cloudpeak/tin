@@ -2,10 +2,9 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#pragma once
-
-namespace tin {
-namespace runtime {
+#ifndef TIN_RUNTIME_STACK_STACK_H_
+#define TIN_RUNTIME_STACK_STACK_H_
+namespace tin::runtime {
 
 class Stack {
  public:
@@ -28,18 +27,5 @@ enum StackType {
 
 Stack* NewStack(int type, int size);
 
-}  // namespace runtime
-}  // namespace tin
-
-
-
-
-
-
-
-
-
-
-
-
-
+}  // namespace tin::runtime
+#endif  // TIN_RUNTIME_STACK_STACK_H_

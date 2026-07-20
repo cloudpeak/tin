@@ -6,8 +6,7 @@
 #include "tin/net/winsock_util.h"
 
 
-namespace tin {
-namespace net {
+namespace tin::net {
 
 namespace {
 
@@ -48,5 +47,4 @@ bool ResetEventIfSignaled(WSAEVENT hEvent) {
   return true;
 }
 
-}  // namespace net
-}  // namespace tin
+}  // namespace tin::net

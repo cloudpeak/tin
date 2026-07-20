@@ -12,8 +12,7 @@
 
 #include "tin/runtime/stack/stack.h"
 
-namespace tin {
-namespace runtime {
+namespace tin::runtime {
 
 Stack* NewStack(int type, int size) {
   Stack* stack = nullptr;
@@ -31,5 +30,4 @@ Stack* NewStack(int type, int size) {
   return stack;
 }
 
-}  // namespace runtime
-}  // namespace tin
+}  // namespace tin::runtime

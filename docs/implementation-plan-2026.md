@@ -630,13 +630,13 @@ void ClearQueue(std::deque<T>& queue, std::false_type) {
 
 ---
 
-### P3-4 删除 `all.h`
+### P3-4 删除 `all.h` ✅ 已完成
 
 **问题**：评审 6.3，kitchen-sink 头文件导致编译爆炸。
 
 **操作**：
-1. 更新 README，推荐按模块 include
-2. `all.h` 内容改为 `#error "all.h is removed; include specific headers"` 一个版本
+1. ~~更新 README，推荐按模块 include~~
+2. ~~`all.h` 内容改为 `#error ...`~~
 3. 最终删除
 
 ---
@@ -674,7 +674,7 @@ void ClearQueue(std::deque<T>& queue, std::false_type) {
 - [ ] `GUintptr` 改用类型安全容器（P3-1 未实施）
 - [ ] `void*` 回调改用 `std::function`（P3-2 未实施）
 - [x] `Channel<T*>` 不再 `delete`
-- [ ] `all.h` 删除（P3-4 未实施）
+- [x] `all.h` 删除（P3-4 已在 P2-1 commit 中完成）
 - [x] 全部测试绿 + 性能无回退
 
 ---

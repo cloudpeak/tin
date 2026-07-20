@@ -5,8 +5,6 @@
 #ifndef TIN_ERROR_ERROR_INL_H_
 #define TIN_ERROR_ERROR_INL_H_
 
-#pragma once
-
 // This file is auto-generated from tin/error/error_inl.h.
 // It is the same file, duplicated in include/tin/error/ so that the
 // public include path (include/) is self-contained.

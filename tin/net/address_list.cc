@@ -10,33 +10,32 @@
 #include <absl/log/check.h>
 #include "tin/net/sys_addrinfo.h"
 
-namespace tin {
-namespace net {
+namespace tin::net {
 
 
 AddressList::AddressList() {}
 
 AddressList::~AddressList() {}
 
-AddressList::AddressList(const IPEndPoint& endpoint) {
+AddressList::AddressList(const IpEndpoint& endpoint) {
   push_back(endpoint);
 }
 
 // static
-AddressList AddressList::CreateFromIPAddress(const IPAddress& address,
+AddressList AddressList::CreateFromIpAddress(const IpAddress& address,
     uint16_t port) {
-  return AddressList(IPEndPoint(address, port));
+  return AddressList(IpEndpoint(address, port));
 }
 
 // static
-AddressList AddressList::CreateFromIPAddressList(
-  const IPAddressList& addresses,
+AddressList AddressList::CreateFromIpAddressList(
+  const IpAddressList& addresses,
   const std::string& canonical_name) {
   AddressList list;
   list.set_canonical_name(canonical_name);
-  for (IPAddressList::const_iterator iter = addresses.begin();
+  for (IpAddressList::const_iterator iter = addresses.begin();
        iter != addresses.end(); ++iter) {
-    list.push_back(IPEndPoint(*iter, 0));
+    list.push_back(IpEndpoint(*iter, 0));
   }
   return list;
 }
@@ -48,7 +47,7 @@ AddressList AddressList::CreateFromAddrinfo(const struct addrinfo* head) {
   if (head->ai_canonname)
     list.set_canonical_name(std::string(head->ai_canonname));
   for (const struct addrinfo* ai = head; ai; ai = ai->ai_next) {
-    IPEndPoint ipe;
+    IpEndpoint ipe;
     // NOTE: Ignoring non-INET* families.
     if (ipe.FromSockAddr(ai->ai_addr, static_cast<socklen_t>(ai->ai_addrlen)))
       list.push_back(ipe);
@@ -63,7 +62,7 @@ AddressList AddressList::CopyWithPort(const AddressList& list, uint16_t port) {
   AddressList out;
   out.set_canonical_name(list.canonical_name());
   for (size_t i = 0; i < list.size(); ++i)
-    out.push_back(IPEndPoint(list[i].address(), port));
+    out.push_back(IpEndpoint(list[i].address(), port));
   return out;
 }
 
@@ -72,5 +71,4 @@ void AddressList::SetDefaultCanonicalName() {
   set_canonical_name(front().ToStringWithoutPort());
 }
 
-}  // namespace net
-}  // namespace tin
+}  // namespace tin::net

@@ -14,8 +14,7 @@
 
 #include "tin/runtime/p.h"
 
-namespace tin {
-namespace runtime {
+namespace tin::runtime {
 
 P::P(int id)
   : runq_head_(0)
@@ -200,5 +199,4 @@ bool P::CasStatus(uint32_t old_status, uint32_t new_status) {
   return atomic::cas32(&status_, old_status, new_status);
 }
 
-}  // namespace runtime
-}  // namespace tin
+}  // namespace tin::runtime

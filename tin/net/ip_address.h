@@ -5,46 +5,45 @@
 #ifndef NET_BASE_IP_ADDRESS_NET_H_
 #define NET_BASE_IP_ADDRESS_NET_H_
 
-#include <stddef.h>
+#include <cstddef>
 
 #include <string>
 #include <vector>
 
 #include <absl/strings/string_view.h>
 
-namespace tin {
-namespace net {
+namespace tin::net {
 
-class  IPAddress {
+class  IpAddress {
  public:
   enum  { kIPv4AddressSize = 4, kIPv6AddressSize = 16 };
 
   // Creates a zero-sized, invalid address.
-  IPAddress();
+  IpAddress();
 
   // Copies the input address to |ip_address_|. The input is expected to be in
   // network byte order.
-  explicit IPAddress(const std::vector<uint8_t>& address);
+  explicit IpAddress(const std::vector<uint8_t>& address);
 
-  IPAddress(const IPAddress& other);
+  IpAddress(const IpAddress& other);
 
   // Copies the input address to |ip_address_|. The input is expected to be in
   // network byte order.
   template <size_t N>
-  IPAddress(const uint8_t(&address)[N])  // NOLINT
+  IpAddress(const uint8_t(&address)[N])  // NOLINT
     : ip_address_(address, address + N) {}
 
   // Copies the input address to |ip_address_| taking an additional length
   // parameter. The input is expected to be in network byte order.
-  IPAddress(const uint8_t* address, size_t address_len);
+  IpAddress(const uint8_t* address, size_t address_len);
 
   // Initializes |ip_address_| from the 4 bX bytes to form an IPv4 address.
   // The bytes are expected to be in network byte order.
-  IPAddress(uint8_t b0, uint8_t b1, uint8_t b2, uint8_t b3);
+  IpAddress(uint8_t b0, uint8_t b1, uint8_t b2, uint8_t b3);
 
   // Initializes |ip_address_| from the 16 bX bytes to form an IPv6 address.
   // The bytes are expected to be in network byte order.
-  IPAddress(uint8_t b0,
+  IpAddress(uint8_t b0,
             uint8_t b1,
             uint8_t b2,
             uint8_t b3,
@@ -61,7 +60,7 @@ class  IPAddress {
             uint8_t b14,
             uint8_t b15);
 
-  ~IPAddress();
+  ~IpAddress();
 
   // Returns true if the IP has |kIPv4AddressSize| elements.
   bool IsIPv4() const;
@@ -103,24 +102,24 @@ class  IPAddress {
   // Returns the underlying byte vector.
   const std::vector<uint8_t>& bytes() const { return ip_address_; }
 
-  // Returns an IPAddress instance representing the 127.0.0.1 address.
-  static IPAddress IPv4Localhost();
+  // Returns an IpAddress instance representing the 127.0.0.1 address.
+  static IpAddress IPv4Localhost();
 
-  // Returns an IPAddress instance representing the ::1 address.
-  static IPAddress IPv6Localhost();
+  // Returns an IpAddress instance representing the ::1 address.
+  static IpAddress IPv6Localhost();
 
-  // Returns an IPAddress made up of |num_zero_bytes| zeros.
-  static IPAddress AllZeros(size_t num_zero_bytes);
+  // Returns an IpAddress made up of |num_zero_bytes| zeros.
+  static IpAddress AllZeros(size_t num_zero_bytes);
 
-  // Returns an IPAddress instance representing the 0.0.0.0 address.
-  static IPAddress IPv4AllZeros();
+  // Returns an IpAddress instance representing the 0.0.0.0 address.
+  static IpAddress IPv4AllZeros();
 
-  // Returns an IPAddress instance representing the :: address.
-  static IPAddress IPv6AllZeros();
+  // Returns an IpAddress instance representing the :: address.
+  static IpAddress IPv6AllZeros();
 
-  bool operator==(const IPAddress& that) const;
-  bool operator!=(const IPAddress& that) const;
-  bool operator<(const IPAddress& that) const;
+  bool operator==(const IpAddress& that) const;
+  bool operator!=(const IpAddress& that) const;
+  bool operator<(const IpAddress& that) const;
 
  private:
   // IPv4 addresses will have length kIPv4AddressSize, whereas IPv6 address
@@ -130,23 +129,23 @@ class  IPAddress {
   // This class is copyable and assignable.
 };
 
-using IPAddressList = std::vector<IPAddress>;
+using IpAddressList = std::vector<IpAddress>;
 
 // Returns the canonical string representation of an IP address along with its
 // port. For example: "192.168.0.1:99" or "[::1]:80".
-std::string IPAddressToStringWithPort(const IPAddress& address,
+std::string IpAddressToStringWithPort(const IpAddress& address,
                                       uint16_t port);
 
 // Returns the address as a sequence of bytes in network-byte-order.
-std::string IPAddressToPackedString(const IPAddress& address);
+std::string IpAddressToPackedString(const IpAddress& address);
 
 // Converts an IPv4 address to an IPv4-mapped IPv6 address.
 // For example 192.168.0.1 would be converted to ::ffff:192.168.0.1.
-IPAddress ConvertIPv4ToIPv4MappedIPv6(const IPAddress& address);
+IpAddress ConvertIPv4ToIPv4MappedIPv6(const IpAddress& address);
 
 // Converts an IPv4-mapped IPv6 address to IPv4 address. Should only be called
 // on IPv4-mapped IPv6 addresses.
-IPAddress ConvertIPv4MappedIPv6ToIPv4(const IPAddress& address);
+IpAddress ConvertIPv4MappedIPv6ToIPv4(const IpAddress& address);
 
 // Compares an IP address to see if it falls within the specified IP block.
 // Returns true if it does, false otherwise.
@@ -158,8 +157,8 @@ IPAddress ConvertIPv4MappedIPv6ToIPv4(const IPAddress& address);
 // In cases when an IPv4 address is being compared to an IPv6 address prefix
 // and vice versa, the IPv4 addresses will be converted to IPv4-mapped
 // (IPv6) addresses.
-bool IPAddressMatchesPrefix(const IPAddress& ip_address,
-                            const IPAddress& ip_prefix,
+bool IpAddressMatchesPrefix(const IpAddress& ip_address,
+                            const IpAddress& ip_prefix,
                             size_t prefix_length_in_bits);
 
 // Parses an IP block specifier from CIDR notation to an
@@ -178,27 +177,26 @@ bool IPAddressMatchesPrefix(const IPAddress& ip_address,
 // In other words, |hostname| must be an IPv4 literal, or an IPv6 literal
 // surrounded by brackets as in [::1].
 bool ParseURLHostnameToAddress(const absl::string_view& hostname,
-                               IPAddress* ip_address)
+                               IpAddress* ip_address)
 ABSL_MUST_USE_RESULT;
 
 // Returns number of matching initial bits between the addresses |a1| and |a2|.
-unsigned CommonPrefixLength(const IPAddress& a1,
-                            const IPAddress& a2);
+unsigned CommonPrefixLength(const IpAddress& a1,
+                            const IpAddress& a2);
 
 // Computes the number of leading 1-bits in |mask|.
-unsigned MaskPrefixLength(const IPAddress& mask);
+unsigned MaskPrefixLength(const IpAddress& mask);
 
 // Checks whether |address| starts with |prefix|. This provides similar
-// functionality as IPAddressMatchesPrefix() but doesn't perform automatic IPv4
+// functionality as IpAddressMatchesPrefix() but doesn't perform automatic IPv4
 // to IPv4MappedIPv6 conversions and only checks against full bytes.
 template <size_t N>
-bool IPAddressStartsWith(const IPAddress& address, const uint8_t (&prefix)[N]) {
+bool IpAddressStartsWith(const IpAddress& address, const uint8_t (&prefix)[N]) {
   if (address.size() < N)
     return false;
   return std::equal(prefix, prefix + N, address.bytes().begin());
 }
 
-}  // namespace net
-}  // namespace tin
+}  // namespace tin::net
 
 #endif  // NET_BASE_IP_ADDRESS_NET_H_

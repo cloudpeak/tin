@@ -7,10 +7,9 @@
 #include "tin/net/ip_address.h"
 #include "tin/net/sys_addrinfo.h"
 
-namespace tin {
-namespace net {
+namespace tin::net {
 
-AddressFamily GetAddressFamily(const IPAddress& address) {
+AddressFamily GetAddressFamily(const IpAddress& address) {
   if (address.IsIPv4()) {
     return ADDRESS_FAMILY_IPV4;
   } else if (address.IsIPv6()) {
@@ -33,5 +32,4 @@ int ConvertAddressFamily(AddressFamily address_family) {
   return AF_UNSPEC;
 }
 
-}  // namespace net
-}  // namespace tin
+}  // namespace tin::net

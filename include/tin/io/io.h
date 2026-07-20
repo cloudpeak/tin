@@ -2,7 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#pragma once
+#ifndef TIN_IO_IO_H_
+#define TIN_IO_IO_H_
 #include <cstddef>
 
 #include <absl/strings/string_view.h>
@@ -10,8 +11,7 @@
 #include "tin/result.h"
 #include "tin/time/time.h"
 
-namespace tin {
-namespace io {
+namespace tin::io {
 
 class Reader {
  public:
@@ -29,8 +29,11 @@ class Writer {
   virtual Result<size_t> Write(const void* buf, int nbytes) = 0;
 };
 
-class IOReadWriter : public Reader, public Writer {
+class IoReadWriter : public Reader, public Writer {
 };
+
+// Deprecated alias for backward compatibility. Use IoReadWriter instead.
+using IOReadWriter = IoReadWriter;
 
 // Reads from reader into buf until at least min bytes are read or an error
 // occurs. Returns the number of bytes read and a status.
@@ -45,5 +48,5 @@ Result<size_t> Write(Writer* writer, const void* buf, int len);
 // Writes a string to writer.
 Result<size_t> WriteString(Writer* writer, const absl::string_view& str);
 
-}  // namespace io
-}  // namespace tin
+}  // namespace tin::io
+#endif  // TIN_IO_IO_H_

@@ -4,8 +4,7 @@
 
 #include "tin/runtime/net/poll_descriptor.h"
 
-namespace tin {
-namespace runtime {
+namespace tin::runtime {
 
 PollDescriptor::PollDescriptor() {
   fd = 0;
@@ -18,5 +17,4 @@ PollDescriptor::PollDescriptor() {
   user = 0;
 }
 
-}  // namespace runtime
-}  // namespace tin
+}  // namespace tin::runtime

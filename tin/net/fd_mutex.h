@@ -2,12 +2,12 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#pragma once
+#ifndef TIN_NET_FD_MUTEX_H_
+#define TIN_NET_FD_MUTEX_H_
 #include "cstdint"
 #include <atomic>
 
-namespace tin {
-namespace net {
+namespace tin::net {
 
 class FdMutex {
  public:
@@ -28,11 +28,5 @@ class FdMutex {
   uint32_t wsema_;
 };
 
-}  // namespace net
-}  // namespace tin
-
-
-
-
-
-
+}  // namespace tin::net
+#endif  // TIN_NET_FD_MUTEX_H_

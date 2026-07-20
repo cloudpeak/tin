@@ -6,13 +6,18 @@
 
 #include <string>
 
+#include "tin/error/error.h"
+
 namespace tin {
 
 std::string Status::ToString() const {
   if (ok()) {
     return "OK";
   }
-  return TinErrorName(code_);
+  std::string result = TinErrorName(code_);
+  result += ": ";
+  result += TinErrorDescription(code_);
+  return result;
 }
 
 std::string Status::ErrorName() const {

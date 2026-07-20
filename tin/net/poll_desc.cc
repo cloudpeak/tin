@@ -10,8 +10,7 @@
 #include "tin/runtime/net/pollops.h"
 #include "tin/net/poll_desc.h"
 
-namespace tin {
-namespace net {
+namespace tin::net {
 
 namespace {
 int ConvertErr(int res) {
@@ -95,5 +94,4 @@ void PollDesc::WaitCanceledWrite() {
   WaitCanceled('w');
 }
 
-}  // namespace net
-}  // namespace tin
+}  // namespace tin::net

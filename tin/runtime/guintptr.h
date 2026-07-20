@@ -2,8 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#pragma once
-
+#ifndef TIN_RUNTIME_GUINTPTR_H_
+#define TIN_RUNTIME_GUINTPTR_H_
 #include <base/compiler_specific.h>
 #include "build/build_config.h"
 #include "tin/runtime/util.h"
@@ -25,8 +25,8 @@ class ALIGNAS(sizeof(void*)) GUintptr {
     : integer_(reinterpret_cast<uintptr_t>(pointer)) {
   }
 
-  GUintptr(uintptr_t ingeter)
-    : integer_(ingeter) {
+  GUintptr(uintptr_t integer)
+    : integer_(integer) {
   }
 
   GUintptr& operator=(GUintptr rhs) {
@@ -71,18 +71,4 @@ class ALIGNAS(sizeof(void*)) GUintptr {
 
 
 } // namespace tin::runtime
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+#endif  // TIN_RUNTIME_GUINTPTR_H_

@@ -5,14 +5,15 @@
 #ifndef TIN_CONFIG_DEFAULT_H_
 #define TIN_CONFIG_DEFAULT_H_
 
-#pragma once
-
 namespace tin {
 
 const int kDefaultStackSize = 64 * 1024;
-const int kStackAllignment = 64;
+
+const int kStackAlignment = 64;
+
 const int kDefaultOSThreadStackSize = 640 * 1024;
-#define CACHELINE_SIZE 64;
+
+constexpr int kCacheLineSize = 64;
 
 }  // namespace tin
 

@@ -86,10 +86,10 @@ bool Mutex::TryLock() {
 }
 
 void Mutex::Unlock() {
-  // Fast path: drop lock bit. Inc32 uses seq_cst ordering, which is a
-  // superset of release — this publishes all critical-section writes
+  // Fast path: drop lock bit. inc32 uses seq_cst ordering, which is a
+  // superset of release —this publishes all critical-section writes
   // before the lock bit is cleared, so the next acquirer sees them.
-  int32_t new_state = atomic::Inc32(&state_, -kMutexLocked);  // seq_cst (release+)
+  int32_t new_state = atomic::inc32(&state_, -kMutexLocked);  // seq_cst (release+)
   if (((new_state + kMutexLocked)&kMutexLocked) == 0) {
     LOG(FATAL) << "sync: unlock of unlocked mutex";
   }

@@ -14,10 +14,9 @@
 
 struct addrinfo;
 
-namespace tin {
-namespace net {
+namespace tin::net {
 
-class IPAddress;
+class IpAddress;
 
 class AddressList {
  public:
@@ -26,12 +25,12 @@ class AddressList {
   ~AddressList();
 
   // Creates an address list for a single IP literal.
-  explicit AddressList(const IPEndPoint& endpoint);
+  explicit AddressList(const IpEndpoint& endpoint);
 
-  static AddressList CreateFromIPAddress(const IPAddress& address,
+  static AddressList CreateFromIpAddress(const IpAddress& address,
                                          uint16_t port);
 
-  static AddressList CreateFromIPAddressList(const IPAddressList& addresses,
+  static AddressList CreateFromIpAddressList(const IpAddressList& addresses,
       const std::string& canonical_name);
 
   // Copies the data from |head| and the chained list into an AddressList.
@@ -55,8 +54,8 @@ class AddressList {
   // representation of the address list.  The callback must be destroyed before
   // |this| is.
 
-  using iterator = std::vector<IPEndPoint>::iterator;
-  using const_iterator = std::vector<IPEndPoint>::const_iterator;
+  using iterator = std::vector<IpEndpoint>::iterator;
+  using const_iterator = std::vector<IpEndpoint>::const_iterator;
 
   size_t size() const {
     return endpoints_.size();
@@ -73,25 +72,25 @@ class AddressList {
   size_t capacity() const {
     return endpoints_.capacity();
   }
-  IPEndPoint& operator[](size_t index) {
+  IpEndpoint& operator[](size_t index) {
     return endpoints_[index];
   }
-  const IPEndPoint& operator[](size_t index) const {
+  const IpEndpoint& operator[](size_t index) const {
     return endpoints_[index];
   }
-  IPEndPoint& front() {
+  IpEndpoint& front() {
     return endpoints_.front();
   }
-  const IPEndPoint& front() const {
+  const IpEndpoint& front() const {
     return endpoints_.front();
   }
-  IPEndPoint& back() {
+  IpEndpoint& back() {
     return endpoints_.back();
   }
-  const IPEndPoint& back() const {
+  const IpEndpoint& back() const {
     return endpoints_.back();
   }
-  void push_back(const IPEndPoint& val) {
+  void push_back(const IpEndpoint& val) {
     endpoints_.push_back(val);
   }
 
@@ -113,11 +112,10 @@ class AddressList {
   }
 
  private:
-  std::vector<IPEndPoint> endpoints_;
+  std::vector<IpEndpoint> endpoints_;
   std::string canonical_name_;
 };
 
-}  // namespace net
-}  // namespace tin
+}  // namespace tin::net
 
 #endif  // NET_BASE_ADDRESS_LIST_H_

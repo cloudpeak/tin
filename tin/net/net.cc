@@ -4,9 +4,6 @@
 
 #include "tin/net/net.h"
 
-namespace tin {
+namespace tin::net {
 
-namespace net {
-
-}  // namespace net
-}  // namespace tin
+}  // namespace tin::net

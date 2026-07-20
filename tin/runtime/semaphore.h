@@ -2,36 +2,24 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#pragma once
-#include <stdlib.h>
+#ifndef TIN_RUNTIME_SEMAPHORE_H_
+#define TIN_RUNTIME_SEMAPHORE_H_
+#include <cstdlib>
 #include "tin/runtime/util.h"
 
 
-namespace tin {
-namespace runtime {
+namespace tin::runtime {
 
 struct Sudog {
-  G* gp;
-  uint32_t * selectdone;
-  Sudog* next;
-  Sudog* prev;
-  void* elem;  // data element
-  int32_t nrelease;
-  Sudog* waitlink;
-  uint32_t* address;
-  uint32_t  wakedup;
-
-  Sudog() {
-    wakedup = 0;
-    gp = nullptr;
-    selectdone = nullptr;
-    next = nullptr;
-    prev = nullptr;
-    elem = nullptr;
-    nrelease = 0;
-    waitlink = nullptr;
-    address = nullptr;
-  }
+  G* gp = nullptr;
+  uint32_t* selectdone = nullptr;
+  Sudog* next = nullptr;
+  Sudog* prev = nullptr;
+  void* elem = nullptr;  // data element
+  int32_t nrelease = 0;
+  Sudog* waitlink = nullptr;
+  uint32_t* address = nullptr;
+  uint32_t wakedup = 0;
 };
 
 bool SemAcquire(uint32_t* addr);
@@ -55,5 +43,5 @@ class SyncSema {
   Sudog* tail_;
 };
 
-}  // namespace runtime
-}  // namespace tin
+}  // namespace tin::runtime
+#endif  // TIN_RUNTIME_SEMAPHORE_H_

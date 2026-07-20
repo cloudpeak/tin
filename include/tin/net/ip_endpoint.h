@@ -13,20 +13,19 @@
 
 struct sockaddr;
 
-namespace tin {
-namespace net {
+namespace tin::net {
 
-// An IPEndPoint represents the address of a transport endpoint:
+// An IpEndpoint represents the address of a transport endpoint:
 //  * IP address (either v4 or v6)
 //  * Port
-class  IPEndPoint {
+class  IpEndpoint {
  public:
-  IPEndPoint();
-  ~IPEndPoint();
-  IPEndPoint(const IPAddress& address, uint16_t port);
-  IPEndPoint(const IPEndPoint& endpoint);
+  IpEndpoint();
+  ~IpEndpoint();
+  IpEndpoint(const IpAddress& address, uint16_t port);
+  IpEndpoint(const IpEndpoint& endpoint);
 
-  const IPAddress& address() const {
+  const IpAddress& address() const {
     return address_;
   }
   uint16_t port() const {
@@ -64,15 +63,17 @@ class  IPEndPoint {
   // invalid.
   std::string ToStringWithoutPort() const;
 
-  bool operator<(const IPEndPoint& that) const;
-  bool operator==(const IPEndPoint& that) const;
+  bool operator<(const IpEndpoint& that) const;
+  bool operator==(const IpEndpoint& that) const;
 
  private:
-  IPAddress address_;
+  IpAddress address_;
   uint16_t port_;
 };
 
-}  // namespace net
-}  // namespace tin
+// Deprecated alias for backward compatibility. Use IpEndpoint instead.
+using IPEndPoint = IpEndpoint;
+
+}  // namespace tin::net
 
 #endif  // NET_BASE_IP_ENDPOINT_H_

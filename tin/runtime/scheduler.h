@@ -2,7 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#pragma once
+#ifndef TIN_RUNTIME_SCHEDULER_H_
+#define TIN_RUNTIME_SCHEDULER_H_
 #include <cstddef>
 
 #include "tin/runtime/util.h"
@@ -11,8 +12,7 @@
 #include "tin/runtime/env.h"
 #include "tin/runtime/raw_mutex.h"
 
-namespace tin {
-namespace runtime {
+namespace tin::runtime {
 class P;
 class M;
 
@@ -27,7 +27,7 @@ class Scheduler {
   void GlobalRunqPut(G* gp);
   void GlobalRunqPutHead(G* gp);
   void GlobalRunqBatch(G* ghead, G* gtail, int32_t n);
-  G*   GlobalRunqGet(P* p, int32_t maximium);
+  G*   GlobalRunqGet(P* p, int32_t maximum);
   void InjectGList(G* glist);
 
   int32_t GlobalRunqSize() {
@@ -129,5 +129,5 @@ void WakePIfNecessary();
 
 void SwitchG(Greenlet* from, Greenlet* to, intptr_t args);
 
-}  // namespace runtime
-}  // namespace tin
+}  // namespace tin::runtime
+#endif  // TIN_RUNTIME_SCHEDULER_H_

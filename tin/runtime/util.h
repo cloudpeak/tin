@@ -2,14 +2,13 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#pragma once
-
+#ifndef TIN_RUNTIME_UTIL_H_
+#define TIN_RUNTIME_UTIL_H_
 #include <cstdlib>
 
 #include "tin/runtime/env.h"
 
-namespace tin {
-namespace runtime {
+namespace tin::runtime {
 
 class Greenlet;
 class P;
@@ -40,5 +39,5 @@ void YieldLogicProcessor();
 void YieldLogicProcessor(int n);
 int GetLastSystemErrorCode();
 
-}  // namespace runtime
-}  // namespace tin
+}  // namespace tin::runtime
+#endif  // TIN_RUNTIME_UTIL_H_

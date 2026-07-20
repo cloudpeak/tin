@@ -2,12 +2,12 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#pragma once
+#ifndef TIN_IO_IO_H_
+#define TIN_IO_IO_H_
 #include "tin/time/time.h"
 #include "absl/strings/string_view.h"
 
-namespace tin {
-namespace io {
+namespace tin::io {
 
 class Reader {
  public:
@@ -21,7 +21,7 @@ class Writer {
   virtual int Write(const void* buf, int nbytes) = 0;
 };
 
-class IOReadWriter : public Reader, public Writer {
+class IoReadWriter : public Reader, public Writer {
 };
 
 int ReadAtLeast(Reader* reader, void* buf, int nbytes, int min);
@@ -32,9 +32,5 @@ int Write(Writer* writer, const void* buf, int nbytes);
 
 int WriteString(Writer* writer, const absl::string_view& str);
 
-}  // namespace io
-}  // namespace tin
-
-
-
-
+}  // namespace tin::io
+#endif  // TIN_IO_IO_H_

@@ -2,7 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#pragma once
+#ifndef TIN_NET_NETFD_POSIX_H_
+#define TIN_NET_NETFD_POSIX_H_
 #include <string>
 #include "tin/net/fd_mutex.h"
 #include "tin/net/poll_desc.h"
@@ -11,8 +12,7 @@
 #include "tin/net/sockaddr_storage.h"
 #include "tin/net/netfd_common.h"
 
-namespace tin {
-namespace net {
+namespace tin::net {
 
 class NetFD : public NetFDCommon {
  public:
@@ -37,9 +37,9 @@ class NetFD : public NetFDCommon {
 
   int CloseWrite();
 
-  int Dial(IPEndPoint* local, IPEndPoint* remote, int64_t deadline);
+  int Dial(IpEndpoint* local, IpEndpoint* remote, int64_t deadline);
 
-  int Bind(const IPEndPoint& address);
+  int Bind(const IpEndpoint& address);
 
   int Listen(int backlog = 511);
 
@@ -62,10 +62,5 @@ class NetFD : public NetFDCommon {
 
 NetFD* NewFD(AddressFamily family, int sotype, int* error_code = nullptr);
 
-}  // namespace net
-}  // namespace tin
-
-
-
-
-
+}  // namespace tin::net
+#endif  // TIN_NET_NETFD_POSIX_H_

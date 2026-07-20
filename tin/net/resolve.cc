@@ -26,13 +26,12 @@
 
 #include "tin/net/resolve.h"
 
-namespace tin {
-namespace net {
+namespace tin::net {
 
 using namespace runtime;  // NOLINT
 
 int SyncResolveHostname(const absl::string_view& hostname, AddressFamily af,
-                        std::vector<IPAddress>* addresses) {
+                        std::vector<IpAddress>* addresses) {
   int family = ConvertAddressFamily(af);
   addresses->clear();
   struct addrinfo* result = nullptr;
@@ -57,7 +56,7 @@ int SyncResolveHostname(const absl::string_view& hostname, AddressFamily af,
   struct addrinfo* cursor = result;
   for (; cursor; cursor = cursor->ai_next) {
     if (family == AF_UNSPEC || cursor->ai_family == family) {
-      IPEndPoint endpoint;
+      IpEndpoint endpoint;
       if (endpoint.FromSockAddr(cursor->ai_addr,
                                 static_cast<socklen_t>(cursor->ai_addrlen))) {
         addresses->push_back(endpoint.address());
@@ -72,7 +71,7 @@ class ResolveHostnameWork : public GletWork {
  public:
   ResolveHostnameWork(const absl::string_view& hostname,  // NOLINT
                       AddressFamily& family,  // NOLINT
-                      std::vector<IPAddress>*& addresses)  // NOLINT
+                      std::vector<IpAddress>*& addresses)  // NOLINT
     : result_(0)
     , hostname_(hostname)
     , family_(family)
@@ -94,12 +93,12 @@ class ResolveHostnameWork : public GletWork {
   int  result_;
   const absl::string_view& hostname_;
   AddressFamily& family_;
-  std::vector<IPAddress>*& addresses_;
+  std::vector<IpAddress>*& addresses_;
 };
 
 Status ResolveHostname(const absl::string_view& hostname,
                        AddressFamily family,
-                       std::vector<IPAddress>* addresses) {
+                       std::vector<IpAddress>* addresses) {
   if (addresses == nullptr) {
     return Status::FromErrno(TIN_EINVAL);
   }
@@ -114,31 +113,30 @@ Status ResolveHostname(const absl::string_view& hostname,
 }
 
 // handy functions.
-Result<IPAddress> ResolveHostname(const absl::string_view& hostname,
+Result<IpAddress> ResolveHostname(const absl::string_view& hostname,
                                   AddressFamily af) {
-  std::vector<IPAddress> addresses;
+  std::vector<IpAddress> addresses;
   Status s = ResolveHostname(hostname, af, &addresses);
   if (!s.ok()) {
-    return Result<IPAddress>::Err(s);
+    return Result<IpAddress>::Err(s);
   }
   if (addresses.empty()) {
     // must not be empty on success
     LOG(FATAL) << "ResolveHostname return empty list on success";
   }
-  return Result<IPAddress>::Ok(addresses.front());
+  return Result<IpAddress>::Ok(addresses.front());
 }
 
-Result<IPAddress> ResolveHostname(const absl::string_view& hostname) {
+Result<IpAddress> ResolveHostname(const absl::string_view& hostname) {
   return ResolveHostname(hostname, ADDRESS_FAMILY_UNSPECIFIED);
 }
 
-Result<IPAddress> ResolveHostname4(const absl::string_view& hostname) {
+Result<IpAddress> ResolveHostname4(const absl::string_view& hostname) {
   return ResolveHostname(hostname, ADDRESS_FAMILY_IPV4);
 }
 
-Result<IPAddress> ResolveHostname6(const absl::string_view& hostname) {
+Result<IpAddress> ResolveHostname6(const absl::string_view& hostname) {
   return ResolveHostname(hostname, ADDRESS_FAMILY_IPV6);
 }
 
-}  // namespace net
-}  // namespace tin
+}  // namespace tin::net

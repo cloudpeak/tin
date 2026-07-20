@@ -64,15 +64,15 @@ TEST(Atomic, ReleaseStore32) {
 
 TEST(Atomic, Inc32) {
   int32_t val = 0;
-  CHECK_EQ(tin::atomic::Inc32(&val, 1), 1);
-  CHECK_EQ(tin::atomic::Inc32(&val, 1), 2);
-  CHECK_EQ(tin::atomic::Inc32(&val, -1), 1);
+  CHECK_EQ(tin::atomic::inc32(&val, 1), 1);
+  CHECK_EQ(tin::atomic::inc32(&val, 1), 2);
+  CHECK_EQ(tin::atomic::inc32(&val, -1), 1);
   CHECK_EQ(val, 1);
 }
 
 TEST(Atomic, RelaxedInc32) {
   int32_t val = 10;
-  CHECK_EQ(tin::atomic::relaxed_Inc32(&val, 5), 15);
+  CHECK_EQ(tin::atomic::relaxed_inc32(&val, 5), 15);
   CHECK_EQ(val, 15);
 }
 
@@ -109,7 +109,7 @@ TEST(Atomic, ConcurrentInc32) {
   for (int i = 0; i < nthreads; ++i) {
     threads[i] = std::thread([&]() {
       for (int j = 0; j < per_thread; ++j) {
-        tin::atomic::Inc32(&val, 1);
+        tin::atomic::inc32(&val, 1);
       }
     });
   }

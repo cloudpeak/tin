@@ -2,8 +2,9 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#pragma once
-#include <stdlib.h>
+#ifndef TIN_SYNC_ATOMIC_FLAG_H_
+#define TIN_SYNC_ATOMIC_FLAG_H_
+#include <cstdlib>
 
 #include "cstdint"
 
@@ -35,3 +36,4 @@ class AtomicFlag {
 };
 
 }  // namespace tin
+#endif  // TIN_SYNC_ATOMIC_FLAG_H_

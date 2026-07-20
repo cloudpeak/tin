@@ -10,13 +10,13 @@
 
 namespace tin {
 
-class IOBuffer {
+class IoBuffer {
  public:
 
  public:
-  IOBuffer();
-  explicit IOBuffer(size_t size);
-  ~IOBuffer();
+  IoBuffer();
+  explicit IoBuffer(size_t size);
+  ~IoBuffer();
 
   std::string str() const;
 
@@ -63,7 +63,7 @@ class IOBuffer {
 
   void AdvanceWritablePtr(int amount_to_advance);
 
-  void Swap(IOBuffer* other);
+  void Swap(IoBuffer* other);
 
  private:
   char* storage_;
@@ -72,7 +72,7 @@ class IOBuffer {
   int storage_size_;
 
  public:
-  IOBuffer(IOBuffer&& rvalue) {  // NOLINT
+  IoBuffer(IoBuffer&& rvalue) {  // NOLINT
     storage_ = rvalue.storage_;
     write_idx_ = rvalue.write_idx_;
     read_idx_ = rvalue.read_idx_;
@@ -84,7 +84,7 @@ class IOBuffer {
     rvalue.storage_size_ = 0;
   }
 
-  void operator=(IOBuffer&& rvalue) {
+  void operator=(IoBuffer&& rvalue) {
     delete storage_;
     storage_ = rvalue.storage_;
     write_idx_ = rvalue.write_idx_;

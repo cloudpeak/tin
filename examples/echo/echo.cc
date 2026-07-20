@@ -20,14 +20,14 @@ void HandleClient0(tin::net::TcpConn conn) {
   conn.SetWriteBuffer(64 * 1024);
 
   // user space buffer size.
-  const int kIOBufferSize = 4 * 1024;
-  std::unique_ptr<char[]> buf(new char[kIOBufferSize]);
+  const int kIoBufferSize = 4 * 1024;
+  std::unique_ptr<char[]> buf(new char[kIoBufferSize]);
 
   // set read, write deadline.
   const int64_t kRWDeadline = 20 * tin::kSecond;
   conn.SetDeadline(kRWDeadline);
   while (true) {
-    auto read_result = conn.Read(buf.get(), kIOBufferSize);
+    auto read_result = conn.Read(buf.get(), kIoBufferSize);
     size_t n = read_result.value_or(0);
     if (n > 0) {
       conn.SetReadDeadline(kRWDeadline);
@@ -63,8 +63,8 @@ void HandleClient1(tin::net::TcpConn conn) {
   conn.SetWriteBuffer(64 * 1024);
 
   // user space buffer size.
-  const int kIOBufferSize = 4 * 1024;
-  std::unique_ptr<char[]> buf(new char[kIOBufferSize]);
+  const int kIoBufferSize = 4 * 1024;
+  std::unique_ptr<char[]> buf(new char[kIoBufferSize]);
 
   // record read,  write timestamp.
   int64_t last_set_recv_time = tin::MonoNow();
@@ -74,7 +74,7 @@ void HandleClient1(tin::net::TcpConn conn) {
   const int64_t kRWDeadline = 20 * tin::kSecond;
   conn.SetDeadline(kRWDeadline);
   while (true) {
-    auto read_result = conn.Read(buf.get(), kIOBufferSize);
+    auto read_result = conn.Read(buf.get(), kIoBufferSize);
     size_t n = read_result.value_or(0);
     if (n > 0) {
       int64_t now = tin::MonoNow();
@@ -123,8 +123,8 @@ void HandleClient2(tin::net::TcpConn conn) {
   conn.SetWriteBuffer(64 * 1024);
 
   // user space buffer size.
-  const int kIOBufferSize = 4 * 1024;
-  std::unique_ptr<char[]> buf(new char[kIOBufferSize]);
+  const int kIoBufferSize = 4 * 1024;
+  std::unique_ptr<char[]> buf(new char[kIoBufferSize]);
 
   // record read, write timestamp.
   int64_t last_recv_time = tin::MonoNow();
@@ -134,7 +134,7 @@ void HandleClient2(tin::net::TcpConn conn) {
   const int64_t kRWDeadline = 20 * tin::kSecond;
   conn.SetDeadline(kRWDeadline);
   while (true) {
-    auto read_result = conn.Read(buf.get(), kIOBufferSize);
+    auto read_result = conn.Read(buf.get(), kIoBufferSize);
     size_t n = read_result.value_or(0);
     if (n > 0) {
       // update last recv time.
@@ -218,47 +218,39 @@ void Dispatch(tin::net::TcpConn conn, const int64_t id) {
 }
 
 int TinMain(int argc, char** argv) {
-  const uint16_t kPort = 2222;
-  bool use_ipv6 = false;
-  auto listen_result = tin::net::ListenTcp(
-      use_ipv6 ? "0:0:0:0:0:0:0:0" : "0.0.0.0", kPort);
+  constexpr uint16_t kPort = 2222;
+  const bool use_ipv6 = false;
+  const char* listen_address = use_ipv6 ? "0:0:0:0:0:0:0:0" : "0.0.0.0";
+
+  auto listen_result = tin::net::ListenTcp(listen_address, kPort);
   if (!listen_result.ok()) {
-    LOG(FATAL) << "Listen failed due to " << listen_result.error().ToString();
+    LOG(FATAL) << "Listen failed: " << listen_result.error().ToString();
+    return 1;
   }
-  tin::net::TCPListener listener = std::move(listen_result.value());
-  LOG(INFO) << "echo server is listening on port: " << kPort;
-  int64_t id = 0;
+
+  tin::net::TcpListener listener = std::move(listen_result.value());
+  LOG(INFO) << "Echo server listening on port: " << kPort;
+
+  int64_t connection_id = 0;
   while (true) {
     auto accept_result = listener.Accept();
-    if (accept_result.ok()) {
-      Dispatch(std::move(accept_result.value()), id);
-      id++;
-    } else {
-      LOG(INFO) << "Accept failed due to " << accept_result.error().ToString();
+    if (!accept_result.ok()) {
+      LOG(ERROR) << "Accept failed: " << accept_result.error().ToString();
+      continue;
     }
+
+    Dispatch(std::move(accept_result.value()), connection_id);
+    ++connection_id;
   }
+
   return 0;
 }
-
+ 
 int main(int argc, char** argv) {
-  tin::Initialize();
-
-  // set logging level.
-  // logging::SetMinLogLevel(-1);
   absl::SetMinLogLevel(absl::LogSeverityAtLeast::kInfo);
 
-  // set max p count.
   tin::Config config = tin::DefaultConfig();
   config.SetMaxProcs(static_cast<int>(std::thread::hardware_concurrency()));
 
-  // start the world.
-  tin::PowerOn(TinMain, argc, argv, &config);
-
-  // wait for power off
-  tin::WaitForPowerOff();
-
-  // cleanup.
-  tin::Deinitialize();
-
-  return 0;
+  return tin::Run(TinMain, argc, argv, config);
 }

@@ -54,13 +54,15 @@ void InternalYield() {
 
 void Throw(const char* str) {
   LOG(FATAL) << str;
-  // LOG(FATAL) is [[noreturn]] in abseil, but keep throw as a safety net
-  // for builds where LOG(FATAL) is configured to return.
-  throw(str);
+  // LOG(FATAL) is [[noreturn]] in abseil; this throw is unreachable
+  // but kept as a safety net for non-abseil builds.
+  throw PanicException(str ? str : "fatal");
 }
 
 void Panic(const char* str) {
-  throw(str);
+  std::string msg = str ? str : "panic";
+  LOG(ERROR) << "panic: " << msg;
+  throw PanicException(msg);
 }
 
 void LockOSThread() {
@@ -79,7 +81,7 @@ int GetErrorCode() {
   return runtime::GetG()->GetErrorCode();
 }
 
-bool ErrorOccured() {
+bool ErrorOccurred() {
   return runtime::GetG()->GetErrorCode() != 0;
 }
 

@@ -12,8 +12,7 @@
 #include <errno.h>
 #endif
 
-namespace tin {
-namespace runtime {
+namespace tin::runtime {
 
 void YieldLogicProcessor() {
 #if defined(OS_WIN)
@@ -48,5 +47,4 @@ int GetLastSystemErrorCode() {
 #endif
 }
 
-}  // namespace runtime
-}  // namespace tin
+}  // namespace tin::runtime
