@@ -64,6 +64,9 @@ class Scheduler {
     return &last_poll_;
   }
 
+  // Public so per-P timer code (TimeSleepUntil) can iterate all P heaps.
+  P** AllpPublic() { return allp_; }
+
  private:
   void OnSwitch(G* curg);
   void DoUnlock(UnLockInfo* info);

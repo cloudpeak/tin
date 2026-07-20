@@ -4,8 +4,13 @@
 
 #ifndef TIN_RUNTIME_P_H_
 #define TIN_RUNTIME_P_H_
+#include <atomic>
+#include <vector>
+
 #include "tin/runtime/util.h"
 #include "tin/runtime/guintptr.h"
+#include "tin/runtime/raw_mutex.h"
+#include "tin/runtime/timer/timer_queue.h"
 
 namespace tin::runtime {
 class M;
@@ -27,6 +32,34 @@ class P {
   P& operator=(const P&) = delete;
   int Id() const {
     return id_;
+  }
+
+  // ---- Per-P Timer accessors ----
+  RawMutex& TimersLock() { return timers_lock_; }
+  std::vector<Timer*>& Timers() { return timers_; }
+  void SetTimer0When(uint64_t when) {
+    timer0_when_.store(when, std::memory_order_release);
+  }
+  uint64_t Timer0When() {
+    return timer0_when_.load(std::memory_order_acquire);
+  }
+  void IncNumTimers(int32_t n) {
+    num_timers_.fetch_add(n, std::memory_order_relaxed);
+  }
+  uint32_t NumTimers() {
+    return num_timers_.load(std::memory_order_relaxed);
+  }
+  void IncDeletedTimers(int32_t n) {
+    deleted_timers_.fetch_add(n, std::memory_order_relaxed);
+  }
+  uint32_t DeletedTimers() {
+    return deleted_timers_.load(std::memory_order_relaxed);
+  }
+  uint32_t AdjustTimers() {
+    return adjust_timers_.load(std::memory_order_relaxed);
+  }
+  void IncAdjustTimers(int32_t n) {
+    adjust_timers_.fetch_add(n, std::memory_order_relaxed);
   }
 
   int32_t RunqCapacity() const {
@@ -83,6 +116,19 @@ class P {
     sched_tick_++;
   }
 
+  // ---- Go 1.15 runtime2.go:571-572 syscall tick fields ----
+
+  // Incremented each time the P enters a syscall (runtime2.go:571).
+  // sysmon uses this to detect long-running syscalls.
+  uint32_t SyscallTick() const { return syscalltick_; }
+  void IncSyscallTick() { syscalltick_++; }
+
+  // The syscalltick value observed by sysmon on its last pass
+  // (runtime2.go:572). If it hasn't changed, the P is still in the
+  // same syscall.
+  uint32_t SysmonTick() const { return sysmontick_; }
+  void SetSysmonTick(uint32_t t) { sysmontick_ = t; }
+
   bool CasStatus(uint32_t old_status, uint32_t new_status);
 
  private:
@@ -102,7 +148,17 @@ class P {
   int id_;
   uint32_t status_;
   uint32_t sched_tick_;
+  uint32_t syscalltick_;   // Go 1.15 runtime2.go:571
+  uint32_t sysmontick_;    // Go 1.15 runtime2.go:572
   tin::runtime::M* m_;
+
+  // ---- Per-P Timer fields ----
+  RawMutex timers_lock_;
+  std::vector<Timer*> timers_;
+  std::atomic<uint64_t> timer0_when_{0};
+  std::atomic<uint32_t> num_timers_{0};
+  std::atomic<uint32_t> adjust_timers_{0};
+  std::atomic<uint32_t> deleted_timers_{0};
 };
 
 }  // namespace tin::runtime

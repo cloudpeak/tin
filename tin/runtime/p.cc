@@ -23,6 +23,8 @@ P::P(int id)
   , id_(id)
   , status_(kPidle)
   , sched_tick_(0)
+  , syscalltick_(0)
+  , sysmontick_(0)
   , m_(nullptr) {
   runq_head_ = runq_tail_ = 0;
 }

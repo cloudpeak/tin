@@ -13,6 +13,7 @@
 #include "tin/runtime/m.h"
 #include "tin/runtime/runtime.h"
 #include "tin/runtime/net/netpoll.h"
+#include "tin/runtime/timer/timer_queue.h"
 
 #include "tin/runtime/scheduler.h"
 
@@ -20,6 +21,15 @@ namespace tin::runtime {
 const int kTinProcsLimit = 256;
 
 bool ExitSyscallUnlockFunc(void* arg1, void* arg2);
+
+// Only steal timers from a P that isn't actively running (reduces lock
+// contention on its timersLock). tin currently has no preempt flag, so
+// we use the P status as a proxy.
+namespace {
+bool ShouldStealTimers(P* p2) {
+  return p2->GetStatus() != kPrunning;
+}
+}  // namespace
 
 Scheduler::Scheduler()
   : runq_size_(0)
@@ -73,6 +83,24 @@ P* Scheduler::ResizeProc(int nprocs) {
       if (gp == nullptr)
         break;
       GlobalRunqPutHead(gp);
+    }
+
+    // === Per-P timer migration ===
+    // Move all timers from the dying P to the current P's heap so they
+    // keep firing. STW is in effect (caller holds sched->lock_ via the
+    // ResizeProc path), so concurrent timer access is impossible.
+    if (!p->Timers().empty()) {
+      P* plocal = GetP();
+      plocal->TimersLock().Lock();
+      p->TimersLock().Lock();
+      MoveTimers(plocal, p->Timers());
+      p->SetTimer0When(0);
+      // Reset counters on the dying P.
+      p->IncNumTimers(-static_cast<int32_t>(p->NumTimers()));
+      p->IncDeletedTimers(-static_cast<int32_t>(p->DeletedTimers()));
+      p->IncAdjustTimers(-static_cast<int32_t>(p->AdjustTimers()));
+      p->TimersLock().Unlock();
+      plocal->TimersLock().Unlock();
     }
 
     p->SetStatus(kPdead);
@@ -234,6 +262,31 @@ G* Scheduler::FindRunnable(bool* inherit_time) {
 
 top:
   P* curp = curm->P();
+
+  // Shutdown takes precedence over timer processing: once ExitFlag is set,
+  // PollDescriptors may be torn down (and their embedded Timers freed) while
+  // still physically present in some P's heap. Running CheckTimers in that
+  // window would dereference freed memory. Bail out before touching timers.
+  if (rtm_env->ExitFlag()) {
+    return nullptr;
+  }
+
+  // === Per-P timer check (Go 1.15 model) ===
+  // Run any expired timers on the current P first. A timer callback may
+  // Ready() a G which then shows up in curp's runq.
+  {
+    int64_t now = 0;
+    int64_t poll_until = 0;
+    bool ran_timer = false;
+    CheckTimers(curp, 0, &now, &poll_until, &ran_timer);
+    if (ran_timer) {
+      G* gp = curp->RunqGet(inherit_time);
+      if (gp != nullptr) {
+        return gp;
+      }
+    }
+  }
+
   G* gp = curp->RunqGet(inherit_time);
   if (gp != nullptr) {
     return gp;
@@ -248,10 +301,6 @@ top:
       *inherit_time = false;
       return gp;
     }
-  }
-
-  if (rtm_env->ExitFlag()) {
-    return nullptr;
   }
 
   if (NetPollInited() && last_poll_ != 0) {
@@ -288,6 +337,17 @@ top:
     } else {
       bool steal_run_next = i > 2 * static_cast<int>(rtm_conf->MaxProcs());
       gp = curp->RunqSteal(p, steal_run_next);
+      // After a failed steal, if p2 isn't running, opportunistically
+      // check its timers (Go's work-stealing checkTimers).
+      if (gp == nullptr && ShouldStealTimers(p)) {
+        int64_t tnow = 0;
+        int64_t w = 0;
+        bool ran = false;
+        CheckTimers(p, 0, &tnow, &w, &ran);
+        if (ran) {
+          gp = curp->RunqGet(inherit_time);
+        }
+      }
     }
     if (gp != nullptr) {
       *inherit_time = false;
@@ -723,6 +783,9 @@ bool ExitSyscallUnlockFunc(void* arg1, void* arg2) {
 void EnterSyscallBlock() {
   G* gp = GetG();
   gp->SetState(CoroutineState::kSyscall);
+  // Go 1.15 runtime2.go:571 — increment syscalltick so sysmon (Phase 2
+  // retake) can detect long-running syscalls.
+  gp->M()->P()->IncSyscallTick();
   sched->HandoffP(ReleaseP());
 }
 

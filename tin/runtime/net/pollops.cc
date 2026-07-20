@@ -8,6 +8,7 @@
 #include "tin/sync/atomic.h"
 #include "tin/runtime/runtime.h"
 #include "tin/runtime/scheduler.h"
+#include "tin/runtime/timer/timer_queue.h"
 #include "tin/runtime/net/netpoll.h"
 #include "tin/runtime/net/pollops.h"
 
@@ -102,11 +103,11 @@ void WaitCanceled(PollDescriptor* pd, int mode) {
 
 void AddTimerRefCounted(PollDescriptor* pd, Timer* t) {
   pd->AddRef();
-  timer_q->AddTimer(t);
+  AddTimer(t);
 }
 
 void DelTimerRefCounted(PollDescriptor* pd, Timer* t) {
-  if (timer_q->DelTimer(t))
+  if (DelTimer(t))
     pd->Release();
 }
 

@@ -7,6 +7,7 @@
 #include <list>
 #include <memory>
 #include <semaphore>
+#include <string>
 #include <thread>
 #include <absl/log/log.h>
 #include <absl/log/check.h>
@@ -128,6 +129,28 @@ class M  {
     return &locked_;
   }
 
+  // ---- Go 1.15 runtime2.go:490-535 fields ----
+
+  //持锁计数（runtime2.go:505）。
+  int32_t Locks() const { return locks_; }
+  void IncLocks() { locks_++; }
+  void DecLocks() { locks_--; }
+
+  // 分配中标记（runtime2.go:502）。
+  int32_t Mallocing() const { return mallocing_; }
+  void SetMallocing(int32_t v) { mallocing_ = v; }
+
+  // 禁止抢占字符串（runtime2.go:504），空字符串表示允许。
+  const std::string& PreemptOff() const { return preemptoff_; }
+  void SetPreemptOff(const std::string& s) { preemptoff_ = s; }
+
+  // syscall 前的 P（runtime2.go:500）。
+  tin::runtime::P* OldP() const { return oldp_; }
+  void SetOldP(tin::runtime::P* p) { oldp_ = p; }
+
+  // 快速随机数状态（runtime2.go:514）。
+  uint32_t Fastrand();
+
   char* Cache() {
     if (!cache_) {
       cache_.reset(new char[64 * 1024]);
@@ -168,6 +191,13 @@ class M  {
   bool is_m0_;
   std::list<G*> dead_queue_;
   uint32_t locked_;
+
+  // ---- Go 1.15 runtime2.go:490-535 fields ----
+  int32_t locks_;          // runtime2.go:505
+  int32_t mallocing_;      // runtime2.go:502
+  std::string preemptoff_; // runtime2.go:504
+  tin::runtime::P* oldp_;      // runtime2.go:500
+  uint32_t fastrand_;      // runtime2.go:514
 };
 
 } // namespace tin::runtime

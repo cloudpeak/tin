@@ -432,5 +432,173 @@ inline int32_t inc32(volatile uint32_t* ptr, uint32_t increment) {
                static_cast<int32_t>(increment));
 }
 
+// ===========================================================================
+// int64_t operations (ref: Go 1.15 internal/atomic/atomic_amd64.go:39-92)
+// ===========================================================================
+
+// --- compare-and-swap 64 ---
+
+inline bool acquire_cas64(volatile int64_t* ptr,
+                          int64_t old_value,
+                          int64_t new_value) {
+  return atomic_addr(ptr)->compare_exchange_strong(
+      old_value, new_value,
+      std::memory_order_acquire, std::memory_order_relaxed);
+}
+
+inline bool release_cas64(volatile int64_t* ptr,
+                          int64_t old_value,
+                          int64_t new_value) {
+  return atomic_addr(ptr)->compare_exchange_strong(
+      old_value, new_value,
+      std::memory_order_release, std::memory_order_relaxed);
+}
+
+inline bool cas64(volatile int64_t* ptr,
+                  int64_t old_value,
+                  int64_t new_value) {
+  memory_barrier();
+  return acquire_cas64(ptr, old_value, new_value);
+}
+
+// --- store64 ---
+
+inline void relaxed_store64(volatile int64_t* ptr, int64_t value) {
+  atomic_addr(ptr)->store(value, std::memory_order_relaxed);
+}
+
+inline void release_store64(volatile int64_t* ptr, int64_t value) {
+  atomic_addr(ptr)->store(value, std::memory_order_release);
+}
+
+inline void store64(volatile int64_t* ptr, int64_t value) {
+  memory_barrier();
+  atomic_addr(ptr)->store(value, std::memory_order_relaxed);
+  memory_barrier();
+}
+
+// --- load64 ---
+
+inline int64_t relaxed_load64(volatile const int64_t* ptr) {
+  return atomic_addr(ptr)->load(std::memory_order_relaxed);
+}
+
+inline int64_t acquire_load64(volatile const int64_t* ptr) {
+  return atomic_addr(ptr)->load(std::memory_order_acquire);
+}
+
+inline int64_t load64(volatile const int64_t* ptr) {
+  memory_barrier();
+  return atomic_addr(ptr)->load(std::memory_order_acquire);
+}
+
+// --- exchange64 ---
+
+inline int64_t exchange64(volatile int64_t* ptr, int64_t new_value) {
+  memory_barrier();
+  int64_t old_value =
+      atomic_addr(ptr)->exchange(new_value, std::memory_order_relaxed);
+  memory_barrier();
+  return old_value;
+}
+
+// --- increment64 ---
+
+inline int64_t relaxed_inc64(volatile int64_t* ptr, int64_t increment) {
+  return atomic_addr(ptr)->fetch_add(increment, std::memory_order_relaxed)
+         + increment;
+}
+
+inline int64_t inc64(volatile int64_t* ptr, int64_t increment) {
+  return atomic_addr(ptr)->fetch_add(increment, std::memory_order_seq_cst)
+         + increment;
+}
+
+// ===========================================================================
+// uint64_t operations (delegate to int64_t via cast)
+// ===========================================================================
+
+inline bool acquire_cas64(volatile uint64_t* ptr,
+                          uint64_t old_value,
+                          uint64_t new_value) {
+  return acquire_cas64(reinterpret_cast<volatile int64_t*>(ptr),
+                       static_cast<int64_t>(old_value),
+                       static_cast<int64_t>(new_value));
+}
+
+inline bool release_cas64(volatile uint64_t* ptr,
+                          uint64_t old_value,
+                          uint64_t new_value) {
+  return release_cas64(reinterpret_cast<volatile int64_t*>(ptr),
+                       static_cast<int64_t>(old_value),
+                       static_cast<int64_t>(new_value));
+}
+
+inline bool cas64(volatile uint64_t* ptr,
+                  uint64_t old_value,
+                  uint64_t new_value) {
+  return cas64(reinterpret_cast<volatile int64_t*>(ptr),
+               static_cast<int64_t>(old_value),
+               static_cast<int64_t>(new_value));
+}
+
+inline void relaxed_store64(volatile uint64_t* ptr, uint64_t value) {
+  relaxed_store64(reinterpret_cast<volatile int64_t*>(ptr),
+                  static_cast<int64_t>(value));
+}
+
+inline void release_store64(volatile uint64_t* ptr, uint64_t value) {
+  release_store64(reinterpret_cast<volatile int64_t*>(ptr),
+                  static_cast<int64_t>(value));
+}
+
+inline void store64(volatile uint64_t* ptr, uint64_t value) {
+  store64(reinterpret_cast<volatile int64_t*>(ptr),
+          static_cast<int64_t>(value));
+}
+
+inline uint64_t relaxed_load64(volatile const uint64_t* ptr) {
+  return static_cast<uint64_t>(relaxed_load64(
+      reinterpret_cast<volatile const int64_t*>(ptr)));
+}
+
+inline uint64_t acquire_load64(volatile const uint64_t* ptr) {
+  return static_cast<uint64_t>(acquire_load64(
+      reinterpret_cast<volatile const int64_t*>(ptr)));
+}
+
+inline uint64_t load64(volatile const uint64_t* ptr) {
+  return static_cast<uint64_t>(load64(
+      reinterpret_cast<volatile const int64_t*>(ptr)));
+}
+
+inline uint64_t exchange64(volatile uint64_t* ptr, uint64_t new_value) {
+  return static_cast<uint64_t>(exchange64(
+      reinterpret_cast<volatile int64_t*>(ptr),
+      static_cast<int64_t>(new_value)));
+}
+
+inline int64_t relaxed_inc64(volatile uint64_t* ptr, uint64_t increment) {
+  return relaxed_inc64(reinterpret_cast<volatile int64_t*>(ptr),
+                       static_cast<int64_t>(increment));
+}
+
+inline int64_t inc64(volatile uint64_t* ptr, uint64_t increment) {
+  return inc64(reinterpret_cast<volatile int64_t*>(ptr),
+               static_cast<int64_t>(increment));
+}
+
+// ===========================================================================
+// 8-bit bitwise operations (ref: Go 1.15 atomic_amd64.go:63-66)
+// ===========================================================================
+
+inline void and8(volatile uint8_t* ptr, uint8_t v) {
+  atomic_addr(ptr)->fetch_and(v, std::memory_order_relaxed);
+}
+
+inline void or8(volatile uint8_t* ptr, uint8_t v) {
+  atomic_addr(ptr)->fetch_or(v, std::memory_order_relaxed);
+}
+
 }  // namespace tin::atomic
 #endif  // TIN_SYNC_ATOMIC_H_

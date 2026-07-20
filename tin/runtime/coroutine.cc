@@ -5,6 +5,7 @@
 #include <utility>
 #include <functional>
 #include <string>
+#include <atomic>
 
 #include "base/strings/string_util.h"
 
@@ -20,10 +21,19 @@
 namespace tin {
 namespace runtime {
 
+// Global goroutine ID counter (ref: Go 1.15 proc.go sched.goidgen).
+// Phase 1 uses a simple global atomic; Phase 6 (Step 6.1) will replace
+// this with per-P batched allocation (goidcache / goidcacheend).
+static std::atomic<int64_t> g_next_goid{1};
+
 Coroutine::Coroutine()
   : lockedm_(nullptr)
   , error_code_(0)
-  , timer_(nullptr) {
+  , timer_(nullptr)
+  , goid_(g_next_goid.fetch_add(1, std::memory_order_relaxed))
+  , waitsince_(0)
+  , waitreason_(kWaitReasonZero)
+  , param_(nullptr) {
 }
 
 Coroutine::~Coroutine() {

@@ -39,12 +39,10 @@ int Env::Initialize(EntryFn fn, int argc, char** argv, tin::Config* new_conf) {
   rtm_conf = conf_;
   SignalInit();
   // P1-1: core objects owned by Env via unique_ptr. The global non-owning
-  // pointers are set here so existing call sites (sched->..., timer_q->...)
-  // work without modification.
+  // pointer is set here so existing call sites (sched->...) work without
+  // modification.
   sched_ = std::make_unique<Scheduler>();
-  timer_q_ = std::make_unique<TimerQueue>();
   sched = sched_.get();
-  timer_q = timer_q_.get();
   // coro_tls is thread_local and cannot be a member of Env; it remains a
   // raw pointer managed manually (deleted in Deinitialize).
   coro_tls = new Coroutine;
@@ -57,20 +55,16 @@ int Env::Initialize(EntryFn fn, int argc, char** argv, tin::Config* new_conf) {
 void Env::Deinitialize() {
   // If OnMainExit() hasn't run yet (Stop() was called before the entry
   // function returned), do the cleanup now from the main thread.
-  // JoinAll() sends nullptr to all thread pool workers and joins them;
-  // timer_q->Join() signals the timer goroutine to exit and waits for it.
+  // JoinAll() sends nullptr to all thread pool workers and joins them.
   if (!main_exited_) {
     ThreadPool::GetInstance()->JoinAll();
-    if (timer_q_)
-      timer_q_->Join();
   }
   delete coro_tls;
   coro_tls = nullptr;
-  // Clear non-owning global pointers before unique_ptr members are reset.
+  // Clear non-owning global pointer before unique_ptr member is reset.
   sched = nullptr;
-  timer_q = nullptr;
-  // sched_ and timer_q_ will be destroyed when Env is destroyed (via
-  // rtm_env.reset() in DeInitializeEnv).
+  // sched_ will be destroyed when Env is destroyed (via rtm_env.reset()
+  // in DeInitializeEnv()).
 }
 
 int Env::WaitMainExit() {
@@ -93,9 +87,9 @@ void* Env::MainCoro(intptr_t) {
 }
 
 void Env::OnMainExit() {
-  // Graceful shutdown: stop the scheduler, join the worker thread pool and
-  // the timer queue, then notify WaitForPowerOff() so that the main thread
-  // can return and run Deinitialize()/RAII destructors.
+  // Graceful shutdown: stop the scheduler and join the worker thread pool,
+  // then notify WaitForPowerOff() so that the main thread can return and
+  // run Deinitialize()/RAII destructors.
   //
   // Do NOT call _exit() here -- that would skip RAII destructors, atexit
   // hooks, and the Deinitialize() call in the user's main(), defeating the
@@ -103,7 +97,6 @@ void Env::OnMainExit() {
   exit_flag_ = true;
   main_exited_ = true;  // signal to Deinitialize() that cleanup is done
   ThreadPool::GetInstance()->JoinAll();
-  timer_q->Join();
   rtm_env->main_signal_.Notify();
 }
 
@@ -111,8 +104,8 @@ void Env::RequestStop(int exit_code) {
   exit_code_ = exit_code;
   exit_flag_ = true;
   // Notify main_signal_ so that WaitForPowerOff() returns.
-  // The actual cleanup (JoinAll + timer_q->Join) will be done by
-  // Deinitialize() since main_exited_ remains false.
+  // The actual cleanup (JoinAll) will be done by Deinitialize() since
+  // main_exited_ remains false.
   main_signal_.Notify();
 }
 
@@ -153,7 +146,6 @@ bool StopRequested() {
 
 std::unique_ptr<Env> rtm_env;
 Scheduler* sched = nullptr;
-TimerQueue* timer_q = nullptr;
 thread_local Coroutine* coro_tls = nullptr;
 
 tin::Config* rtm_conf = nullptr;

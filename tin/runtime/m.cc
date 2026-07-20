@@ -36,7 +36,12 @@ M::M()
   , unlock_info_(new UnLockInfo)
   , is_m0_(0)
   , dead_queue_()
-  , locked_(0) {
+  , locked_(0)
+  , locks_(0)
+  , mallocing_(0)
+  , preemptoff_()
+  , oldp_(nullptr)
+  , fastrand_(0) {
 }
 
 M::~M() {
@@ -218,6 +223,22 @@ void M::ClearDeadQueue() {
     delete gp;
     dead_queue_.pop_front();
   }
+}
+
+// Go 1.15 runtime2.go:514 — xorshift32 PRNG.
+// This replaces rand() in runtime code for speed and determinism.
+// If fastrand_ is 0 (uninitialized), seed from the M address to avoid
+// the xorshift zero-trap (0 → 0 forever).
+uint32_t M::Fastrand() {
+  uint32_t x = fastrand_;
+  if (x == 0) {
+    x = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(this)) | 1;
+  }
+  x ^= x << 13;
+  x ^= x >> 17;
+  x ^= x << 5;
+  fastrand_ = x;
+  return x;
 }
 
 // -----------------------------------------------------

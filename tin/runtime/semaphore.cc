@@ -111,7 +111,7 @@ void SemSetDeadline(G* gp, Sudog* s, int64_t deadline) {
   timer->f = OnSemDeadlineReached;
   timer->when = NanoFromNow(deadline);
   timer->arg = s;
-  timer_q->AddTimer(timer);
+  AddTimer(timer);
 }
 
 bool SemAcquire(uint32_t* addr) {

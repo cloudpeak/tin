@@ -16,7 +16,6 @@ namespace tin::runtime {
 
 class Scheduler;
 class Coroutine;
-class TimerQueue;
 
 class Env {
  public:
@@ -45,9 +44,9 @@ class Env {
   // return value.
   int exit_code() const { return exit_code_; }
 
-  // Returns true if OnMainExit() has already done cleanup (JoinAll +
-  // timer_q->Join). Used by Deinitialize() to avoid double-cleanup when
-  // Stop() was called before the entry function returned.
+  // Returns true if OnMainExit() has already done cleanup (JoinAll).
+  // Used by Deinitialize() to avoid double-cleanup when Stop() was
+  // called before the entry function returned.
   bool main_exited() const { return main_exited_; }
 
  private:
@@ -67,12 +66,11 @@ class Env {
   tin::AtomicFlag exit_flag_;
   bool main_exited_ = false;
   int exit_code_ = 0;
-  // Owned by Env via unique_ptr (P1-1). The global non-owning pointers
-  // `sched` and `timer_q` below are set to point at these in Initialize()
-  // and cleared in Deinitialize(), so existing call sites (sched->Init()
-  // etc.) work without modification.
+  // Owned by Env via unique_ptr (P1-1). The global non-owning pointer
+  // `sched` below is set to point at this in Initialize() and cleared
+  // in Deinitialize(), so existing call sites (sched->Init() etc.)
+  // work without modification.
   std::unique_ptr<Scheduler> sched_;
-  std::unique_ptr<TimerQueue> timer_q_;
 };
 
 // rtm_env is owned by a unique_ptr (P1-1). DeInitializeEnv() calls reset().
@@ -80,9 +78,8 @@ extern std::unique_ptr<Env> rtm_env;
 
 // Non-owning pointers into rtm_env's members. Set in Initialize(),
 // cleared in Deinitialize(). Retained so the hundreds of call sites
-// that use `sched->...` and `timer_q->...` do not need modification.
+// that use `sched->...` do not need modification.
 extern Scheduler* sched;
-extern TimerQueue* timer_q;
 extern thread_local Coroutine* coro_tls;
 extern tin::Config* rtm_conf;
 

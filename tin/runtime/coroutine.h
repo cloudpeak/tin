@@ -39,6 +39,21 @@ enum CoroutineFlag {
   kFlagG0 = 1,
 };
 
+// WaitReason —reason a G is blocked (ref: Go 1.15 runtime2.go:979-1004).
+// Only the wait reasons relevant to tin's existing blocking scenarios
+// are enumerated; additional values can be added as new features land.
+enum WaitReason {
+  kWaitReasonZero = 0,
+  kWaitReasonGCAssistWait,   // 1
+  kWaitReasonIOWait,         // 2
+  kWaitReasonChanReceive,    // 3
+  kWaitReasonChanSend,       // 4
+  kWaitReasonSelect,         // 5
+  kWaitReasonMutex,          // 6
+  kWaitReasonSleep,          // 7
+  kWaitReasonTimer,          // 8
+};
+
 // zcontext C ABI entry (signature fixed by zcontext assembly, do not change).
 using ZContextEntry = void* (*)(intptr_t);
 
@@ -100,6 +115,26 @@ class Coroutine {
     return (flags_ & kFlagG0) != 0;
   }
 
+  // ---- Go 1.15 runtime2.go:425-431 fields ----
+
+  // goroutine ID (runtime2.go:428). Assigned at construction from a
+  // global monotonic counter; later Phase 6 will switch to per-P batched
+  // allocation (goidcache).
+  int64_t GoId() const { return goid_; }
+
+  // Approximate time when the G became blocked (runtime2.go:430),
+  // in nanoseconds since startup (MonoNow). 0 means not blocked.
+  int64_t WaitSince() const { return waitsince_; }
+  void SetWaitSince(int64_t t) { waitsince_ = t; }
+
+  // Why the G is blocked (runtime2.go:431).
+  int32_t WaitReason() const { return waitreason_; }
+  void SetWaitReason(int32_t r) { waitreason_ = r; }
+
+  // Parameter passed to the G when it is woken (runtime2.go:425).
+  void* Param() const { return param_; }
+  void SetParam(void* p) { param_ = p; }
+
   Timer* GetTimer();
 
   // User coroutine factory: creates a coroutine with a closure and enqueues it.
@@ -129,6 +164,12 @@ class Coroutine {
   int32_t flags_;
   int error_code_;
   Timer* timer_;
+
+  // ---- Go 1.15 runtime2.go:425-431 fields ----
+  int64_t goid_;          // goroutine ID
+  int64_t waitsince_;     // monotonic ns when blocking started
+  int32_t waitreason_;    // WaitReason enum
+  void* param_;           // wakeup parameter
 };
 
 // Internal spawn (replaces the old SpawnSimple overloads).

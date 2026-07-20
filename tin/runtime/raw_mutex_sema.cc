@@ -42,6 +42,7 @@ bool RawMutex::TryLock() {
   // Returns false if already held or has waiters.
   if (atomic::acquire_cas(&key_, 0, kLocked)) {  // acquire
     owner_ = GetM();
+    owner_->IncLocks();  // Go 1.15 runtime2.go:505
     return true;
   }
   return false;
@@ -59,7 +60,8 @@ void RawMutex::Lock() {
   // Speculative grab for lock. acquire_cas ensures we see all writes
   // from the previous critical section.
   if (atomic::acquire_cas(&key_, 0, kLocked)) {  // acquire
-    owner_ = GetM();
+    owner_ = m;
+    m->IncLocks();  // Go 1.15 runtime2.go:505
     return;
   }
 
@@ -76,7 +78,8 @@ void RawMutex::Lock() {
       if ((v & kLocked) == 0) {
         // Unlocked. Try to lock.
         if (atomic::acquire_cas(&key_, v, v | kLocked)) {  // acquire
-          owner_ = GetM();
+          owner_ = m;
+          m->IncLocks();  // Go 1.15 runtime2.go:505
           return;
         }
         i = 0;
@@ -121,6 +124,7 @@ void RawMutex::Lock() {
 void RawMutex::Unlock() {
   // P1-5: Clear owner_ first (release ordering via the CAS below ensures
   // this write is visible to the next acquirer).
+  M* owner_m = owner_;
   owner_ = nullptr;
   M* mp = nullptr;
   while (true) {
@@ -141,6 +145,10 @@ void RawMutex::Unlock() {
         break;
       }
     }
+  }
+  // Go 1.15 runtime2.go:505 — decrement lock count after release.
+  if (owner_m != nullptr) {
+    owner_m->DecLocks();
   }
 }
 
