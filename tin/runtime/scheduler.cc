@@ -29,6 +29,41 @@ namespace {
 bool ShouldStealTimers(P* p2) {
   return p2->GetStatus() != kPrunning;
 }
+
+// Go 1.15 proc.go:2289-2336 — stealOrder deterministic traversal.
+// Instead of rand()%MaxProcs (which may revisit the same P multiple times
+// and skip others), stealOrder visits every P exactly once per round in
+// a pseudo-random order.
+struct StealOrder {
+  uint32_t count;     // = MaxProcs
+  uint32_t position;  // current position (0..count-1)
+  uint32_t offset;    // starting offset
+  bool random;        // true if using hash-based permutation
+
+  void Start(uint32_t procs, uint32_t fastrand) {
+    count = procs;
+    position = 0;
+    if (procs > 1) {
+      offset = fastrand % procs;
+      random = (offset != 0);  // offset==0 => sequential traversal
+    } else {
+      offset = 0;
+      random = false;
+    }
+  }
+
+  uint32_t Next() {
+    uint32_t i = position + offset;
+    position++;
+    if (random) {
+      // Knuth multiplicative hashing for pseudo-random permutation.
+      i = (i * 2654435761u) % count;
+    }
+    return i % count;
+  }
+
+  bool Done() const { return position >= count; }
+};
 }  // namespace
 
 Scheduler::Scheduler()
@@ -332,30 +367,38 @@ top:
     atomic::inc32(&nr_spinning_, 1);
   }
 
-  for (int i = 0;
-       i < static_cast<int>(4 * rtm_conf->MaxProcs());
-       i++) {
-    P* p = Allp()[rand() % rtm_conf->MaxProcs()];
-    if (p == curp) {
-      gp = p->RunqGet();
-    } else {
-      bool steal_run_next = i > 2 * static_cast<int>(rtm_conf->MaxProcs());
-      gp = curp->RunqSteal(p, steal_run_next);
-      // After a failed steal, if p2 isn't running, opportunistically
-      // check its timers (Go's work-stealing checkTimers).
-      if (gp == nullptr && ShouldStealTimers(p)) {
-        int64_t tnow = 0;
-        int64_t w = 0;
-        bool ran = false;
-        CheckTimers(p, 0, &tnow, &w, &ran);
-        if (ran) {
-          gp = curp->RunqGet(inherit_time);
+  // Go 1.15 proc.go:2336-2373 — stealWork with stealOrder.
+  // 4 rounds, each visiting every P exactly once in pseudo-random order.
+  for (int round = 0; round < 4; round++) {
+    StealOrder so;
+    so.Start(static_cast<uint32_t>(rtm_conf->MaxProcs()),
+             curm->Fastrand());
+    while (!so.Done()) {
+      P* p = Allp()[so.Next()];
+      if (p == nullptr)
+        continue;
+      if (p == curp) {
+        gp = p->RunqGet();
+      } else {
+        bool steal_run_next = round > 2;
+        gp = curp->RunqSteal(p, steal_run_next);
+        // After a failed steal, opportunistically check p's timers.
+        // Only steal timers in rounds > 1 to avoid premature lock
+        // contention (Go 1.15 proc.go:2361).
+        if (gp == nullptr && (round > 1 && ShouldStealTimers(p))) {
+          int64_t tnow = 0;
+          int64_t w = 0;
+          bool ran = false;
+          CheckTimers(p, 0, &tnow, &w, &ran);
+          if (ran) {
+            gp = curp->RunqGet(inherit_time);
+          }
         }
       }
-    }
-    if (gp != nullptr) {
-      *inherit_time = false;
-      return gp;
+      if (gp != nullptr) {
+        *inherit_time = false;
+        return gp;
+      }
     }
   }
 
